@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japan 2026 — Trip Planner</title>
+    <meta name="description" content="18-day Japan itinerary for 8 friends — May 16 to Jun 2, 2026. Tokyo, Fuji, Izu, Kyoto, Osaka & Nara.">
+    <meta property="og:title" content="Japan 2026 Trip Planner">
+    <meta property="og:description" content="18-day Japan itinerary — Tokyo, Fuji, Izu, Kyoto, Osaka & Nara.">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>">
+</head>
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header class="header">
+        <div class="header-inner">
+            <h1 class="logo"><span class="logo-icon">🌸</span> Japan 2026</h1>
+            <nav class="nav" id="nav" aria-label="Main navigation">
+                <button class="nav-btn active" data-view="dashboard">🏠 Home</button>
+                <button class="nav-btn" data-view="itinerary">📅 Itinerary</button>
+                <button class="nav-btn" data-view="places">📍 Places</button>
+                <button class="nav-btn" data-view="map">🗺️ Map</button>
+                <button class="nav-btn" data-view="packing">🎒 Packing</button>
+                <button class="nav-btn" data-view="guide">📖 Guide</button>
+            </nav>
+            <div class="header-actions">
+                <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">🌙</button>
+                <button class="icon-btn" id="sidebar-btn" title="Menu">☰</button>
+                <button class="icon-btn" id="edit-btn" title="Toggle edit mode">🔒</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== SIDEBAR (slide-over) ===== -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+    <aside class="sidebar" id="sidebar">
+        <button class="sidebar-close" id="sidebar-close">&times;</button>
+
+        <div class="sidebar-section">
+            <h3>✅ To-Do</h3>
+            <ul class="todo-list" id="todo-list"></ul>
+            <div class="todo-add edit-only">
+                <input type="text" id="todo-input" placeholder="Add a task...">
+                <button id="todo-add-btn">+</button>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>💾 Data</h3>
+            <div class="data-actions">
+                <button class="btn btn-accent btn-sm" id="export-btn" style="flex:1">📥 Export</button>
+                <button class="btn btn-ghost btn-sm" id="import-btn" style="flex:1">📤 Import</button>
+                <input type="file" id="import-file" accept=".json" style="display:none">
+            </div>
+            <p class="data-hint">Export saves all your edits as a .json file. Import loads it on any device.</p>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>🏨 Hotel Address (Show to Taxi)</h3>
+            <div id="hotel-cards">
+                <div class="hotel-card" data-city="Tokyo">
+                    <div class="hotel-city">Tokyo</div>
+                    <div class="hotel-name-jp" id="hotel-jp-tokyo">ホテル名を入力してください</div>
+                    <div class="hotel-addr-jp" id="hotel-addr-tokyo">住所を入力してください</div>
+                    <div class="hotel-name-en" id="hotel-en-tokyo">Edit mode to set hotel</div>
+                    <div class="hotel-actions">
+                        <button class="btn btn-sm btn-ghost" onclick="copyHotel('tokyo')">📋 Copy</button>
+                        <a class="btn btn-sm btn-navigate" id="hotel-nav-tokyo" href="#" target="_blank">📍 Map</a>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-sm btn-ghost edit-only" onclick="openHotelEditor()" style="width:100%;margin-top:.5rem">✏️ Edit Hotels</button>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>🚨 Emergency</h3>
+            <div class="emergency-grid">
+                <div class="emg-item"><span class="emg-num">110</span><span class="emg-label">Police</span></div>
+                <div class="emg-item"><span class="emg-num">119</span><span class="emg-label">Ambulance / Fire</span></div>
+                <div class="emg-item"><span class="emg-num">03-3224-5000</span><span class="emg-label">Turkish Embassy</span></div>
+            </div>
+            <div class="emg-extra">
+                <div style="font-size:.78rem;color:var(--text-2);margin-top:.5rem">
+                    <strong>Lost card:</strong> Call your bank immediately<br>
+                    <strong>Lost passport:</strong> Contact embassy + file police report<br>
+                    <strong>Free Wi-Fi:</strong> Look for "Japan Connected-free Wi-Fi" app
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>💱 Currency</h3>
+            <div class="currency-widget">
+                <div class="currency-row">
+                    <input type="number" id="currency-yen" placeholder="¥ Amount" oninput="convertCurrency('yen')">
+                    <span class="currency-label">JPY</span>
+                </div>
+                <div class="currency-row">
+                    <input type="number" id="currency-local" placeholder="Amount" oninput="convertCurrency('local')">
+                    <span class="currency-label" id="currency-code">TRY</span>
+                </div>
+                <div class="currency-rate">Rate: <input type="number" id="currency-rate" value="0.22" step="0.01" style="width:60px" oninput="convertCurrency('yen')"> <span id="currency-code2">TRY</span>/¥</div>
+                <div class="currency-presets">
+                    <button onclick="setYen(500)">¥500</button>
+                    <button onclick="setYen(1000)">¥1K</button>
+                    <button onclick="setYen(5000)">¥5K</button>
+                    <button onclick="setYen(10000)">¥10K</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>📸 Trip Photos</h3>
+            <p style="font-size:.78rem;color:var(--text-2);margin-bottom:.5rem">Share your photos! Everyone can add to the album.</p>
+            <a class="dash-link" href="#" target="_blank" id="photos-link" style="justify-content:center">📸 Open Shared Album</a>
+            <p class="data-hint" style="margin-top:.4rem">Set the album URL in edit mode: paste your Google Photos shared album link.</p>
+            <div class="edit-only" style="margin-top:.4rem">
+                <input type="text" id="photos-url" placeholder="https://photos.google.com/share/..." style="width:100%;padding:.4rem .55rem;font-size:.76rem;background:var(--bg-3);border:1px solid var(--bg-4);border-radius:6px;color:var(--text-1);outline:none" onchange="savePhotosUrl(this.value)">
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>🔗 Quick Links</h3>
+            <ul class="link-list">
+                <li><a href="https://www.google.com/maps" target="_blank">Google Maps</a></li>
+                <li><a href="https://www.japan-guide.com/" target="_blank">Japan Guide</a></li>
+                <li><a href="https://www.hyperdia.com/" target="_blank">Train Schedule (Hyperdia)</a></li>
+            </ul>
+        </div>
+
+        <div class="sidebar-section">
+            <h3>📋 Trip Rules</h3>
+            <ul class="guideline-list">
+                <li>Keep rooms tidy</li>
+                <li>Be prepared with your packing</li>
+                <li>Text/call to coordinate meetups</li>
+                <li>Stay on schedule for reservations</li>
+                <li>Close windows &amp; doors when out</li>
+                <li><strong>Keep CASH — many places are cash-only</strong></li>
+            </ul>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main">
+
+        <!-- ── DASHBOARD VIEW (default) ── -->
+        <section class="view active" id="view-dashboard">
+            <div id="dashboard-content"></div>
+        </section>
+
+        <!-- ── ITINERARY VIEW ── -->
+        <section class="view" id="view-itinerary">
+            <div class="view-top">
+                <div class="view-top-left">
+                    <h2>Travel Itinerary</h2>
+                    <span class="day-counter" id="day-counter"></span>
+                </div>
+                <div class="view-top-right">
+                    <select id="day-select" class="day-select"></select>
+                    <button class="btn btn-accent edit-only" id="add-day-btn">+ Add Day</button>
+                </div>
+            </div>
+            <div class="itinerary-layout">
+                <div id="itinerary-list" class="itinerary-list"></div>
+                <aside class="place-pool" id="place-pool">
+                    <div class="pool-header">
+                        <h3>📌 Unadded Places</h3>
+                        <span class="pool-count" id="pool-count"></span>
+                    </div>
+                    <div class="pool-controls">
+                        <input type="text" id="pool-search" class="pool-search" placeholder="Search places...">
+                        <select id="pool-city-filter" class="pool-filter-select">
+                            <option value="all">All Cities / Areas</option>
+                        </select>
+                    </div>
+                    <div class="pool-target edit-only">
+                        <select id="pool-target-day" class="pool-filter-select">
+                            <option value="">Add to day...</option>
+                        </select>
+                    </div>
+                    <div class="pool-list" id="pool-list"></div>
+                </aside>
+            </div>
+        </section>
+
+        <!-- ── PLACES VIEW ── -->
+        <section class="view" id="view-places">
+            <div class="view-top">
+                <h2>Places to Visit</h2>
+                <button class="btn btn-accent edit-only" id="add-place-btn">+ Add Place</button>
+            </div>
+            <div class="places-toolbar">
+                <input type="text" id="place-search" class="search-input" placeholder="Search places...">
+                <div class="filter-bar" id="filter-bar">
+                    <button class="chip active" data-filter="all">All</button>
+                    <button class="chip" data-filter="Tokyo">Tokyo</button>
+                    <button class="chip" data-filter="Kyoto">Kyoto</button>
+                    <button class="chip" data-filter="Osaka">Osaka</button>
+                    <button class="chip" data-filter="Nara">Nara</button>
+                    <button class="chip" data-filter="Fuji">Fuji</button>
+                    <button class="chip" data-filter="Izu">Izu</button>
+                    <span class="chip-sep">|</span>
+                    <button class="chip" data-filter="Food">🍜 Food</button>
+                    <button class="chip" data-filter="Shopping">🛍️ Shopping</button>
+                    <button class="chip" data-filter="Attractions">⛩️ Attractions</button>
+                    <button class="chip" data-filter="Entertainment">🎮 Entertainment</button>
+                    <button class="chip" data-filter="Hotel">🏨 Hotel</button>
+                    <button class="chip" data-filter="Onsen">♨️ Onsen</button>
+                </div>
+                <div class="area-bar" id="area-bar" style="display:none"></div>
+            </div>
+            <div class="places-count" id="places-count"></div>
+            <div class="places-grid" id="places-grid"></div>
+        </section>
+
+        <!-- ── MAP VIEW ── -->
+        <section class="view" id="view-map">
+            <div class="view-top">
+                <h2>Map</h2>
+                <div class="view-top-right">
+                    <button class="btn btn-sm" id="map-fit">Fit All</button>
+                    <select id="map-filter" class="select-sm">
+                        <option value="all">All Cities</option>
+                        <option value="Tokyo">Tokyo</option>
+                        <option value="Kyoto">Kyoto</option>
+                        <option value="Osaka">Osaka</option>
+                        <option value="Nara">Nara</option>
+                        <option value="Fuji">Fuji</option>
+                        <option value="Izu">Izu</option>
+                    </select>
+                </div>
+            </div>
+            <div id="map" class="map-container"></div>
+            <div id="map-fallback" class="map-fallback" style="display:none">
+                <div class="map-fallback-inner">
+                    <span style="font-size:2.5rem">🗺️</span>
+                    <h3>Map unavailable</h3>
+                    <p>Google Maps couldn't load. This can happen offline or if the API is blocked.</p>
+                    <p>You can still use all other features &mdash; places, itinerary, packing, etc.</p>
+                    <button class="btn btn-accent" onclick="window.location.reload()">Try Again</button>
+                </div>
+            </div>
+            <div class="map-legend">
+                <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Food</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>Shopping</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#10b981"></span>Attractions</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>Entertainment</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#ec4899"></span>Hotel</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Onsen</span>
+            </div>
+        </section>
+
+        <!-- ── PACKING VIEW ── -->
+        <section class="view" id="view-packing">
+            <div class="view-top">
+                <h2>Packing List</h2>
+                <button class="btn btn-accent edit-only" id="add-packing-btn">+ Add Item</button>
+            </div>
+            <div class="packing-tabs" id="packing-tabs">
+                <button class="chip active" data-cat="all">All</button>
+                <button class="chip" data-cat="Clothes">👕 Clothes</button>
+                <button class="chip" data-cat="Electronics">🔌 Electronics</button>
+                <button class="chip" data-cat="Essentials">📄 Essentials</button>
+                <button class="chip" data-cat="Toiletries">🧴 Toiletries</button>
+                <button class="chip" data-cat="Shoes">👟 Shoes</button>
+                <button class="chip" data-cat="Miscellaneous">📦 Misc</button>
+            </div>
+            <div class="packing-progress" id="packing-progress"></div>
+            <div class="packing-wrap">
+                <table class="packing-table">
+                    <thead><tr><th>Item</th><th>Type</th><th>Qty</th><th>Notes</th><th>Packed</th><th class="edit-only"></th></tr></thead>
+                    <tbody id="packing-body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ── GUIDE VIEW ── -->
+        <section class="view" id="view-guide">
+            <div class="view-top"><h2>Travel Guide</h2></div>
+            <div class="guide-tabs" id="guide-tabs">
+                <button class="chip active" data-gtab="phrases">🗣️ Phrases</button>
+                <button class="chip" data-gtab="transport">🚆 Transport</button>
+            </div>
+            <div id="guide-content"></div>
+        </section>
+
+    </main>
+
+    <!-- ===== MODALS ===== -->
+
+    <!-- Place Add/Edit Modal -->
+    <div class="modal-overlay" id="modal-place">
+        <div class="modal">
+            <button class="modal-close" data-close="modal-place">&times;</button>
+            <h2 id="modal-place-title">Add New Place</h2>
+            <form id="place-form">
+                <div class="form-row">
+                    <div class="form-group"><label>Name *</label><input type="text" id="f-name" required></div>
+                    <div class="form-group"><label>City *</label>
+                        <select id="f-city" required>
+                            <option value="Tokyo">Tokyo</option><option value="Osaka">Osaka</option>
+                            <option value="Kyoto">Kyoto</option><option value="Nara">Nara</option>
+                            <option value="Fuji">Fuji</option><option value="Izu">Izu</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Category *</label>
+                        <select id="f-category" required>
+                            <option value="Food">Food</option><option value="Shopping">Shopping</option>
+                            <option value="Attractions">Attractions</option><option value="Entertainment">Entertainment</option>
+                            <option value="Hotel">Hotel</option>
+                            <option value="Onsen">Onsen</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Hours</label><input type="text" id="f-hours" placeholder="e.g. 08:00 – 17:00"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Area / Neighborhood</label><input type="text" id="f-area" placeholder="e.g. Shibuya, Arashiyama"></div>
+                    <div class="form-group"><label>Address</label><input type="text" id="f-address" placeholder="Start typing an address..."></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Latitude</label><input type="number" step="any" id="f-lat" placeholder="Auto-filled"></div>
+                    <div class="form-group"><label>Longitude</label><input type="number" step="any" id="f-lng" placeholder="Auto-filled"></div>
+                </div>
+                <div class="form-group"><label>Description</label><textarea id="f-desc" rows="2"></textarea></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Cost</label><input type="text" id="f-cost" placeholder="e.g. ¥1,200 or Free"></div>
+                    <div class="form-group"><label>Notes</label><input type="text" id="f-notes" placeholder="e.g. Cash only"></div>
+                </div>
+                <div class="form-group"><label>URL</label><input type="url" id="f-url" placeholder="https://..."></div>
+                <input type="hidden" id="f-id">
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost" data-close="modal-place">Cancel</button>
+                    <button type="submit" class="btn btn-accent">Save Place</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Place Detail Modal -->
+    <div class="modal-overlay" id="modal-detail">
+        <div class="modal modal-lg">
+            <button class="modal-close" data-close="modal-detail">&times;</button>
+            <div id="detail-content"></div>
+        </div>
+    </div>
+
+    <!-- Expanded Day Map Modal -->
+    <div class="modal-overlay" id="modal-day-map">
+        <div class="modal modal-map">
+            <button class="modal-close" data-close="modal-day-map">&times;</button>
+            <h2 id="day-map-modal-title">Map</h2>
+            <div id="day-map-expanded" class="day-map-expanded"></div>
+        </div>
+    </div>
+
+    <!-- Itinerary Item Edit Modal -->
+    <div class="modal-overlay" id="modal-itin">
+        <div class="modal modal-sm">
+            <button class="modal-close" data-close="modal-itin">&times;</button>
+            <h2 id="modal-itin-title">Add Activity</h2>
+            <form id="itin-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start</label>
+                        <input type="text" id="ii-time" placeholder="e.g. 13:00">
+                    </div>
+                    <div class="form-group">
+                        <label>End (optional)</label>
+                        <input type="text" id="ii-time-end" placeholder="e.g. 14:00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Activity Name *</label>
+                    <input type="text" id="ii-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="ii-desc" rows="3"></textarea>
+                </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:.5rem">
+                    <input type="checkbox" id="ii-note" style="width:18px;height:18px;accent-color:var(--accent)">
+                    <label for="ii-note" style="margin:0;cursor:pointer">This is a note / reminder (no navigation)</label>
+                </div>
+                <input type="hidden" id="ii-day-id">
+                <input type="hidden" id="ii-item-id">
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost" data-close="modal-itin">Cancel</button>
+                    <button type="submit" class="btn btn-accent">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Packing Add Modal -->
+    <div class="modal-overlay" id="modal-packing">
+        <div class="modal modal-sm">
+            <button class="modal-close" data-close="modal-packing">&times;</button>
+            <h2>Add Packing Item</h2>
+            <form id="packing-form">
+                <div class="form-group"><label>Item Name *</label><input type="text" id="p-name" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Category</label>
+                        <select id="p-cat">
+                            <option value="Clothes">Clothes</option><option value="Electronics">Electronics</option>
+                            <option value="Essentials">Essentials</option><option value="Toiletries">Toiletries</option>
+                            <option value="Shoes">Shoes</option><option value="Miscellaneous">Miscellaneous</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Quantity</label><input type="number" id="p-qty" value="1" min="1"></div>
+                </div>
+                <div class="form-group"><label>Notes</label><input type="text" id="p-notes"></div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-ghost" data-close="modal-packing">Cancel</button>
+                    <button type="submit" class="btn btn-accent">Add Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bottom mobile tab bar -->
+    <nav class="bottom-nav" id="bottom-nav" aria-label="Mobile navigation">
+        <button class="bottom-tab active" data-view="dashboard"><span class="bottom-tab-icon">🏠</span><span class="bottom-tab-label">Home</span></button>
+        <button class="bottom-tab" data-view="itinerary"><span class="bottom-tab-icon">📅</span><span class="bottom-tab-label">Days</span></button>
+        <button class="bottom-tab" data-view="places"><span class="bottom-tab-icon">📍</span><span class="bottom-tab-label">Places</span></button>
+        <button class="bottom-tab" data-view="map"><span class="bottom-tab-icon">🗺️</span><span class="bottom-tab-label">Map</span></button>
+        <button class="bottom-tab" data-view="guide"><span class="bottom-tab-icon">📖</span><span class="bottom-tab-label">Guide</span></button>
+        <button class="bottom-tab" data-view="more"><span class="bottom-tab-icon">☰</span><span class="bottom-tab-label">More</span></button>
+    </nav>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toast-container" aria-live="polite" role="status"></div>
+
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loading-screen">
+        <div class="loading-inner">
+            <div class="loading-icon">🌸</div>
+            <div class="loading-title">Japan 2026</div>
+            <div class="loading-fact" id="loading-fact"></div>
+        </div>
+    </div>
+
+    <!-- SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+    <!-- Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <!-- html2canvas for shareable day cards -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <!-- App JS -->
+    <script src="script.js"></script>
+    <!-- Google Maps (for map view + edit mode autocomplete) -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBfw2E-pFd7W0p7-kSqy4VLeaGX8oRqYp8&libraries=places&callback=onGoogleMapsReady"></script>
+    <!-- Service Worker -->
+    <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
+</body>
+</html>

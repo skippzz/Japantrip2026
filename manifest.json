@@ -1,0 +1,16 @@
+{
+    "name": "Japan 2026 Trip Planner",
+    "short_name": "Japan 2026",
+    "description": "18-day Japan itinerary for 8 friends — May 16 to Jun 2, 2026",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#0b0f19",
+    "theme_color": "#3b82f6",
+    "icons": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌸</text></svg>",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ]
+}

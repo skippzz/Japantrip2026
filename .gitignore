@@ -1,0 +1,30 @@
+# Backups & dev files
+script.backup.js
+*.backup.*
+
+# Python scripts (dev-only, not for deploy)
+*.py
+__pycache__/
+
+# Old JS fetch script
+fetch-photos.js
+
+# Reports
+missing_places_report.txt
+
+# Exported data (contains personal data)
+japan-trip-backup-*.json
+
+# Google Takeout data
+takeout-*/
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
