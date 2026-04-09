@@ -236,8 +236,19 @@ export function renderReservationSummary() {
 }
 
 export function deletePlace(id) {
-    if (!confirm('Delete this place?')) return;
-    state.places = state.places.filter(p=>p.id!==id);
+    const place = state.places.find(p => p.id === id);
+    if (!place) return;
+    const inDays = [];
+    state.itinerary.forEach((day, idx) => {
+        if (day.items.some(it => it.placeId === id || it.name === place.name)) inDays.push(idx + 1);
+    });
+    const warn = inDays.length ? `\n\nThis place is scheduled on Day ${inDays.join(', ')}. Those activities will also be removed.` : '';
+    if (!confirm(`Delete "${place.name}"?${warn}`)) return;
+    state.places = state.places.filter(p => p.id !== id);
+    // Cascade: remove itinerary items referencing this place
+    state.itinerary.forEach(day => {
+        day.items = day.items.filter(it => it.placeId !== id && it.name !== place.name);
+    });
     save(); renderPlaces(); window.updateMapMarkers?.(); window.renderPlacePool?.(); window.renderItinerary?.(); window.renderDashboard?.();
 }
 

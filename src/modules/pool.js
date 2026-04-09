@@ -167,6 +167,12 @@ export function addPlaceToDay(placeId) {
         return;
     }
 
+    // Prevent duplicates in same day
+    const alreadyInDay = targetDay.items.some(it => it.placeId === place.id || it.name === place.name);
+    if (alreadyInDay) {
+        if (!confirm(`"${place.name}" is already in this day. Add again?`)) return;
+    }
+
     targetDay.items.push({
         id: 'it' + Date.now(),
         placeId: place.id,

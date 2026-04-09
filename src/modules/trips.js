@@ -76,6 +76,10 @@ export function switchTrip(tripId) {
     // Load the new trip's state
     setStorageKey(trip.storageKey);
     loadTripState(trip);
+    // Reset UI state for new trip
+    window._expandedDays?.clear();
+    if (state.itinerary?.length) window._expandedDays?.add(state.itinerary[0].id);
+    Object.keys(window._dayMaps || {}).forEach(k => delete window._dayMaps[k]);
     emit('renderAll');
     showToast(`Switched to: ${trip.name}`, 'success');
 }
@@ -102,6 +106,11 @@ function loadTripState(trip) {
 
 export function createTrip(name, destination, dateStart, dateEnd, templateKey) {
     if (!name || !name.trim()) { showToast('Trip name is required.', 'warn'); return null; }
+    if (dateStart && dateEnd) {
+        const s = new Date(dateStart), e = new Date(dateEnd);
+        if (isNaN(s.getTime()) || isNaN(e.getTime())) { showToast('Invalid dates.', 'warn'); return null; }
+        if (e < s) { showToast('End date must be after start date.', 'warn'); return null; }
+    }
 
     const meta = ensureTripsMeta();
     const id = 'trip-' + Date.now();
@@ -339,6 +348,8 @@ export function saveTripSettings() {
 export function resetTripItinerary() {
     if (!confirm('Reset the entire itinerary? All scheduled activities will be removed. Places will be kept.')) return;
     state.itinerary.forEach(day => { day.items = []; });
+    // Clean up map instances
+    Object.keys(window._dayMaps || {}).forEach(k => delete window._dayMaps[k]);
     save();
     emit('renderAll');
     window.closeModal?.('modal-detail');

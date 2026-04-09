@@ -149,7 +149,12 @@ export function importData(file) {
             if (!confirm(`Import ${imported.places.length} places and ${imported.itinerary.length} days? This will replace your current data.`)) return;
             state = imported;
             state.version = DATA_VERSION;
+            if (!state.rules) state.rules = [];
             setStateRef(state);
+            // Reset UI state
+            window._expandedDays?.clear();
+            if (state.itinerary?.length) window._expandedDays?.add(state.itinerary[0].id);
+            Object.keys(window._dayMaps || {}).forEach(k => delete window._dayMaps[k]);
             save();
             emit('renderAll');
             showToast('Import successful!', 'success');
@@ -198,7 +203,11 @@ export function loadVersion(index) {
     if (!confirm(`Load "${v.name}"? This will replace your current data.`)) return;
     state = JSON.parse(JSON.stringify(v.snapshot));
     if (state.version !== DATA_VERSION) applyMigrations(state);
+    if (!state.rules) state.rules = [];
     setStateRef(state);
+    window._expandedDays?.clear();
+    if (state.itinerary?.length) window._expandedDays?.add(state.itinerary[0].id);
+    Object.keys(window._dayMaps || {}).forEach(k => delete window._dayMaps[k]);
     save();
     emit('renderAll');
     showToast(`Loaded: "${v.name}"`, 'success');

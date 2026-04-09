@@ -31,7 +31,7 @@ import { renderTodos, toggleTodo, deleteTodo, addTodo,
          renderRules, addRule, deleteRule } from './modules/todos.js';
 import { initMap, updateMapMarkers, fitMapToAll, initAutocomplete,
          initDayMap, expandDayMap, initExpandedDayMaps,
-         startPhotoFetching, expandedDayMapInstance, toggleMapCategory } from './modules/map.js';
+         startPhotoFetching, expandedDayMapInstance, toggleMapCategory, cleanupExpandedMap } from './modules/map.js';
 import { renderGuide, speakJapanese, translatePhrase, setGuideTab, setPhraseSearch } from './modules/guide.js';
 import { renderHotelCards, copyHotel, openHotelEditor, saveHotelEditor } from './modules/hotels.js';
 import { convertCurrency, setYen, loadPhotosUrl, savePhotosUrl,
@@ -76,7 +76,10 @@ function openModal(id) {
 function closeModal(id) {
     const modal = document.getElementById(id);
     if (id === 'modal-day-map') {
-        // expandedDayMapInstance cleanup handled by map module
+        cleanupExpandedMap();
+    }
+    if (id === 'modal-place') {
+        window._importedPhotoUrl = null;
     }
     if (activeModalFocusTrap) {
         modal.removeEventListener('keydown', activeModalFocusTrap);
@@ -254,12 +257,16 @@ function bindEvents() {
 // ══════════════════════════════════════════════════════════════
 //  GLOBAL SEARCH (Ctrl+K)
 // ══════════════════════════════════════════════════════════════
+let _globalSearchBound = false;
 function openGlobalSearch() {
     openModal('modal-search');
     const input = document.getElementById('global-search-input');
     if (input) { input.value = ''; input.focus(); }
     document.getElementById('global-search-results').innerHTML = '<div class="data-hint">Type to search places, activities, and phrases...</div>';
-    input?.addEventListener('input', () => runGlobalSearch(input.value));
+    if (!_globalSearchBound && input) {
+        input.addEventListener('input', () => runGlobalSearch(input.value));
+        _globalSearchBound = true;
+    }
 }
 
 function runGlobalSearch(query) {

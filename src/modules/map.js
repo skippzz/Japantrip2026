@@ -22,6 +22,12 @@ let autocompleteWidget = null;
 let photoQueue = [], isProcessingPhotos = false;
 export let expandedDayMapInstance = null;
 
+export function cleanupExpandedMap() {
+    expandedDayMapInstance = null;
+    const container = document.getElementById('day-map-expanded');
+    if (container) container.innerHTML = '';
+}
+
 // ── Shared helper for day map views (deduplication) ──
 function createDayMapView(mapEl, coords, options = {}) {
     const {
