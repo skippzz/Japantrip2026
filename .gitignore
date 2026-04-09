@@ -23,6 +23,12 @@ Thumbs.db
 .DS_Store
 desktop.ini
 
+# Roadmap / planning docs
+ROADMAP.md
+
+# Old monolith (replaced by src/modules)
+# script.js kept as backup but not deployed
+
 # IDE
 .vscode/
 .idea/

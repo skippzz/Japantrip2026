@@ -1,0 +1,518 @@
+// ── Data: Default places, itinerary, phrases, hotels, and reference data ──
+
+// ── NEIGHBORHOOD / AREA MAPPING ──
+export const PLACE_AREAS = {
+    // TOKYO — Shinjuku
+    1:'Shinjuku', 9:'Shinjuku', 14:'Shinjuku', 35:'Shinjuku', 37:'Shinjuku',
+    41:'Shinjuku', 42:'Shinjuku', 101:'Shinjuku', 121:'Shinjuku', 45:'Shinjuku',
+    // TOKYO — Ginza
+    2:'Ginza', 8:'Ginza', 18:'Ginza', 20:'Ginza',
+    // TOKYO — Shibuya
+    3:'Shibuya', 7:'Shibuya', 10:'Shibuya', 11:'Shibuya', 17:'Shibuya',
+    19:'Shibuya', 21:'Shibuya', 25:'Shibuya', 30:'Shibuya', 31:'Shibuya', 38:'Shibuya', 43:'Shibuya',
+    // TOKYO — Harajuku
+    23:'Harajuku', 29:'Harajuku', 100:'Harajuku',
+    // TOKYO — Asakusa
+    5:'Asakusa', 6:'Asakusa', 13:'Asakusa', 26:'Asakusa', 27:'Asakusa', 51:'Asakusa',
+    // TOKYO — Tokyo Station
+    12:'Tokyo Station', 16:'Tokyo Station', 24:'Tokyo Station',
+    // TOKYO — Other areas
+    4:'Nihonbashi', 15:'Tsukiji', 28:'Oshiage', 22:'Ikebukuro', 44:'Ikebukuro',
+    34:'Azabudai', 32:'Minato', 36:'Minato', 39:'Shimokitazawa',
+    33:'Maihama', 40:'Maihama', 102:'Kanda', 135:'Kamakura',
+
+    // KYOTO — Arashiyama
+    77:'Arashiyama', 82:'Arashiyama', 87:'Arashiyama', 90:'Arashiyama', 126:'Arashiyama', 128:'Arashiyama',
+    // KYOTO — Higashiyama
+    76:'Higashiyama', 81:'Higashiyama', 86:'Higashiyama', 88:'Higashiyama', 106:'Higashiyama', 130:'Higashiyama',
+    // KYOTO — Gion / Downtown
+    80:'Gion', 78:'Downtown', 79:'Nishiki', 91:'Nishiki', 118:'Downtown', 129:'Downtown', 120:'Shijo',
+    // KYOTO — Kita / Kinugasa
+    75:'Kinugasa', 105:'Kinugasa',
+    // KYOTO — Philosopher's Path / Sakyo
+    83:'Sakyo', 84:'Sakyo',
+    // KYOTO — Other
+    50:'Fushimi', 89:'Kurama', 85:'Yamazaki',
+
+    // OSAKA — Namba / Dotonbori
+    49:'Namba', 61:'Namba', 65:'Namba', 68:'Namba', 69:'Namba', 71:'Namba',
+    107:'Namba', 108:'Namba', 48:'Namba',
+    // OSAKA — Shinsaibashi
+    70:'Shinsaibashi', 109:'Shinsaibashi', 131:'Shinsaibashi',
+    // OSAKA — Shinsekai
+    62:'Shinsekai', 67:'Shinsekai',
+    // OSAKA — Osaka Castle area
+    46:'Osaka Castle', 119:'Osaka Castle', 127:'Chuo',
+    // OSAKA — Umeda / Kita
+    47:'Umeda', 72:'Umeda',
+    // OSAKA — Bay Area / Outer
+    63:'Tempozan', 64:'Tempozan', 66:'Sumiyoshi', 73:'Nagai', 74:'Minoo', 110:'Ikoma',
+
+    // NARA
+    92:'Nara Park', 93:'Nara Park', 94:'Nara Park', 95:'Nara Park',
+    111:'Nara Park', 112:'Nara Park', 132:'Nara Park',
+    96:'Naramachi', 113:'Naramachi',
+
+    // FUJI
+    53:'Kawaguchiko', 59:'Kawaguchiko', 99:'Kawaguchiko', 116:'Kawaguchiko', 125:'Kawaguchiko',
+    98:'Lake Saiko', 133:'Lake Saiko',
+    54:'Fujiyoshida', 114:'Fujiyoshida', 134:'Fujiyoshida',
+    52:'Fujinomiya', 97:'Fujinomiya',
+    55:'Oshino', 115:'Yamanakako',
+
+    // IZU
+    56:'Ito', 57:'Ito', 103:'Ito', 104:'Ito', 117:'Ito',
+    58:'Shuzenji', 123:'Shuzenji', 124:'Shuzenji',
+    122:'Kawazu', 60:'Numazu',
+};
+
+export const PLACE_VENUE = {
+    // indoor places
+    1:'indoor',2:'indoor',3:'indoor',4:'indoor',7:'indoor',8:'indoor',9:'indoor',10:'indoor',
+    11:'indoor',12:'indoor',14:'indoor',17:'indoor',18:'indoor',19:'indoor',20:'indoor',
+    21:'indoor',22:'indoor',23:'indoor',24:'indoor',25:'indoor',29:'indoor',30:'indoor',
+    31:'indoor',34:'indoor',35:'indoor',36:'indoor',37:'indoor',38:'indoor',39:'indoor',
+    41:'indoor',42:'indoor',43:'indoor',44:'indoor',45:'indoor',47:'indoor',48:'indoor',
+    49:'indoor',61:'indoor',62:'indoor',64:'indoor',65:'indoor',67:'indoor',68:'indoor',
+    69:'indoor',70:'indoor',71:'indoor',72:'indoor',78:'indoor',79:'indoor',85:'indoor',
+    86:'indoor',91:'indoor',96:'indoor',100:'indoor',101:'indoor',102:'indoor',107:'indoor',
+    108:'indoor',109:'indoor',110:'indoor',113:'indoor',118:'indoor',120:'indoor',125:'indoor',
+    127:'indoor',129:'indoor',130:'indoor',131:'indoor',
+    // outdoor places
+    5:'outdoor',6:'outdoor',13:'outdoor',15:'outdoor',26:'outdoor',27:'outdoor',28:'outdoor',
+    33:'outdoor',40:'outdoor',50:'outdoor',51:'outdoor',52:'outdoor',53:'outdoor',54:'outdoor',
+    55:'outdoor',56:'outdoor',57:'outdoor',58:'outdoor',59:'outdoor',60:'outdoor',66:'outdoor',
+    73:'outdoor',74:'outdoor',75:'outdoor',76:'outdoor',77:'outdoor',80:'outdoor',81:'outdoor',
+    82:'outdoor',83:'outdoor',84:'outdoor',87:'outdoor',88:'outdoor',89:'outdoor',90:'outdoor',
+    92:'outdoor',93:'outdoor',94:'outdoor',95:'outdoor',97:'outdoor',98:'outdoor',99:'outdoor',
+    103:'outdoor',104:'outdoor',105:'outdoor',106:'outdoor',111:'outdoor',112:'outdoor',
+    114:'outdoor',115:'outdoor',116:'outdoor',117:'outdoor',119:'outdoor',122:'outdoor',
+    123:'outdoor',124:'outdoor',126:'outdoor',128:'outdoor',132:'outdoor',133:'outdoor',
+    134:'outdoor',135:'outdoor',
+    // both (indoor option available)
+    16:'both',32:'both',46:'both',63:'both',
+};
+
+export const DEFAULT_PLACES = [
+    { id:1,  name:"Ichiran Ramen",city:"Tokyo",category:"Food",description:"Famous tonkotsu ramen chain with private individual booths. Customise broth richness, noodle firmness, garlic, scallion and pork. Open 24 hours.",hours:"24 hours",cost:"~¥1,000",address:"B1 Peace Bldg, 3-34-11 Shinjuku, Shinjuku-ku, Tokyo",lat:35.6919,lng:139.7043,notes:"Cash OK, card OK",url:"https://en.ichiran.com/shop/tokyo/shinjuku/" },
+    { id:2,  name:"Bar Centifolia",city:"Tokyo",category:"Food",description:"Upscale cocktail bar in Ginza known for refined atmosphere and creative cocktails. Reservation recommended.",hours:"18:00 – 02:00",cost:"¥¥¥",address:"Ginza, Chuo City, Tokyo",lat:35.6713,lng:139.7642,notes:"Smart casual dress code" },
+    { id:3,  name:"Hello Donuts",city:"Tokyo",category:"Food",description:"Cute donut shop serving colourful, Instagram-worthy mochi donuts and classic varieties.",hours:"11:00 – 22:00",cost:"~¥400–800",address:"Shibuya, Tokyo",lat:35.6595,lng:139.6983,notes:"Credit card accepted" },
+    { id:4,  name:"Godaime Hanayama Udon Nihonbashi",city:"Tokyo",category:"Food",description:"Popular udon restaurant in Nihonbashi serving thick, chewy handmade noodles.",hours:"11:00 – 15:00, 17:00 – 20:00",cost:"~¥1,000–1,500",address:"Nihonbashi, Chuo City, Tokyo",lat:35.6838,lng:139.7740,notes:"Credit card accepted" },
+    { id:5,  name:"Ippuku & Matcha",city:"Tokyo",category:"Food",description:"Cozy matcha cafe near Senso-ji serving premium matcha lattes, desserts and traditional tea.",hours:"11:00 – 18:00",cost:"~¥500–1,200",address:"Asakusa, Taito City, Tokyo",lat:35.7138,lng:139.7940,notes:"Cash preferred" },
+    { id:6,  name:"Asakusaimahan Kinrakuei",city:"Tokyo",category:"Food",description:"Historic sukiyaki and wagyu beef restaurant in Asakusa, serving premium marbled beef since 1895.",hours:"11:00 – 22:00",cost:"~¥3,000–8,000",address:"2-17-10 Nishi-Asakusa, Taito City, Tokyo",lat:35.7133,lng:139.7912,notes:"Reservations recommended. Credit card accepted." },
+    { id:7,  name:"Tofu Cuisine Sorano Shibuya",city:"Tokyo",category:"Food",description:"Elegant tofu-focused restaurant serving luxurious multi-course tofu kaiseki meals.",hours:"15:00 – 22:00",cost:"~¥3,000–6,000",address:"Shibuya, Shibuya City, Tokyo",lat:35.6585,lng:139.6975,notes:"Credit card accepted" },
+    { id:8,  name:"Udon Maruka",city:"Tokyo",category:"Food",description:"Popular Sanuki-style udon shop near Ginza. Famous for silky handmade noodles and rich broth.",hours:"11:00 – 14:30",cost:"~¥800–1,200",address:"Ginza, Chuo City, Tokyo",lat:35.6683,lng:139.7561,notes:"Closed Sundays. Cash preferred." },
+    { id:9,  name:"2D Cafe",city:"Tokyo",category:"Food",description:"Unique cafe designed to look like a black-and-white manga drawing. Drinks and desserts in 2D-style tableware.",hours:"11:00 – 22:00",cost:"~¥800–1,500",address:"Shin-Okubo, Shinjuku City, Tokyo",lat:35.7009,lng:139.7005,notes:"Credit card accepted" },
+    { id:10, name:"NAMU CAFE",city:"Tokyo",category:"Food",description:"Korean-Japanese fusion cafe in Shibuya with aesthetic interior and specialty lattes.",hours:"11:00 – 20:00",cost:"~¥600–1,200",address:"Shibuya, Tokyo",lat:35.6595,lng:139.6950,notes:"Credit card accepted" },
+    { id:11, name:"CAFE REISSUE",city:"Tokyo",category:"Food",description:"Famous for incredible latte art — baristas draw detailed portraits on your coffee.",hours:"10:00 – 19:00",cost:"~¥800–1,500",address:"Shibuya, Tokyo",lat:35.6612,lng:139.6980,notes:"Closed Mondays" },
+    { id:12, name:"Bakery Bank",city:"Tokyo",category:"Food",description:"Artisan bakery and cafe known for signature curry buns and freshly baked bread.",hours:"08:00 – 18:00",cost:"~¥300–800",address:"Tokyo Station area, Tokyo",lat:35.6812,lng:139.7671,notes:"Closed Wednesdays" },
+    { id:13, name:"Ikeda-ya TeaStore",city:"Tokyo",category:"Food",description:"Traditional matcha shop offering premium Japanese green tea and matcha products.",hours:"10:00 – 19:00",cost:"~¥500–2,000",address:"Asakusa, Taito City, Tokyo",lat:35.7125,lng:139.7950 },
+    { id:14, name:"Shinjuku Shokudo",city:"Tokyo",category:"Food",description:"Bustling late-night eatery near Shinjuku Station — ramen, gyoza, rice bowls.",hours:"09:00 – 02:00",cost:"~¥700–1,500",address:"Shinjuku, Tokyo",lat:35.6896,lng:139.7006,notes:"Everyday. Cash OK." },
+    { id:15, name:"Unitora Nakadori (Tsukiji)",city:"Tokyo",category:"Food",description:"Popular udon stall at Tsukiji Outer Market serving fresh handmade udon with dashi broth.",hours:"07:00 – 18:00",cost:"~¥500–1,000",address:"Tsukiji Outer Market, Chuo City, Tokyo",lat:35.6654,lng:139.7707,notes:"Cash only. Get there early." },
+    { id:16, name:"Tokyo Ramen Street",city:"Tokyo",category:"Food",description:"Ramen alley inside Tokyo Station with multiple acclaimed shops — try different regional styles.",hours:"07:30 – 23:00",cost:"~¥900–1,500",address:"Tokyo Ramen Street, Tokyo Station, Chiyoda, Tokyo",lat:35.6812,lng:139.7669,notes:"Multiple shops" },
+    { id:17, name:"Kakigoya by the Sea",city:"Tokyo",category:"Food",description:"Seasonal oyster restaurant serving fresh grilled oysters. Reservation recommended in winter.",hours:"17:00 – 22:00",cost:"~¥3,000–5,000",address:"Shibuya, Tokyo",lat:35.6562,lng:139.6980 },
+    { id:18, name:"GU",city:"Tokyo",category:"Shopping",description:"Uniqlo's trendy sister brand offering affordable casual fashion. Multiple floors in the Ginza flagship.",hours:"11:00 – 21:00",cost:"¥¥",address:"5 Chome-7-7 Ginza, Chuo City, Tokyo 104-0061",lat:35.6697,lng:139.7638,notes:"Near Uniqlo Ginza" },
+    { id:19, name:"Shibuya 109",city:"Tokyo",category:"Shopping",description:"Iconic cylindrical fashion building — 10 floors of trendy Japanese pop fashion, streetwear and accessories.",hours:"10:00 – 21:00",cost:"¥–¥¥",address:"2-29-1 Dogenzaka, Shibuya City, Tokyo 150-0043",lat:35.6593,lng:139.6983 },
+    { id:20, name:"Uniqlo Ginza",city:"Tokyo",category:"Shopping",description:"World's largest Uniqlo flagship — 12 floors of clothing. Connected to GU. Automatic self-checkout.",hours:"11:00 – 21:00",cost:"¥–¥¥",address:"6-9-5 Ginza, Chuo City, Tokyo 104-0061",lat:35.6706,lng:139.7649,notes:"12 floors!" },
+    { id:21, name:"LOFT",city:"Tokyo",category:"Shopping",description:"Japanese lifestyle store — stationery, home goods, beauty, travel accessories and unique gifts.",hours:"11:00 – 21:00",cost:"¥–¥¥",address:"21-1 Udagawacho, Shibuya City, Tokyo",lat:35.6620,lng:139.6985,notes:"Great for souvenirs" },
+    { id:22, name:"Animate Ikebukuro",city:"Tokyo",category:"Shopping",description:"World's largest anime store — 9 floors of manga, anime figures, merchandise, CDs and doujinshi.",hours:"11:00 – 20:00",cost:"¥–¥¥¥",address:"1-20-7 Higashi-Ikebukuro, Toshima City, Tokyo",lat:35.7295,lng:139.7188,notes:"Anime paradise" },
+    { id:23, name:"Takeshita Street",city:"Tokyo",category:"Shopping",description:"Harajuku's famous pedestrian shopping street — colourful fashion boutiques, crepe stands, quirky shops.",hours:"10:00 – 20:00",cost:"¥–¥¥",address:"Takeshita-dori, Jingumae, Shibuya City, Tokyo",lat:35.6702,lng:139.7027,notes:"Crowded on weekends" },
+    { id:24, name:"Tokyo Character Street",city:"Tokyo",category:"Shopping",description:"Underground area in Tokyo Station with official stores for Pokémon, Ghibli, Sanrio, etc.",hours:"10:00 – 20:30",cost:"¥–¥¥",address:"First Avenue Tokyo Station B1, Chiyoda, Tokyo",lat:35.6809,lng:139.7673,notes:"Inside Tokyo Station" },
+    { id:25, name:"WOMB",city:"Tokyo",category:"Entertainment",description:"Famous nightclub in Shibuya with multiple floors, massive sound system and international DJ events.",hours:"23:00 – 05:00 (event nights)",cost:"~¥2,500–4,000 entry",address:"2-16 Maruyamacho, Shibuya City, Tokyo",lat:35.6563,lng:139.6959 },
+    { id:26, name:"Senso-ji Temple",city:"Tokyo",category:"Attractions",description:"Tokyo's oldest Buddhist temple (645 AD) in Asakusa. Iconic Kaminarimon gate with giant red lantern.",hours:"Main hall 06:00 – 17:00, grounds 24h",cost:"Free",address:"2-3-1 Asakusa, Taito City, Tokyo 111-0032",lat:35.7148,lng:139.7967,notes:"Visit early morning to avoid crowds" },
+    { id:27, name:"Nakamise Shopping Street",city:"Tokyo",category:"Attractions",description:"Historic 250m shopping street leading to Senso-ji — traditional snacks, souvenirs and crafts since Edo period.",hours:"10:00 – 17:00",cost:"Free to walk",address:"Nakamise-dori, Asakusa, Taito City, Tokyo",lat:35.7120,lng:139.7955,notes:"Try melon pan and ningyo-yaki" },
+    { id:28, name:"Tokyo Skytree",city:"Tokyo",category:"Attractions",description:"Japan's tallest structure at 634m with two observation decks (350m and 450m). Panoramic views of Tokyo and Mt. Fuji.",hours:"10:00 – 21:00",cost:"¥2,100–3,400",address:"1-1-2 Oshiage, Sumida City, Tokyo 131-0045",lat:35.7101,lng:139.8107,notes:"Book online to skip queues" },
+    { id:29, name:"Meiji Shrine",city:"Tokyo",category:"Attractions",description:"Major Shinto shrine in a 170-acre forested park near Harajuku. Dedicated to Emperor Meiji. Serene atmosphere.",hours:"Sunrise – Sunset",cost:"Free",address:"1-1 Yoyogikamizonocho, Shibuya City, Tokyo 151-8557",lat:35.6764,lng:139.6993 },
+    { id:30, name:"Shibuya Crossing",city:"Tokyo",category:"Attractions",description:"The world's busiest pedestrian scramble crossing — up to 3,000 people cross at once.",hours:"24 hours",cost:"Free",address:"Shibuya Scramble Crossing, Shibuya City, Tokyo",lat:35.6595,lng:139.7004,notes:"Most impressive at night" },
+    { id:31, name:"Shibuya Sky",city:"Tokyo",category:"Attractions",description:"Open-air rooftop observation deck on the 46th floor of Scramble Square (229m). 360° panoramic views.",hours:"10:00 – 22:30",cost:"¥2,500",address:"2-24-12 Shibuya, Shibuya City, Tokyo 150-0002",lat:35.6584,lng:139.7022,notes:"Book timed tickets online. Sunset popular.",url:"https://www.shibuya-scramble-square.com/sky/" },
+    { id:32, name:"Tokyo Tower",city:"Tokyo",category:"Attractions",description:"Iconic 333m tower. Two observation decks at 150m and 250m. Beautiful orange illumination at night.",hours:"09:00 – 22:30",cost:"¥1,200–2,800",address:"4-2-8 Shibakoen, Minato City, Tokyo 105-0011",lat:35.6586,lng:139.7454,notes:"Night views recommended" },
+    { id:33, name:"Tokyo DisneySea",city:"Tokyo",category:"Attractions",description:"Unique nautical-themed Disney park — only in Japan. Seven themed ports and world-class rides. Plan a full day.",hours:"08:00 – 22:00 (varies)",cost:"¥7,900–10,900",address:"1-13 Maihama, Urayasu, Chiba 279-0031",lat:35.6267,lng:139.8850,notes:"Buy tickets online. Weekdays less crowded.",url:"https://www.tokyodisneyresort.jp/en/tds/" },
+    { id:34, name:"teamLab Borderless",city:"Tokyo",category:"Attractions",description:"Immersive digital art museum with 70+ interactive installations that flow between rooms. Now at Azabudai Hills.",hours:"10:00 – 21:00",cost:"¥3,800",address:"Azabudai Hills Garden Plaza B, B1, Toranomon, Minato, Tokyo",lat:35.6608,lng:139.7381,notes:"Book timed tickets weeks in advance.",url:"https://www.teamlab.art/e/borderless-azabudai/" },
+    { id:35, name:"Tokyo Metropolitan Gov. Building",city:"Tokyo",category:"Attractions",description:"Free observation decks on the 45th floor (202m) of the Shinjuku government building. Stunning night views.",hours:"09:30 – 23:00",cost:"Free",address:"2-8-1 Nishi-Shinjuku, Shinjuku City, Tokyo",lat:35.6896,lng:139.6922,notes:"Free!" },
+    { id:36, name:"Shiba Park",city:"Tokyo",category:"Attractions",description:"One of Japan's oldest parks with beautiful views of Tokyo Tower. Cherry blossoms in spring.",hours:"24 hours",cost:"Free",address:"Shibakoen, Minato City, Tokyo",lat:35.6545,lng:139.7487 },
+    { id:37, name:"Suga Jinja (Your Name Shrine)",city:"Tokyo",category:"Attractions",description:"The famous staircase shrine from the anime film 'Your Name' (Kimi no Na wa). Iconic pilgrimage spot.",hours:"24 hours",cost:"Free",address:"5 Suganomachi, Shinjuku City, Tokyo",lat:35.6911,lng:139.7190 },
+    { id:38, name:"Miyashita Park",city:"Tokyo",category:"Attractions",description:"Rooftop park above Shibuya with shopping complex — stores, restaurants and a rooftop skate park.",hours:"Park 08:00 – 23:00, Shops 11:00 – 21:00",cost:"Free (park)",address:"6-20-10 Jingumae, Shibuya City, Tokyo",lat:35.6615,lng:139.6990 },
+    { id:39, name:"Shelter Shimokitazawa",city:"Tokyo",category:"Entertainment",description:"Legendary underground live music venue — indie rock, punk and alternative bands since 1991.",hours:"Varies by event",cost:"~¥2,000–4,000",address:"2-6-10 Kitazawa, Setagaya City, Tokyo",lat:35.6612,lng:139.6685 },
+    { id:40, name:"PokéPark Kanto",city:"Tokyo",category:"Entertainment",description:"Pokémon-themed amusement area with rides, games and character meet-and-greets.",hours:"10:00 – 20:00",cost:"¥¥",address:"LaLaPort Toyosu, 2-4-9 Toyosu, Koto City, Tokyo",lat:35.6280,lng:139.8810 },
+    { id:41, name:"Shinjuku Golden Gai",city:"Tokyo",category:"Entertainment",description:"Network of 6 narrow alleys with 200+ tiny bars, each seating 5–10 people. Eclectic themed bars.",hours:"19:00 – late",cost:"¥500–1,500/drink",address:"1-1 Kabukicho, Shinjuku City, Tokyo",lat:35.6938,lng:139.7048,notes:"Some bars charge cover ¥300–1,000" },
+    { id:42, name:"Omoide Yokocho",city:"Tokyo",category:"Entertainment",description:"'Memory Lane' — atmospheric alley of tiny yakitori bars near Shinjuku Station. Post-war nostalgia.",hours:"17:00 – 00:00",cost:"~¥500–2,000",address:"1-2 Nishi-Shinjuku, Shinjuku City, Tokyo",lat:35.6930,lng:139.6987,notes:"Cash only" },
+    { id:43, name:"Shibuya Parco",city:"Tokyo",category:"Entertainment",description:"Modern mall with fashion, galleries, Nintendo TOKYO store, Pokémon Center, cinema and rooftop.",hours:"11:00 – 21:00",cost:"Free entry",address:"15-1 Udagawacho, Shibuya City, Tokyo",lat:35.6618,lng:139.6979,notes:"Nintendo TOKYO on 6F!" },
+    { id:44, name:"Round One Ikebukuro",city:"Tokyo",category:"Entertainment",description:"Massive entertainment complex — bowling, arcade, karaoke, billiards, darts, batting cages.",hours:"10:00 – 06:00",cost:"Varies",address:"1-10 Higashi-Ikebukuro, Toshima City, Tokyo",lat:35.7297,lng:139.7115 },
+    { id:45, name:"Kazu Plaza Hotel Tokyo",city:"Tokyo",category:"Hotel",description:"Well-located hotel with comfortable rooms and good transportation access.",hours:"Check-in 15:00 / Check-out 11:00",cost:"¥¥",address:"Nakano / West Tokyo area",lat:35.6762,lng:139.6503 },
+    { id:46, name:"Osaka Castle",city:"Osaka",category:"Attractions",description:"Iconic 16th-century castle and symbol of Osaka. 8-floor museum with panoramic city views from the top.",hours:"09:00 – 17:00",cost:"¥600",address:"1-1 Osakajo, Chuo Ward, Osaka 540-0002",lat:34.6873,lng:135.5262,notes:"Cherry blossoms in spring" },
+    { id:47, name:"Maashiko Ozumi Paris",city:"Osaka",category:"Food",description:"Popular Osaka eatery serving French-Japanese fusion pastries and brunch.",hours:"10:00 – 18:00",cost:"~¥800–1,500",address:"Namba Parks, 2-10-70 Nambanaka, Naniwa Ward, Osaka",lat:34.6655,lng:135.5020 },
+    { id:48, name:"Unagi Kushiyaki Idume",city:"Osaka",category:"Food",description:"Specialty grilled eel (unagi) kushiyaki restaurant — fresh charcoal-grilled eel skewers with tare sauce.",hours:"11:00 – 21:00",cost:"~¥1,500–3,000",address:"2-3-17 Sennichimae, Chuo Ward, Osaka",lat:34.6685,lng:135.5013,notes:"tabelog.com rated" },
+    { id:49, name:"Riceball Gori-chan Namba",city:"Osaka",category:"Food",description:"Beloved onigiri shop in Namba — freshly made with premium rice and creative fillings.",hours:"11:00 – 20:00",cost:"~¥200–500",address:"2-3-34 Namba, Chuo Ward, Osaka",lat:34.6627,lng:135.5014,notes:"Quick, cheap, delicious" },
+    { id:50, name:"Fushimi Inari Taisha",city:"Kyoto",category:"Attractions",description:"Thousands of vermillion torii gates forming tunnels up Mount Inari. Full hike ~2-3 hours. Iconic.",hours:"24 hours",cost:"Free",address:"68 Fukakusa Yabunouchicho, Fushimi Ward, Kyoto 612-0882",lat:34.9671,lng:135.7727,notes:"Go early morning to avoid crowds" },
+    { id:51, name:"ASAKUSA SUMO CLUB",city:"Tokyo",category:"Entertainment",description:"Experience sumo firsthand — watch practice, learn rules, try sumo moves with retired wrestlers.",hours:"By reservation",cost:"~¥8,000–12,000",address:"Asakusa, Taito City, Tokyo",lat:35.7155,lng:139.7960,url:"https://asakusasumoclub.com/" },
+    { id:52, name:"Mt. Fuji 5th Station (Fujinomiya)",city:"Fuji",category:"Attractions",description:"The most popular starting point for climbing Mt. Fuji at 2,400m elevation. Stunning views even without climbing.",hours:"Jul–Sep (climbing season)",cost:"¥1,000 conservation fee",address:"Fujinomiya 5th Station, Fujinomiya, Shizuoka",lat:35.3378,lng:138.7350,notes:"Bus from Shin-Fuji or Fujinomiya Station." },
+    { id:53, name:"Fuji Five Lakes (Kawaguchiko)",city:"Fuji",category:"Attractions",description:"Lake Kawaguchiko is the most accessible of the five lakes at the base of Mt. Fuji. Iconic reflections.",hours:"24 hours",cost:"Free (area)",address:"Kawaguchiko, Fujikawaguchiko, Minamitsuru, Yamanashi",lat:35.5161,lng:138.7519,notes:"Take Fuji Excursion train from Shinjuku (~2hrs)" },
+    { id:54, name:"Chureito Pagoda",city:"Fuji",category:"Attractions",description:"Iconic five-story red pagoda with Mt. Fuji in the background — one of Japan's most photographed spots. 398 steps up.",hours:"24 hours",cost:"Free",address:"Arakurayama Sengen Park, 3353-1 Shimoyoshida, Fujiyoshida, Yamanashi",lat:35.4982,lng:138.8092,notes:"Best at sunrise." },
+    { id:55, name:"Oshino Hakkai",city:"Fuji",category:"Attractions",description:"Eight crystal-clear spring water ponds fed by snowmelt from Mt. Fuji. Traditional thatched-roof farmhouses.",hours:"09:00 – 17:00",cost:"¥300",address:"Oshino Hakkai, Oshino, Minamitsuru, Yamanashi",lat:35.4627,lng:138.8355 },
+    { id:56, name:"Ito Onsen",city:"Izu",category:"Onsen",description:"Charming seaside hot spring town on the Izu Peninsula. Ocean-view onsen baths, fresh seafood.",hours:"Varies by ryokan/onsen",cost:"¥500–2,000 (public baths)",address:"Ito, Shizuoka Prefecture",lat:34.9657,lng:139.0986,notes:"1.5 hrs from Tokyo by train." },
+    { id:57, name:"Jogasaki Coast",city:"Izu",category:"Attractions",description:"Dramatic volcanic coastline near Ito with rugged cliffs, a famous suspension bridge (48m high) and sea caves.",hours:"24 hours",cost:"Free",address:"Jogasaki Coast, Ito, Shizuoka",lat:34.9020,lng:139.1290,notes:"2-3 hr walking trail." },
+    { id:58, name:"Shuzenji Onsen",city:"Izu",category:"Onsen",description:"One of the oldest hot spring towns in Izu. Bamboo groves, a historic temple, red bridges over the Katsura River.",hours:"24 hours (town)",cost:"¥350–1,500 (public baths)",address:"Shuzenji, Izu, Shizuoka",lat:34.9739,lng:138.9332 },
+    { id:59, name:"Lake Kawaguchi Music Forest",city:"Fuji",category:"Attractions",description:"European-style museum on Lake Kawaguchi shores. Music boxes, organ concerts with Mt. Fuji views.",hours:"10:00 – 17:00",cost:"¥1,800",address:"3077-20 Kawaguchi, Fujikawaguchiko, Yamanashi",lat:35.5205,lng:138.7670 },
+    { id:60, name:"Numazu Fish Market",city:"Izu",category:"Food",description:"Fresh-from-the-ocean seafood market at Numazu Port. Famous for shirasu don, fresh sashimi.",hours:"06:00 – 15:00",cost:"~¥1,000–2,500",address:"Numazu Port, Numazu, Shizuoka",lat:35.0856,lng:138.8573,notes:"Go early for best selection." },
+    { id:61, name:"Dotonbori",city:"Osaka",category:"Attractions",description:"Osaka's most famous entertainment district — neon lights, Glico Running Man sign, canal walks and street food.",hours:"24 hours (shops 11:00–23:00)",cost:"Free to walk",address:"Dotonbori, Chuo Ward, Osaka",lat:34.6687,lng:135.5013,notes:"Most iconic at night" },
+    { id:62, name:"Tsutenkaku",city:"Osaka",category:"Attractions",description:"Iconic 103m tower in Shinsekai district. Observation deck with city views plus the Billiken lucky god statue.",hours:"10:00 – 20:00",cost:"¥900",address:"1-18-6 Ebisuhigashi, Naniwa Ward, Osaka",lat:34.6526,lng:135.5063 },
+    { id:63, name:"Osaka Aquarium Kaiyukan",city:"Osaka",category:"Attractions",description:"One of the world's largest aquariums — 15 tanks representing the Pacific Rim. Star: whale sharks.",hours:"10:00 – 20:00",cost:"¥2,700",address:"1-1-10 Kaigandori, Minato Ward, Osaka",lat:34.6545,lng:135.4290,notes:"Book online" },
+    { id:64, name:"Universal Studios Japan",city:"Osaka",category:"Attractions",description:"Major theme park with Super Nintendo World, Harry Potter and more. Plan a full day.",hours:"09:00 – 21:00 (varies)",cost:"¥8,600–9,800",address:"2-1-33 Sakurajima, Konohana Ward, Osaka",lat:34.6654,lng:135.4323,notes:"Buy tickets + Express Pass online.",url:"https://www.usj.co.jp/web/en/us" },
+    { id:65, name:"Namba Yasaka Jinja",city:"Osaka",category:"Attractions",description:"Striking shrine with a giant lion head stage (Ema-den) — 12m tall with glowing eyes. Very photogenic.",hours:"24 hours",cost:"Free",address:"2-9-19 Motomachi, Naniwa Ward, Osaka",lat:34.6597,lng:135.4958 },
+    { id:66, name:"Sumiyoshi Taisha",city:"Osaka",category:"Attractions",description:"One of Japan's oldest shrines (3rd century) with iconic arched Taikobashi bridge.",hours:"06:00 – 17:00",cost:"Free",address:"2-9-89 Sumiyoshi, Sumiyoshi Ward, Osaka",lat:34.6128,lng:135.4930 },
+    { id:67, name:"MEGA Don Quijote Shinsekai",city:"Osaka",category:"Shopping",description:"Massive discount store in Shinsekai — electronics, snacks, cosmetics, souvenirs. Tax-free for tourists.",hours:"24 hours",cost:"¥–¥¥",address:"3-4 Ebisuhigashi, Naniwa Ward, Osaka",lat:34.6517,lng:135.5060,notes:"Tax-free with passport" },
+    { id:68, name:"Wagyu Yakiniku Kurono Namba",city:"Osaka",category:"Food",description:"Premium whole-cow wagyu yakiniku in Ura-Namba. High-quality cuts at reasonable prices.",hours:"17:00 – 00:00",cost:"~¥4,000–8,000",address:"Ura-Namba, Chuo Ward, Osaka",lat:34.6648,lng:135.5030,notes:"Reservation recommended" },
+    { id:69, name:"Yakiniku Kitan Hozenji",city:"Osaka",category:"Food",description:"Popular yakiniku near Hozenji Temple. Quality wagyu in an atmospheric alley setting.",hours:"17:00 – 23:00",cost:"~¥4,000–7,000",address:"Hozenji Yokocho, Chuo Ward, Osaka",lat:34.6685,lng:135.5028 },
+    { id:70, name:"Pokémon Cafe Osaka",city:"Osaka",category:"Food",description:"Official Pokémon-themed cafe — character-shaped meals, themed drinks and exclusive merch.",hours:"10:30 – 22:00",cost:"~¥1,500–2,500",address:"Shinsaibashi PARCO, Chuo Ward, Osaka",lat:34.6723,lng:135.5006,notes:"Book online — sells out fast!" },
+    { id:71, name:"Hozen-ji Temple",city:"Osaka",category:"Attractions",description:"Tiny atmospheric temple in a stone-paved alley near Dotonbori. Moss-covered Fudo Myoo statue.",hours:"24 hours",cost:"Free",address:"1-2-16 Namba, Chuo Ward, Osaka",lat:34.6686,lng:135.5026 },
+    { id:72, name:"Nakazakicho",city:"Osaka",category:"Attractions",description:"Trendy retro neighbourhood with vintage cafes, indie shops in renovated old wooden houses.",hours:"Varies",cost:"Free to walk",address:"Nakazakicho, Kita Ward, Osaka",lat:34.7071,lng:135.5068,notes:"Great for coffee" },
+    { id:73, name:"teamLab Botanical Garden Osaka",city:"Osaka",category:"Attractions",description:"Outdoor digital art transforming the Nagai Botanical Garden at night with interactive light installations.",hours:"18:30 – 21:30",cost:"¥1,600",address:"Nagai Park, Higashisumiyoshi Ward, Osaka",lat:34.6158,lng:135.5176 },
+    { id:74, name:"Katsuoji Temple",city:"Osaka",category:"Attractions",description:"Mountain temple famous for thousands of daruma dolls. Beautiful autumn colours.",hours:"08:00 – 17:00",cost:"¥400",address:"2914-1 Kasuganomachi, Minoo, Osaka",lat:34.8670,lng:135.4700,notes:"30 min bus from Minoo Station" },
+    { id:75, name:"Kinkaku-ji (Golden Pavilion)",city:"Kyoto",category:"Attractions",description:"Iconic Zen temple covered in gold leaf, reflecting in a mirror pond.",hours:"09:00 – 17:00",cost:"¥500",address:"1 Kinkakujicho, Kita Ward, Kyoto 603-8361",lat:35.0394,lng:135.7292 },
+    { id:76, name:"Kiyomizu-dera",city:"Kyoto",category:"Attractions",description:"UNESCO World Heritage hillside temple with famous wooden stage offering panoramic views.",hours:"06:00 – 18:00",cost:"¥400",address:"1-294 Kiyomizu, Higashiyama Ward, Kyoto 605-0862",lat:35.0050,lng:135.7850 },
+    { id:77, name:"Arashiyama Bamboo Forest",city:"Kyoto",category:"Attractions",description:"Towering bamboo groves creating a magical tunnel pathway. Best early morning.",hours:"24 hours",cost:"Free",address:"Sagatenryuji, Ukyo Ward, Kyoto",lat:35.0170,lng:135.6713,notes:"Go before 8 AM" },
+    { id:78, name:"Nijo Castle",city:"Kyoto",category:"Attractions",description:"UNESCO World Heritage castle (1603). Famous 'nightingale floors' that chirp when walked on.",hours:"08:45 – 17:00",cost:"¥1,030",address:"541 Nijojocho, Nakagyo Ward, Kyoto 604-8301",lat:35.0142,lng:135.7481 },
+    { id:79, name:"Nishiki Market",city:"Kyoto",category:"Food",description:"'Kyoto's Kitchen' — 400m covered market with 100+ stalls. Fresh seafood, pickles, matcha sweets, knives.",hours:"10:00 – 18:00",cost:"Free to walk",address:"Nishiki Market, Nakagyo Ward, Kyoto",lat:35.0051,lng:135.7649,notes:"Try dashimaki tamago and yuba" },
+    { id:80, name:"Pontocho Alley",city:"Kyoto",category:"Entertainment",description:"Atmospheric narrow stone-paved alley along the Kamo River lined with restaurants and teahouses. Lantern-lit.",hours:"17:00 – 00:00",cost:"Varies",address:"Pontocho, Nakagyo Ward, Kyoto",lat:35.0046,lng:135.7706,notes:"Most atmospheric after dark" },
+    { id:81, name:"Yasaka Pagoda (Hokan-ji)",city:"Kyoto",category:"Attractions",description:"Iconic five-story pagoda in Higashiyama — THE classic Kyoto photo spot.",hours:"10:00 – 16:00 (exterior 24h)",cost:"¥400 (interior)",address:"Higashiyama Ward, Kyoto",lat:35.0024,lng:135.7805 },
+    { id:82, name:"Tenryu-ji Temple",city:"Kyoto",category:"Attractions",description:"UNESCO World Heritage Zen temple in Arashiyama with finest landscape gardens.",hours:"08:30 – 17:00",cost:"¥500",address:"68 Sagatenryuji, Ukyo Ward, Kyoto",lat:35.0156,lng:135.6746 },
+    { id:83, name:"Nanzen-ji Temple",city:"Kyoto",category:"Attractions",description:"Impressive Zen temple with massive Sanmon gate and photogenic brick Suirokaku aqueduct.",hours:"08:40 – 17:00",cost:"¥500",address:"Nanzenji Fukuchicho, Sakyo Ward, Kyoto",lat:35.0113,lng:135.7923 },
+    { id:84, name:"Philosopher's Path",city:"Kyoto",category:"Attractions",description:"Scenic 2km stone path along a cherry-tree-lined canal connecting Nanzen-ji to Ginkaku-ji.",hours:"24 hours",cost:"Free",address:"Tetsugaku no Michi, Sakyo Ward, Kyoto",lat:35.0226,lng:135.7939,notes:"Beautiful cherry blossoms" },
+    { id:85, name:"Suntory Yamazaki Distillery",city:"Kyoto",category:"Entertainment",description:"Japan's first malt whisky distillery (1923). Tours, tasting rooms and whisky library.",hours:"10:00 – 16:45",cost:"¥1,000 (tour)",address:"5-2-1 Yamazaki, Shimamoto, Osaka (near Kyoto border)",lat:34.8938,lng:135.6773,notes:"Book 3+ months ahead!",url:"https://www.suntory.co.jp/factory/yamazaki/" },
+    { id:86, name:"teamLab Biovortex Kyoto",city:"Kyoto",category:"Attractions",description:"Newest teamLab museum — immersive nature-themed digital art installations.",hours:"10:00 – 21:00",cost:"¥2,400",address:"Higashiyama Ward, Kyoto",lat:35.0056,lng:135.7722 },
+    { id:87, name:"Hozugawa River Boat Ride",city:"Kyoto",category:"Attractions",description:"Thrilling 16km river boat ride through the Hozu gorge from Kameoka to Arashiyama.",hours:"09:00 – 15:30",cost:"¥4,100",address:"Hozugawa Kudari, Kameoka, Kyoto",lat:35.0122,lng:135.5747,notes:"~2 hour ride. Book in advance." },
+    { id:88, name:"Wargo Antique Kimono Rental",city:"Kyoto",category:"Shopping",description:"Rent beautiful antique kimono for a day exploring Kyoto in traditional style.",hours:"09:00 – 18:00",cost:"~¥3,500–8,000",address:"Higashiyama Ward, Kyoto",lat:35.0033,lng:135.7794,notes:"Return by 17:30" },
+    { id:89, name:"Kurama Hot Spring",city:"Kyoto",category:"Onsen",description:"Mountain onsen north of Kyoto — outdoor rotenburo baths surrounded by cedar forest.",hours:"10:00 – 21:00",cost:"¥1,000",address:"Kurama Honmachi, Sakyo Ward, Kyoto",lat:35.1179,lng:135.7695,notes:"Eizan Railway from Demachiyanagi" },
+    { id:90, name:"Otagi Nenbutsuji Temple",city:"Kyoto",category:"Attractions",description:"Hidden temple in Arashiyama with 1,200 unique carved stone rakan statues — each with a different expression.",hours:"08:00 – 17:00",cost:"¥300",address:"2-5 Sagatorimoto, Ukyo Ward, Kyoto",lat:35.0287,lng:135.6590 },
+    { id:91, name:"Hayakawa Hamonoten",city:"Kyoto",category:"Shopping",description:"Traditional Japanese knife shop at Nishiki Market. Handmade kitchen knives — quintessential Kyoto souvenir.",hours:"10:00 – 18:00",cost:"¥¥–¥¥¥",address:"Nishiki Market, Nakagyo Ward, Kyoto",lat:35.0053,lng:135.7645 },
+    { id:92, name:"Todai-ji Temple",city:"Nara",category:"Attractions",description:"World's largest wooden building housing a 15m tall bronze Great Buddha. UNESCO World Heritage.",hours:"07:30 – 17:30",cost:"¥600",address:"406-1 Zoshicho, Nara 630-8211",lat:34.6887,lng:135.8398 },
+    { id:93, name:"Kasuga Taisha Shrine",city:"Nara",category:"Attractions",description:"Ancient Shinto shrine (768 AD) with thousands of stone and bronze lanterns.",hours:"06:30 – 17:30",cost:"¥500 (inner shrine)",address:"160 Kasuganocho, Nara 630-8212",lat:34.6832,lng:135.8499 },
+    { id:94, name:"Isuien Garden",city:"Nara",category:"Attractions",description:"Elegant Meiji-era Japanese garden with borrowed scenery of Todai-ji's roof.",hours:"09:30 – 16:30",cost:"¥650",address:"74 Suimoncho, Nara 630-8208",lat:34.6885,lng:135.8422 },
+    { id:95, name:"Nara National Museum",city:"Nara",category:"Attractions",description:"Premier museum for Buddhist art — stunning sculptures, scrolls and temple treasures.",hours:"09:30 – 17:00",cost:"¥700",address:"50 Noboriojicho, Nara 630-8213",lat:34.6851,lng:135.8410 },
+    { id:96, name:"Harushika Sake Brewery",city:"Nara",category:"Food",description:"Historic sake brewery offering tastings of 5 varieties for ¥500.",hours:"09:00 – 17:00",cost:"¥500 (tasting)",address:"50-1 Fukuchiincho, Nara",lat:34.6815,lng:135.8360,notes:"Includes souvenir cup" },
+    { id:97, name:"Shiraito Falls",city:"Fuji",category:"Attractions",description:"200m-wide curtain waterfall fed by Mt. Fuji snowmelt. UNESCO World Heritage.",hours:"24 hours",cost:"Free",address:"Shiraito Falls, Fujinomiya, Shizuoka",lat:35.3194,lng:138.5870 },
+    { id:98, name:"Saiko Iyashi-no-Sato Nemba",city:"Fuji",category:"Attractions",description:"Traditional thatched-roof village on Lake Saiko with craft workshops and Mt. Fuji views.",hours:"09:00 – 17:00",cost:"¥500",address:"2710 Saiko, Fujikawaguchiko, Yamanashi",lat:35.4922,lng:138.6880 },
+    { id:99, name:"Lawson Fujikawaguchiko (Fuji View)",city:"Fuji",category:"Attractions",description:"The famous Lawson with a perfect Mt. Fuji backdrop — one of the most photographed spots in Japan.",hours:"24 hours",cost:"Free",address:"Fujikawaguchiko Town Hall, Yamanashi",lat:35.5022,lng:138.7655,notes:"The viral photo spot!" },
+    { id:100, name:"Chuomachi Tactical Crafts (Laforet Harajuku)",city:"Tokyo",category:"Shopping",description:"Tactical/military inspired fashion with Japanese twist in Laforet Harajuku.",hours:"11:00 – 20:00",cost:"¥–¥¥",address:"Laforet Harajuku, 1-11-6 Jingumae, Shibuya, Tokyo",lat:35.6696,lng:139.7047 },
+    { id:101, name:"Kabukicho",city:"Tokyo",category:"Entertainment",description:"Tokyo's famous entertainment and nightlife district in Shinjuku. Neon streets, arcades, late-night eats.",hours:"24 hours",cost:"Free to walk",address:"Kabukicho, Shinjuku City, Tokyo",lat:35.6949,lng:139.7031,notes:"Lively at night" },
+    { id:102, name:"Hotel Niwa Tokyo",city:"Tokyo",category:"Hotel",description:"Modern boutique hotel in Kanda with Japanese garden. Near Tokyo Station and Akihabara.",hours:"Check-in 15:00 / Check-out 11:00",cost:"¥¥",address:"1-1-16 Misaki-cho, Chiyoda, Tokyo",lat:35.6964,lng:139.7579 },
+    { id:103, name:"Izu Teddy Bear Museum",city:"Izu",category:"Attractions",description:"Cute museum with antique teddy bears, including Totoro exhibits. Near Ito.",hours:"09:30 – 17:00",cost:"¥1,500",address:"1064-2 Yawatano, Ito, Shizuoka",lat:34.9300,lng:139.1040 },
+    { id:104, name:"Izu Granpal Park",city:"Izu",category:"Attractions",description:"Amusement park near Ito with rides and beautiful illuminations at night.",hours:"09:30 – 17:00 (illumination until 21:00)",cost:"¥1,600",address:"1090 Futo, Ito, Shizuoka",lat:34.9228,lng:139.1167 },
+    { id:105, name:"Ryoan-ji",city:"Kyoto",category:"Attractions",description:"UNESCO Zen temple famous for its enigmatic rock garden — 15 stones on raked white gravel.",hours:"08:00 – 17:00",cost:"¥500",address:"13 Ryoanji Goryonoshitacho, Ukyo Ward, Kyoto",lat:35.0345,lng:135.7184 },
+    { id:106, name:"Shorin-ji Temple",city:"Kyoto",category:"Attractions",description:"Beautiful Rinzai Zen temple near Fushimi Inari. Peaceful garden, fewer tourists.",hours:"09:00 – 16:00",cost:"Free",address:"Fukakusa, Fushimi Ward, Kyoto",lat:35.0072,lng:135.7704 },
+    { id:107, name:"Round1 Stadium Sennichimae",city:"Osaka",category:"Entertainment",description:"Multi-floor entertainment complex in Namba — arcade, bowling, karaoke, billiards.",hours:"10:00 – 06:00",cost:"~¥500–3,000",address:"Sennichimae, Chuo Ward, Osaka",lat:34.6636,lng:135.5047 },
+    { id:108, name:"Kitan Hibiki",city:"Osaka",category:"Food",description:"Upscale yakiniku — premium wagyu in an intimate setting. Part of the Kitan restaurant group.",hours:"17:00 – 23:00",cost:"~¥5,000–10,000",address:"Namba, Chuo Ward, Osaka",lat:34.6670,lng:135.5028,notes:"Reservation recommended" },
+    { id:109, name:"TORCH TORCH Shinsaibashi PARCO",city:"Osaka",category:"Shopping",description:"Jewellery brand inspired by Dark Souls, Bloodborne and other games. Handcrafted rings.",hours:"10:00 – 20:00",cost:"¥¥¥",address:"Shinsaibashi PARCO, Chuo Ward, Osaka",lat:34.6723,lng:135.5006 },
+    { id:110, name:"Ikoma Sanjo Amusement Park",city:"Osaka",category:"Attractions",description:"Retro hilltop amusement park on Mt. Ikoma. Old-school rides with panoramic views.",hours:"10:00 – 17:00",cost:"Free entry (rides ¥300–500)",address:"Mt. Ikoma, Ikoma, Nara",lat:34.6785,lng:135.6793,notes:"Cable car ride up" },
+    { id:111, name:"Yoshikien Garden",city:"Nara",category:"Attractions",description:"Three adjacent gardens near Todai-ji. Free for foreign tourists with passport.",hours:"09:00 – 17:00",cost:"Free (foreigners)",address:"Noboriojicho, Nara 630-8213",lat:34.6886,lng:135.8418,notes:"Show passport" },
+    { id:112, name:"Ukimido Pavilion",city:"Nara",category:"Attractions",description:"Elegant hexagonal floating pavilion on Sagi-ike Pond. Beautiful reflections at dawn.",hours:"24 hours",cost:"Free",address:"Nara Park, Nara 630-8213",lat:34.6843,lng:135.8458 },
+    { id:113, name:"Meoto Daikokusha",city:"Nara",category:"Attractions",description:"Small shrine for married couple deities — popular for love and marriage blessings.",hours:"09:00 – 17:00",cost:"Free",address:"Naramachi, Nara",lat:34.6796,lng:135.8325 },
+    { id:114, name:"Arakurayama Sengen Park",city:"Fuji",category:"Attractions",description:"The park housing Chureito Pagoda. One of the best Mt. Fuji viewpoints in Japan.",hours:"24 hours",cost:"Free",address:"Arakura, Fujiyoshida, Yamanashi",lat:35.3985,lng:138.7987 },
+    { id:115, name:"Lake Yamanaka",city:"Fuji",category:"Attractions",description:"Largest of the Fuji Five Lakes — water sports, cycling, stunning Fuji reflections.",hours:"24 hours",cost:"Free",address:"Yamanakako, Minamitsuru District, Yamanashi",lat:35.4068,lng:138.8674 },
+    { id:116, name:"Fujisan Yume No Ohashi Bridge",city:"Fuji",category:"Attractions",description:"Elegant bridge over Lake Kawaguchi — perfect Mt. Fuji photo frame. Beautiful at sunrise.",hours:"24 hours",cost:"Free",address:"Kawaguchiko, Fujikawaguchiko, Yamanashi",lat:35.5126,lng:138.7588 },
+    { id:117, name:"Tsubaki-hana Garden",city:"Izu",category:"Attractions",description:"Tranquil botanical garden with camellia varieties, seasonal flowers and coastal views.",hours:"09:00 – 17:00",cost:"¥500",address:"Ito, Shizuoka",lat:34.8640,lng:139.1265 },
+    { id:118, name:"Onigiri Ranma",city:"Kyoto",category:"Food",description:"Artisanal onigiri shop — handcrafted with premium rice and creative fillings.",hours:"08:00 – 15:00",cost:"~¥300–600",address:"20-2 Susukinobabacho, Saga-Tenryuji, Ukyo Ward, Kyoto (Arashiyama)",lat:35.0164,lng:135.6718,notes:"Popular — may have queues" },
+    { id:119, name:"Hokoku Shrine",city:"Osaka",category:"Attractions",description:"Grand Shinto shrine in Osaka Castle Park dedicated to Toyotomi Hideyoshi.",hours:"06:00 – 17:00",cost:"Free",address:"Osaka Castle Park, Chuo Ward, Osaka",lat:34.6865,lng:135.5264 },
+    { id:120, name:"Shijo Kawaramachi Onsen Sora Niwa Terrace Kyoto",city:"Kyoto",category:"Onsen",description:"Rooftop open-air onsen in the heart of Kyoto's Shijo Kawaramachi shopping district. City views from the terrace baths.",hours:"06:00 – 00:00",cost:"~¥1,500–2,500",address:"Shijo Kawaramachi, Shimogyo Ward, Kyoto 600-8002",lat:35.0037,lng:135.7688,notes:"Towel rental available. Great after a long day walking." },
+    { id:121, name:"Keio Plaza Hotel Tokyo",city:"Tokyo",category:"Hotel",description:"Grand luxury hotel in Shinjuku with panoramic views, multiple restaurants and excellent transport access.",hours:"Check-in 14:00 / Check-out 11:00",cost:"¥¥¥",address:"2-2-1 Nishi-Shinjuku, Shinjuku City, Tokyo 160-8330",lat:35.6933,lng:139.6917,notes:"Direct access to Shinjuku Station west exit." },
+    { id:122, name:"Amagiso",city:"Izu",category:"Onsen",description:"Famous riverside onsen ryokan in Kawazu. Stunning open-air baths perched over the river with waterfall views.",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥¥",address:"359-1 Kawazu, Kawazu-cho, Kamo-gun, Shizuoka 413-0501",lat:34.7558,lng:138.9698,notes:"Iconic waterfall-view rotenburo. Book well in advance." },
+    { id:123, name:"Ryokufuso",city:"Izu",category:"Hotel",description:"Traditional Japanese ryokan near Shuzenji. Tranquil garden setting with private onsen baths.",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥¥",address:"Shuzenji, Izu, Shizuoka",lat:34.9725,lng:138.9340,notes:"Ryokan with kaiseki dinner included." },
+    { id:124, name:"Shouhoukaku Kogetsu",city:"Izu",category:"Hotel",description:"Luxury ryokan in Shuzenji Onsen with elegant rooms, private open-air baths and multi-course kaiseki.",hours:"Check-in 15:00 / Check-out 11:00",cost:"¥¥¥",address:"765-2 Shuzenji, Izu, Shizuoka 410-2416",lat:34.9733,lng:138.9348,notes:"One of Shuzenji's finest ryokans." },
+    { id:125, name:"Ubuya",city:"Fuji",category:"Hotel",description:"Famous luxury ryokan on Lake Kawaguchi with every room facing Mt. Fuji. Iconic Fuji views from the bath.",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥¥",address:"10 Azagawa, Fujikawaguchiko, Minamitsuru, Yamanashi 401-0303",lat:35.5069,lng:138.7509,notes:"Advance booking essential. Unbeatable Mt. Fuji views." },
+    { id:126, name:"Unagi Hirokawa",city:"Kyoto",category:"Food",description:"Famous grilled eel restaurant in Arashiyama. Rich charcoal-grilled unagi served over rice.",hours:"11:00 – 20:00",cost:"~¥2,500–4,000",address:"44-1 Sagatenryuji Tsukurimichicho, Ukyo Ward, Kyoto",lat:35.0145,lng:135.6768,notes:"Often long queues — go early." },
+    { id:127, name:"Ikasuri Jinja (Zama Shrine)",city:"Osaka",category:"Attractions",description:"One of Osaka's oldest shrines, over 1,800 years old. Known for warding off evil and illness.",hours:"06:00 – 17:00",cost:"Free",address:"2-4-13 Watanabe, Chuo Ward, Osaka 541-0043",lat:34.6839,lng:135.5078 },
+    { id:128, name:"Kyoto Arashiyama Onsen Kadensho",city:"Kyoto",category:"Onsen",description:"Hot spring resort in Arashiyama with outdoor baths, sauna and Katsura River views.",hours:"11:00 – 21:00 (day visit)",cost:"~¥1,000–1,500",address:"Sagatenryuji Susukinobabacho, Ukyo Ward, Kyoto 616-8385",lat:35.0122,lng:135.6760,notes:"Great after exploring Arashiyama." },
+    { id:129, name:"Fujiya Ryokan",city:"Kyoto",category:"Hotel",description:"Traditional machiya-style ryokan in central Kyoto. Intimate, beautifully restored wooden townhouse.",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥¥",address:"Fuyacho, Aneyakoji-dori, Nakagyo Ward, Kyoto 604-8113",lat:35.0082,lng:135.7640,notes:"Small and charming. Book early." },
+    { id:130, name:"KANADE",city:"Kyoto",category:"Food",description:"Stylish modern cafe in Higashiyama serving matcha desserts, coffee and light meals in a traditional setting.",hours:"10:00 – 18:00",cost:"~¥800–1,500",address:"Higashiyama Ward, Kyoto",lat:35.0010,lng:135.7782 },
+    { id:131, name:"Nihonbashi Nishikawa Daimaru Shinsaibashi",city:"Osaka",category:"Food",description:"Premium Japanese ice cream and bedding brand. Famous for incredibly smooth soft-serve ice cream.",hours:"10:00 – 20:00",cost:"~¥400–800",address:"Daimaru Shinsaibashi, Chuo Ward, Osaka 542-8501",lat:34.6729,lng:135.5010,notes:"Try the signature sleeping pillow ice cream." },
+    { id:132, name:"Manyo Botanical Gardens",city:"Nara",category:"Attractions",description:"Beautiful garden in Nara Park featuring plants mentioned in ancient Japanese poetry (Manyoshu).",hours:"09:00 – 16:30",cost:"Free",address:"Kasugano-cho, Nara 630-8212",lat:34.6828,lng:135.8475,notes:"Closed Mondays." },
+    { id:133, name:"Saiko Nenba-hama",city:"Fuji",category:"Attractions",description:"Scenic lakeside beach on Lake Saiko with beautiful Mt. Fuji views and clear water. Great for photos.",hours:"24 hours",cost:"Free",address:"Saiko, Fujikawaguchiko, Minamitsuru, Yamanashi",lat:35.4905,lng:138.6898 },
+    { id:134, name:"Fuji-Honcho Main Street",city:"Fuji",category:"Attractions",description:"Charming shopping street in Fujiyoshida with Mt. Fuji backdrop. Retro storefronts, local shops and cafes.",hours:"Varies by shop",cost:"Free to walk",address:"Honcho, Fujiyoshida, Yamanashi",lat:35.4875,lng:138.8028,notes:"Great for Fuji photos down the street." },
+    { id:135, name:"Sasuke Inari Shrine",city:"Tokyo",category:"Attractions",description:"Hidden hillside shrine in Kamakura with dozens of red torii gates winding through the forest. Mystical atmosphere.",hours:"24 hours",cost:"Free",address:"2-22-12 Sasuke, Kamakura, Kanagawa 248-0017",lat:35.3213,lng:139.5459,notes:"Day trip from Tokyo (~1hr by train)." },
+];
+
+export const DEFAULT_TODOS = [
+    { id:"t1", text:"Book flight tickets", done:true },
+    { id:"t2", text:"Book accommodations 1/3", done:false },
+    { id:"t3", text:"Create packing list", done:false },
+    { id:"t4", text:"Plan travel itinerary", done:false },
+    { id:"t5", text:"Make restaurant and attraction reservations", done:false },
+    { id:"t6", text:"Purchase transportation passes", done:false },
+    { id:"t7", text:"Purchase e-SIM", done:false },
+    { id:"t8", text:"Learn basic Japanese phrases", done:false },
+];
+
+export const DEFAULT_RULES = [
+    "Keep rooms tidy",
+    "Be prepared with your packing",
+    "Text/call to coordinate meetups",
+    "Stay on schedule for reservations",
+    "Close windows & doors when out",
+    "Keep CASH — many places are cash-only",
+];
+
+// ── Templates for new trip creation ──
+export const TRIP_TEMPLATES = {
+    japan: {
+        name: 'Japan Trip',
+        todos: [
+            "Book flight tickets",
+            "Book accommodations",
+            "Create packing list",
+            "Plan travel itinerary",
+            "Make restaurant and attraction reservations",
+            "Purchase JR Pass / transportation passes",
+            "Purchase e-SIM or pocket WiFi",
+            "Learn basic Japanese phrases",
+            "Check passport validity",
+            "Set up Suica on phone",
+        ],
+        rules: [
+            "Keep rooms tidy",
+            "Be prepared with your packing",
+            "Text/call to coordinate meetups",
+            "Stay on schedule for reservations",
+            "Close windows & doors when out",
+            "Keep CASH — many places are cash-only",
+            "Take shoes off indoors",
+            "Bow when greeting",
+            "Be quiet on public transport",
+        ],
+    },
+    general: {
+        name: 'General Trip',
+        todos: [
+            "Book flights",
+            "Book accommodation",
+            "Create packing list",
+            "Plan daily itinerary",
+            "Make reservations",
+            "Get travel insurance",
+            "Check visa requirements",
+            "Download offline maps",
+        ],
+        rules: [
+            "Stay together or communicate meetup plans",
+            "Keep valuables secure",
+            "Respect local customs",
+            "Stay on schedule for group activities",
+            "Keep emergency contacts accessible",
+        ],
+    },
+    minimal: {
+        name: 'Minimal (blank)',
+        todos: [],
+        rules: [],
+    },
+};
+
+export const DEFAULT_ITINERARY = [
+    // TOKYO BLOCK 1 — May 16–18 (Open / Unplanned)
+    { id:"d01", title:"May 16 (Fri) — Tokyo: Arrival", items:[] },
+    { id:"d02", title:"May 17 (Sat) — Tokyo: Free Day", items:[
+        { id:"it1771690169976", time:"", name:"Mt. Fuji 5th Station (Fujinomiya)", desc:"The most popular starting point for climbing Mt. Fuji at 2,400m elevation. Stunning views even without climbing.", visited:false },
+    ]},
+    { id:"d03", title:"May 18 (Sun) — Tokyo: Free Day", items:[] },
+
+    // FUJI — May 19–20
+    { id:"d04", title:"May 19 (Mon) — Fuji Day 1", items:[
+        { id:"i14", time:"7 AM", name:"Train to Kawaguchiko", desc:"Fuji Excursion from Shinjuku (~2 hrs direct)", visited:false },
+    ]},
+    { id:"d05", title:"May 20 (Tue) — Fuji Day 2", items:[] },
+
+    // IZU — May 21
+    { id:"d06", title:"May 21 (Wed) — Izu Peninsula", items:[
+        { id:"i20", time:"8 AM", name:"Train to Ito", desc:"Odoriko Express from Kawaguchiko/Tokyo (~1.5 hrs)", visited:false },
+        { id:"i24", time:"6:30 PM", name:"Return to base", desc:"Train back via Mishima or stay at ryokan", visited:false },
+    ]},
+
+    // KYOTO — May 22–25
+    { id:"d07", title:"May 22 (Thu) — Travel to Kyoto", items:[
+        { id:"it1771698705393", time:"", name:"Shijo Kawaramachi Onsen Sora Niwa Terrace Kyoto", desc:"Rooftop open-air onsen in the heart of Kyoto's Shijo Kawaramachi shopping district. City views from the terrace baths.", visited:false },
+        { id:"it1771698901445", time:"", name:"Hayakawa Hamonoten", desc:"Traditional Japanese knife shop at Nishiki Market. Handmade kitchen knives — quintessential Kyoto souvenir.", visited:false },
+        { id:"it1772974502014", time:"15:30", name:"Nishiki Market", desc:"'Kyoto\\'s Kitchen' — 400m covered market with 100+ stalls. Fresh seafood, pickles, matcha sweets, knives.", visited:false },
+        { id:"it1772974779828", time:"", name:"Kawaramachi Shopping", desc:"Explore Shijo-Kawaramachi area shops", visited:false, isNote:true },
+        { id:"it1772974821824", time:"", name:"Miltons Bar", desc:"Cocktail bar plan", visited:false, isNote:true },
+    ]},
+    { id:"d08", title:"May 23 (Fri) — Kyoto", items:[
+        { id:"it1771698618494", time:"8:30", name:"Onigiri Ranma", desc:"Artisanal onigiri shop — handcrafted with premium rice and creative fillings.", visited:false },
+        { id:"it1771698602220", time:"9:00", name:"Arashiyama Bamboo Forest", desc:"Towering bamboo groves creating a magical tunnel pathway. Best early morning.", visited:false },
+        { id:"it1771698645916", time:"9:30-10:00", name:"Tenryu-ji Temple", desc:"UNESCO World Heritage Zen temple in Arashiyama with finest landscape gardens.", visited:false },
+        { id:"it1772975484674", time:"11:20", name:"Saga-toriimoto preserved street", desc:"Walk through the atmospheric Meiji-era preserved street", visited:false, isNote:true },
+        { id:"it1771698608280", time:"11:30", name:"Otagi Nenbutsuji Temple", desc:"Hidden temple in Arashiyama with 1,200 unique carved stone rakan statues — each with a different expression.", visited:false },
+        { id:"it1771698614817", time:"12:30-13:00", name:"Unagi Hirokawa", desc:"Famous grilled eel restaurant in Arashiyama. Rich charcoal-grilled unagi served over rice.", visited:false },
+        { id:"it1773005974632", time:"", name:"Ryoan-ji", desc:"UNESCO Zen temple famous for its enigmatic rock garden — 15 stones on raked white gravel.", visited:false },
+        { id:"it1773005969697", time:"", name:"Kinkaku-ji (Golden Pavilion)", desc:"Iconic Zen temple covered in gold leaf, reflecting in a mirror pond.", visited:false },
+        { id:"it1772977347037", time:"", name:"Hotel terrace onsen break", desc:"Head back to the hotel for a relaxing onsen session", visited:false, isNote:true },
+        { id:"it1771698726545", time:"19:00", name:"Dinner — Kyoto tempura (Gion Horten)", desc:"Tempura dinner in Gion area", visited:false, isNote:true },
+        { id:"it1771698741488", time:"22:00", name:"Late night drinks", desc:"Find a bar in the Gion/Pontocho area", visited:false, isNote:true },
+    ]},
+    { id:"d09", title:"May 24 (Sat) — Kyoto", items:[
+        { id:"it1772977699571", time:"8:00", name:"Fushimi Inari Taisha", desc:"Thousands of vermillion torii gates forming tunnels up Mount Inari. Full hike ~2-3 hours. Iconic.", visited:false },
+        { id:"it1772977993420", time:"11:30-13:00", name:"Kiyomizu-dera", desc:"UNESCO World Heritage hillside temple with famous wooden stage offering panoramic views.", visited:false },
+        { id:"it1772978722604", time:"", name:"Yasaka Pagoda (Hokan-ji)", desc:"Iconic five-story pagoda in Higashiyama — THE classic Kyoto photo spot.", visited:false },
+        { id:"it1772978075951", time:"13:00-16:00", name:"Higashiyama walking — Matsubara, Sannenzaka, Ninnenzaka", desc:"Stroll through the traditional lanes connecting Kiyomizu to Yasaka", visited:false, isNote:true },
+        { id:"it1772979079407", time:"", name:"Pontocho Alley", desc:"Atmospheric narrow stone-paved alley along the Kamo River lined with restaurants and teahouses. Lantern-lit.", visited:false },
+        { id:"it1771698786508", time:"", name:"Gion evening — spot maiko/geisha", desc:"Walk through Gion's Hanamikoji street at dusk to see maiko heading to appointments", visited:false, isNote:true },
+        { id:"it1772978628455", time:"", name:"Yasaka Shrine", desc:"Grand vermillion shrine at the east end of Shijo-dori, gateway to Gion", visited:false },
+    ]},
+    { id:"d10", title:"May 25 (Sun) — Kyoto: Last Day", items:[
+        { id:"it1772978862536", time:"", name:"Nanzen-ji Temple", desc:"Impressive Zen temple with massive Sanmon gate and photogenic brick Suirokaku aqueduct.", visited:false },
+        { id:"it1772978861442", time:"", name:"Philosopher\\'s Path", desc:"Scenic 2km stone path along a cherry-tree-lined canal connecting Nanzen-ji to Ginkaku-ji.", visited:false },
+        { id:"it1772978967968", time:"", name:"Ginkaku-ji (Silver Pavilion)", desc:"Understated Zen temple with exquisite moss garden and sand cone", visited:false },
+        { id:"it1772978950844", time:"", name:"Daigo-ji Temple", desc:"UNESCO temple famous for cherry blossoms and a five-story pagoda", visited:false },
+        { id:"it1772979053828", time:"", name:"Nijo Castle", desc:"UNESCO World Heritage castle (1603). Famous \\'nightingale floors\\' that chirp when walked on.", visited:false },
+        { id:"it1772979040923", time:"", name:"Samurai experience activity", desc:"Try a sword-fighting or samurai dress-up experience", visited:false, isNote:true },
+        { id:"it1772979097305", time:"", name:"KANADE", desc:"Stylish modern cafe in Higashiyama serving matcha desserts, coffee and light meals in a traditional setting.", visited:false },
+        { id:"it1772979066571", time:"", name:"teamLab Biovortex Kyoto", desc:"Newest teamLab museum — immersive nature-themed digital art installations.", visited:false },
+    ]},
+
+    // TRANSITION + OSAKA — May 26–29
+    { id:"d11", title:"May 26 (Mon) — Kyoto → Osaka", items:[
+        { id:"i45", time:"10 AM", name:"Train Kyoto → Osaka", desc:"JR Special Rapid (~30 min)", visited:false },
+        { id:"it1772980109262", time:"", name:"Osaka Castle", desc:"Iconic 16th-century castle and symbol of Osaka. 8-floor museum with panoramic city views from the top.", visited:false },
+        { id:"it1772980111520", time:"", name:"Hokoku Shrine", desc:"Grand Shinto shrine in Osaka Castle Park dedicated to Toyotomi Hideyoshi.", visited:false },
+        { id:"it1772980129753", time:"", name:"Umeda Sky Building", desc:"Floating Garden Observatory — panoramic city views from the rooftop", visited:false },
+        { id:"it1772980145148", time:"", name:"Grand Front Osaka shopping", desc:"Browse shops and grab food at the Grand Front complex near Umeda", visited:false, isNote:true },
+        { id:"it1772981946857", time:"", name:"Tsutenkaku", desc:"Iconic 103m tower in Shinsekai district. Observation deck with city views plus the Billiken lucky god statue.", visited:false },
+    ]},
+    { id:"d12", title:"May 27 (Tue) — Nara Day Trip", items:[
+        { id:"i50", time:"9 AM", name:"Train Osaka → Nara", desc:"JR or Kintetsu (~45 min from Namba)", visited:false },
+        { id:"it1772979537019", time:"", name:"Isuien Garden", desc:"Elegant Meiji-era Japanese garden with borrowed scenery of Todai-ji\\'s roof.", visited:false },
+        { id:"it1772979537920", time:"", name:"Kasuga Taisha Shrine", desc:"Ancient Shinto shrine (768 AD) with thousands of stone and bronze lanterns.", visited:false },
+        { id:"it1772979538314", time:"", name:"Manyo Botanical Gardens", desc:"Beautiful garden in Nara Park featuring plants mentioned in ancient Japanese poetry (Manyoshu).", visited:false },
+        { id:"it1772979538917", time:"", name:"Nara National Museum", desc:"Premier museum for Buddhist art — stunning sculptures, scrolls and temple treasures.", visited:false },
+        { id:"it1772979539344", time:"", name:"Todai-ji Temple", desc:"World\\'s largest wooden building housing a 15m tall bronze Great Buddha. UNESCO World Heritage.", visited:false },
+        { id:"it1772979539808", time:"", name:"Ukimido Pavilion", desc:"Elegant hexagonal floating pavilion on Sagi-ike Pond. Beautiful reflections at dawn.", visited:false },
+        { id:"it1772979540248", time:"", name:"Yoshikien Garden", desc:"Three adjacent gardens near Todai-ji. Free for foreign tourists with passport.", visited:false },
+        { id:"it1772979540772", time:"", name:"Harushika Sake Brewery", desc:"Historic sake brewery offering tastings of 5 varieties for ¥500.", visited:false },
+        { id:"it1772979541216", time:"", name:"Meoto Daikokusha", desc:"Small shrine for married couple deities — popular for love and marriage blessings.", visited:false },
+        { id:"i50i", time:"2 PM", name:"Return to Osaka", desc:"Train back, evening in Dotonbori", visited:false },
+        { id:"it1772981088590", time:"15:00", name:"Kuromon Market", desc:"'Osaka's Kitchen' — fresh seafood, street food, and snacks", visited:false },
+        { id:"it1772981167813", time:"", name:"Dotonbori", desc:"Osaka\\'s most famous entertainment district — neon lights, Glico Running Man sign, canal walks and street food.", visited:false },
+        { id:"it1772981309316", time:"", name:"Hozen-ji Temple", desc:"Tiny atmospheric temple in a stone-paved alley near Dotonbori. Moss-covered Fudo Myoo statue.", visited:false },
+        { id:"it1772981265954", time:"", name:"Wagyu dinner", desc:"Find a great wagyu spot in Namba/Dotonbori area", visited:false, isNote:true },
+        { id:"it1772981346001", time:"22:00", name:"Hollow Bar", desc:"Late night cocktails", visited:false, isNote:true },
+        { id:"it1772981138261", time:"12:30AM", name:"Round1 Stadium Sennichimae", desc:"Multi-floor entertainment complex in Namba — arcade, bowling, karaoke, billiards.", visited:false },
+    ]},
+    { id:"d13", title:"May 28 (Wed) — Osaka", items:[
+        { id:"it1772981463912", time:"", name:"Universal Studios Japan", desc:"Major theme park with Super Nintendo World, Harry Potter and more. Plan a full day.", visited:false },
+    ]},
+
+    // TOKYO BLOCK 2 — May 29 – Jun 2
+    { id:"d14", title:"May 29 (Thu) — Osaka → Tokyo", items:[
+        { id:"i53", time:"10 AM", name:"Shinkansen to Tokyo", desc:"Bullet train back (~2h30)", visited:false },
+    ]},
+    { id:"d15", title:"May 30 (Fri) — Tokyo", items:[] },
+    { id:"d16", title:"May 31 (Sat) — Tokyo", items:[] },
+    { id:"d17", title:"Jun 1 (Sun) — Tokyo: Last Full Day", items:[] },
+    { id:"d18", title:"Jun 2 (Mon) — Departure", items:[
+        { id:"i69", time:"", name:"Fly home", desc:"Check out, head to Narita/Haneda. Safe travels!", visited:false },
+    ]},
+];
+
+export const DEFAULT_PACKING = [
+    { id:"pk1",name:"Sweater",cat:"Clothes",qty:1,notes:"",packed:false },
+    { id:"pk2",name:"T-shirt",cat:"Clothes",qty:5,notes:"",packed:false },
+    { id:"pk3",name:"Jacket",cat:"Clothes",qty:1,notes:"Rain jacket",packed:false },
+    { id:"pk4",name:"Underwear",cat:"Clothes",qty:14,notes:"",packed:false },
+    { id:"pk5",name:"Pants",cat:"Clothes",qty:3,notes:"",packed:false },
+    { id:"pk6",name:"Socks",cat:"Clothes",qty:7,notes:"",packed:false },
+    { id:"pk7",name:"Phone charger",cat:"Electronics",qty:1,notes:"USB-C",packed:false },
+    { id:"pk8",name:"Power bank",cat:"Electronics",qty:1,notes:"20,000 mAh",packed:false },
+    { id:"pk9",name:"Earbuds",cat:"Electronics",qty:1,notes:"",packed:false },
+    { id:"pk10",name:"Passport",cat:"Essentials",qty:1,notes:"Check expiry",packed:false },
+    { id:"pk11",name:"Travel insurance docs",cat:"Essentials",qty:1,notes:"",packed:false },
+    { id:"pk12",name:"Yen cash",cat:"Essentials",qty:1,notes:"¥50,000+",packed:false },
+    { id:"pk13",name:"Toothbrush",cat:"Toiletries",qty:1,notes:"",packed:false },
+    { id:"pk14",name:"Sunscreen",cat:"Toiletries",qty:1,notes:"SPF 50",packed:false },
+    { id:"pk15",name:"Walking shoes",cat:"Shoes",qty:1,notes:"Comfortable!",packed:false },
+    { id:"pk16",name:"Sandals",cat:"Shoes",qty:1,notes:"",packed:false },
+    { id:"pk17",name:"Day backpack",cat:"Miscellaneous",qty:1,notes:"Foldable",packed:false },
+    { id:"pk18",name:"Umbrella",cat:"Miscellaneous",qty:1,notes:"Compact",packed:false },
+];
+
+export const JAPAN_FACTS = [
+    'Japan has 5.52 million vending machines — one for every 23 people.',
+    'There are more pets than children in Japan.',
+    'Trains in Japan are so punctual, delays of even a minute trigger formal apologies.',
+    'Japan has over 6,800 islands, but 97% of the population lives on just four.',
+    'You can buy square watermelons in Japan — designed to fit in refrigerators.',
+    'Japan\'s crime rate is so low that people leave belongings unattended on cafe tables.',
+    'Kit-Kat has over 200 flavors in Japan, including wasabi and sake.',
+    'The Tokyo subway system carries 8.7 million passengers per day.',
+    'Japan has over 30,000 onsen (hot spring) facilities.',
+    'There are more deer than people in Nara.',
+    'Cherry blossom season lasts only about 2 weeks.',
+    'Conveyor belt sushi (kaiten-zushi) was invented in Osaka in 1958.',
+];
+
+export const TRIP_START = new Date(2026, 4, 16); // May 16, 2026
+export const TRIP_END   = new Date(2026, 5, 2);  // Jun 2, 2026
+
+export const PHRASES = [
+    { cat:'Greetings', en:'Hello', jp:'こんにちは', rm:'Konnichiwa' },
+    { cat:'Greetings', en:'Good morning', jp:'おはようございます', rm:'Ohayou gozaimasu' },
+    { cat:'Greetings', en:'Good evening', jp:'こんばんは', rm:'Konbanwa' },
+    { cat:'Greetings', en:'Goodbye', jp:'さようなら', rm:'Sayounara' },
+    { cat:'Greetings', en:'Thank you', jp:'ありがとうございます', rm:'Arigatou gozaimasu' },
+    { cat:'Greetings', en:'Excuse me / Sorry', jp:'すみません', rm:'Sumimasen' },
+    { cat:'Greetings', en:'Yes / No', jp:'はい / いいえ', rm:'Hai / Iie' },
+    { cat:'Greetings', en:'Please', jp:'お願いします', rm:'Onegaishimasu' },
+    { cat:'Restaurant', en:'A table for 8 please', jp:'8人です', rm:'Hachi-nin desu' },
+    { cat:'Restaurant', en:'Menu please', jp:'メニューをお願いします', rm:'Menyuu o onegaishimasu' },
+    { cat:'Restaurant', en:'This one please', jp:'これをお願いします', rm:'Kore o onegaishimasu' },
+    { cat:'Restaurant', en:'Check please', jp:'お会計お願いします', rm:'Okaikei onegaishimasu' },
+    { cat:'Restaurant', en:'It was delicious', jp:'おいしかったです', rm:'Oishikatta desu' },
+    { cat:'Restaurant', en:'No meat please', jp:'肉なしでお願いします', rm:'Niku nashi de onegaishimasu' },
+    { cat:'Restaurant', en:'I\'m allergic to...', jp:'...アレルギーがあります', rm:'...arerugii ga arimasu' },
+    { cat:'Restaurant', en:'Water please', jp:'お水お願いします', rm:'Omizu onegaishimasu' },
+    { cat:'Restaurant', en:'Let\'s eat! (before meal)', jp:'いただきます', rm:'Itadakimasu' },
+    { cat:'Restaurant', en:'That was a feast (after meal)', jp:'ごちそうさまでした', rm:'Gochisousama deshita' },
+    { cat:'Directions', en:'Where is...?', jp:'...はどこですか？', rm:'...wa doko desu ka?' },
+    { cat:'Directions', en:'Train station', jp:'駅', rm:'Eki' },
+    { cat:'Directions', en:'Left / Right / Straight', jp:'左 / 右 / まっすぐ', rm:'Hidari / Migi / Massugu' },
+    { cat:'Directions', en:'How far is it?', jp:'どのくらいかかりますか？', rm:'Dono kurai kakarimasu ka?' },
+    { cat:'Directions', en:'Please take me here (taxi)', jp:'ここまでお願いします', rm:'Koko made onegaishimasu' },
+    { cat:'Shopping', en:'How much is this?', jp:'これはいくらですか？', rm:'Kore wa ikura desu ka?' },
+    { cat:'Shopping', en:'Too expensive', jp:'高すぎます', rm:'Takasugimasu' },
+    { cat:'Shopping', en:'I\'ll take this', jp:'これをください', rm:'Kore o kudasai' },
+    { cat:'Shopping', en:'Tax-free please', jp:'免税でお願いします', rm:'Menzei de onegaishimasu' },
+    { cat:'Shopping', en:'Do you accept credit cards?', jp:'カードは使えますか？', rm:'Kaado wa tsukaemasu ka?' },
+    { cat:'Emergency', en:'Help!', jp:'助けて！', rm:'Tasukete!' },
+    { cat:'Emergency', en:'Call an ambulance', jp:'救急車を呼んでください', rm:'Kyuukyuusha o yonde kudasai' },
+    { cat:'Emergency', en:'I\'m lost', jp:'道に迷いました', rm:'Michi ni mayoimashita' },
+    { cat:'Emergency', en:'I don\'t understand', jp:'わかりません', rm:'Wakarimasen' },
+    { cat:'Emergency', en:'Do you speak English?', jp:'英語を話せますか？', rm:'Eigo o hanasemasu ka?' },
+    { cat:'Emergency', en:'Hospital', jp:'病院', rm:'Byouin' },
+    { cat:'Train Station', en:'One ticket to... please', jp:'...まで一枚お願いします', rm:'...made ichimai onegaishimasu' },
+    { cat:'Train Station', en:'Which platform?', jp:'何番ホームですか？', rm:'Nanban hoomu desu ka?' },
+    { cat:'Train Station', en:'Is this the train to...?', jp:'...行きの電車ですか？', rm:'...iki no densha desu ka?' },
+    { cat:'Train Station', en:'Last train', jp:'終電', rm:'Shuuden' },
+    { cat:'Train Station', en:'Reserved seat', jp:'指定席', rm:'Shiteiseki' },
+    { cat:'Polite', en:'I\'m sorry to bother you', jp:'お邪魔します', rm:'Ojama shimasu' },
+    { cat:'Polite', en:'Cheers! (drinking)', jp:'乾杯！', rm:'Kanpai!' },
+    { cat:'Polite', en:'Nice to meet you', jp:'はじめまして', rm:'Hajimemashite' },
+    { cat:'Polite', en:'My name is...', jp:'...と申します', rm:'...to moushimasu' },
+    { cat:'Onsen', en:'Where is the changing room?', jp:'脱衣所はどこですか？', rm:'Datsuijo wa doko desu ka?' },
+    { cat:'Onsen', en:'Is there a towel?', jp:'タオルはありますか？', rm:'Taoru wa arimasu ka?' },
+    { cat:'Onsen', en:'Men / Women', jp:'男 / 女', rm:'Otoko / Onna' },
+];
+
+export const DEFAULT_HOTELS = [
+    { city:'Tokyo',  nameJp:'京王プラザホテル', addrJp:'〒160-8330 東京都新宿区西新宿2-2-1', nameEn:'Keio Plaza Hotel Tokyo', mapUrl:'https://www.google.com/maps?q=Keio+Plaza+Hotel+Tokyo' },
+    { city:'Kyoto',  nameJp:'ホテル名未定', addrJp:'京都市', nameEn:'TBD — Kyoto hotel', mapUrl:'#' },
+    { city:'Osaka',  nameJp:'ホテル名未定', addrJp:'大阪市', nameEn:'TBD — Osaka hotel', mapUrl:'#' },
+];
+
+export const DARK_MAP_STYLES = [
+    { elementType:"geometry", stylers:[{color:"#1d2c4d"}] },
+    { elementType:"labels.text.fill", stylers:[{color:"#8ec3b9"}] },
+    { elementType:"labels.text.stroke", stylers:[{color:"#1a3646"}] },
+    { featureType:"administrative.country", elementType:"geometry.stroke", stylers:[{color:"#4b6878"}] },
+    { featureType:"poi", elementType:"geometry", stylers:[{color:"#283d6a"}] },
+    { featureType:"poi.park", elementType:"geometry.fill", stylers:[{color:"#023e58"}] },
+    { featureType:"road", elementType:"geometry", stylers:[{color:"#304a7d"}] },
+    { featureType:"road.highway", elementType:"geometry", stylers:[{color:"#2c6675"}] },
+    { featureType:"water", elementType:"geometry", stylers:[{color:"#0e1626"}] },
+];

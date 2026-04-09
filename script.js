@@ -7,7 +7,7 @@
 const ENABLE_API_PHOTOS = false;  // Flip to true to re-enable runtime Google Places photo fetching
 
 // ── CONFIG ──
-const DATA_VERSION = 17;
+const DATA_VERSION = 18;
 
 const CITY_COLORS = {
     Tokyo:'#3b82f6', Kyoto:'#ef4444', Osaka:'#f59e0b',
@@ -185,10 +185,22 @@ function mapsSearchUrl(name, city, lat, lng, address) {
     const query = address ? name + ', ' + address : name + ', ' + city + ', Japan';
     return `https://www.google.com/maps?q=${encodeURIComponent(query)}&z=17`;
 }
+function findPlaceById(id) {
+    if (id == null) return null;
+    return state.places.find(p => p.id === id) || null;
+}
 function findPlaceByName(name) {
     if (!name) return null;
     return state.places.find(p => p.name === name)
         || state.places.find(p => p.name.toLowerCase() === name.toLowerCase());
+}
+function findPlaceForItem(item) {
+    if (!item) return null;
+    if (item.placeId != null) {
+        const p = findPlaceById(item.placeId);
+        if (p) return p;
+    }
+    return item.isNote ? null : findPlaceByName(item.name);
 }
 function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
@@ -486,6 +498,7 @@ let expandedDays = new Set();
 let poolFilter = 'all';
 let poolSearch = '';
 let poolSortableInstance = null;
+let timelineSortables = [];
 
 // Google Maps state
 let gmap = null, gmarkers = [], placesService = null, infoWindow = null, autocompleteWidget = null;
@@ -497,11 +510,54 @@ let photoQueue = [], isProcessingPhotos = false;
 // ══════════════════════════════════════════════════════════════
 //  PERSISTENCE
 // ══════════════════════════════════════════════════════════════
+// ── State Migrations ──
+// Each migration transforms state from version N to N+1.
+// Add new migrations at the end. Never remove old ones.
+const STATE_MIGRATIONS = {
+    17: function migrateV17toV18(s) {
+        // Backfill placeId on itinerary items by matching name to places
+        if (s.itinerary && s.places) {
+            const placesByName = new Map();
+            const placesByNameLower = new Map();
+            s.places.forEach(p => {
+                placesByName.set(p.name, p.id);
+                placesByNameLower.set(p.name.toLowerCase(), p.id);
+            });
+            s.itinerary.forEach(day => {
+                if (!day.items) return;
+                day.items.forEach(item => {
+                    if (item.placeId != null || item.isNote) return;
+                    const id = placesByName.get(item.name) ?? placesByNameLower.get(item.name?.toLowerCase());
+                    if (id != null) item.placeId = id;
+                });
+            });
+        }
+        s.version = 18;
+    },
+};
+
+function applyMigrations(s) {
+    const MIN_VERSION = 14; // oldest version we can migrate from
+    if (!s.version || s.version < MIN_VERSION) return false;
+    while (s.version < DATA_VERSION) {
+        const migrate = STATE_MIGRATIONS[s.version];
+        if (!migrate) return false; // missing migration = can't upgrade
+        migrate(s);
+    }
+    return s.version === DATA_VERSION;
+}
+
 function loadState() {
     try {
         const raw = localStorage.getItem('japanTripData');
-        if (raw) { const s = JSON.parse(raw); if (s.version === DATA_VERSION) { state = s; return; } }
+        if (raw) {
+            const s = JSON.parse(raw);
+            if (s.version === DATA_VERSION) { state = s; return; }
+            // Try to migrate from older version
+            if (applyMigrations(s)) { state = s; save(); return; }
+        }
     } catch(e) {}
+    // Fresh install or unrecoverable — load defaults
     state.places = JSON.parse(JSON.stringify(DEFAULT_PLACES));
     state.todos = JSON.parse(JSON.stringify(DEFAULT_TODOS));
     state.itinerary = JSON.parse(JSON.stringify(DEFAULT_ITINERARY));
@@ -509,20 +565,40 @@ function loadState() {
     state.version = DATA_VERSION;
     save();
 }
-function save() { localStorage.setItem('japanTripData', JSON.stringify(state)); }
+function save() {
+    try {
+        localStorage.setItem('japanTripData', JSON.stringify(state));
+    } catch (e) {
+        if (e.name === 'QuotaExceededError' || e.code === 22) {
+            showToast('Storage full! Export your data as JSON to avoid losing changes.', 'error', 6000);
+        } else {
+            showToast('Failed to save: ' + e.message, 'error');
+        }
+    }
+}
+
+function getStorageUsageKB() {
+    try {
+        const data = localStorage.getItem('japanTripData') || '';
+        return (new Blob([data]).size / 1024).toFixed(1);
+    } catch { return '?'; }
+}
 
 function exportData() {
     if (!state || !state.places || !state.places.length) {
         showToast('Nothing to export — state is empty. Try refreshing first.', 'error');
         return;
     }
+    const defaultName = `japan-trip-backup-${new Date().toISOString().slice(0,10)}`;
+    const fileName = prompt('Save file as:', defaultName);
+    if (!fileName) return; // cancelled
     const totalItems = state.itinerary.reduce((sum, d) => sum + d.items.length, 0);
     const data = JSON.stringify(state, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `japan-trip-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.download = fileName.endsWith('.json') ? fileName : fileName + '.json';
     a.click();
     URL.revokeObjectURL(url);
     showToast(`Exported: ${state.places.length} places, ${state.itinerary.length} days, ${totalItems} activities.`, 'success');
@@ -551,6 +627,116 @@ function importData(file) {
         }
     };
     reader.readAsText(file);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SAVE VERSIONING (local snapshots)
+// ══════════════════════════════════════════════════════════════
+const MAX_SAVED_VERSIONS = 10;
+const VERSIONS_KEY = 'japanTripVersions';
+
+function getSavedVersions() {
+    try { return JSON.parse(localStorage.getItem(VERSIONS_KEY)) || []; }
+    catch { return []; }
+}
+
+function saveSavedVersions(versions) {
+    try { localStorage.setItem(VERSIONS_KEY, JSON.stringify(versions)); }
+    catch (e) { showToast('Could not save version list — storage may be full.', 'error'); }
+}
+
+function quickSave() {
+    const defaultName = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+    const name = prompt('Name this save:', defaultName);
+    if (!name) return;
+
+    const versions = getSavedVersions();
+    if (versions.length >= MAX_SAVED_VERSIONS) {
+        if (!confirm(`You have ${MAX_SAVED_VERSIONS} saved versions. The oldest will be removed. Continue?`)) return;
+        versions.pop();
+    }
+    versions.unshift({
+        name,
+        timestamp: Date.now(),
+        snapshot: JSON.parse(JSON.stringify(state))
+    });
+    saveSavedVersions(versions);
+    renderSavedVersions();
+    showToast(`Saved: "${name}"`, 'success');
+}
+
+function loadVersion(index) {
+    const versions = getSavedVersions();
+    const v = versions[index];
+    if (!v) return;
+    if (!confirm(`Load "${v.name}"? This will replace your current data.`)) return;
+    state = JSON.parse(JSON.stringify(v.snapshot));
+    if (state.version !== DATA_VERSION) applyMigrations(state);
+    save();
+    renderAll();
+    showToast(`Loaded: "${v.name}"`, 'success');
+}
+
+function deleteVersion(index) {
+    const versions = getSavedVersions();
+    const v = versions[index];
+    if (!v || !confirm(`Delete saved version "${v.name}"?`)) return;
+    versions.splice(index, 1);
+    saveSavedVersions(versions);
+    renderSavedVersions();
+    showToast('Version deleted.', 'info');
+}
+
+function renameVersion(index) {
+    const versions = getSavedVersions();
+    const v = versions[index];
+    if (!v) return;
+    const name = prompt('Rename version:', v.name);
+    if (!name) return;
+    v.name = name;
+    saveSavedVersions(versions);
+    renderSavedVersions();
+}
+
+function renderSavedVersions() {
+    const container = document.getElementById('saved-versions-list');
+    const usageEl = document.getElementById('storage-usage');
+    if (!container) return;
+
+    const versions = getSavedVersions();
+    if (usageEl) usageEl.textContent = `Storage: ~${getStorageUsageKB()} KB used`;
+
+    if (versions.length === 0) {
+        container.innerHTML = '<div class="pool-empty">No saved versions yet. Use Quick Save to create one.</div>';
+        return;
+    }
+
+    container.innerHTML = versions.map((v, i) => {
+        const date = new Date(v.timestamp);
+        const ago = formatTimeAgo(date);
+        return `<div class="saved-version-item">
+            <div class="saved-version-info" onclick="loadVersion(${i})" title="Click to load">
+                <div class="saved-version-name">${esc(v.name)}</div>
+                <div class="saved-version-date">${ago}</div>
+            </div>
+            <div class="saved-version-actions">
+                <button onclick="renameVersion(${i})" title="Rename">✏️</button>
+                <button onclick="deleteVersion(${i})" title="Delete">🗑️</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function formatTimeAgo(date) {
+    const diff = Date.now() - date.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 30) return `${days}d ago`;
+    return date.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -608,6 +794,7 @@ function renderAll() {
     renderPacking();
     renderHotelCards();
     renderGuide();
+    renderSavedVersions();
     loadPhotosUrl();
 }
 
@@ -815,6 +1002,7 @@ function bindEvents() {
     document.getElementById('export-btn').addEventListener('click', exportData);
     document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
     document.getElementById('import-file').addEventListener('change', e => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
+    document.getElementById('quicksave-btn').addEventListener('click', quickSave);
     // Pool filters
     document.getElementById('pool-search').addEventListener('input', e => { poolSearch = e.target.value.toLowerCase(); renderPlacePool(); });
     document.getElementById('pool-city-filter').addEventListener('change', e => { poolFilter = e.target.value; renderPlacePool(); });
@@ -892,13 +1080,36 @@ function toggleEditMode() {
 // ══════════════════════════════════════════════════════════════
 //  MODALS
 // ══════════════════════════════════════════════════════════════
-function openModal(id)  { document.getElementById(id).classList.add('open'); }
+let activeModalFocusTrap = null;
+
+function openModal(id) {
+    const modal = document.getElementById(id);
+    modal.classList.add('open');
+    // Focus trap: restrict Tab to modal content
+    const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (focusable.length) {
+        focusable[0].focus();
+        activeModalFocusTrap = function(e) {
+            if (e.key !== 'Tab') return;
+            const first = focusable[0], last = focusable[focusable.length - 1];
+            if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last.focus(); } }
+            else { if (document.activeElement === last) { e.preventDefault(); first.focus(); } }
+        };
+        modal.addEventListener('keydown', activeModalFocusTrap);
+    }
+}
+
 function closeModal(id) {
+    const modal = document.getElementById(id);
     if (id === 'modal-day-map' && expandedDayMapInstance) {
         expandedDayMapInstance.setMap(null);
         expandedDayMapInstance = null;
     }
-    document.getElementById(id).classList.remove('open');
+    if (activeModalFocusTrap) {
+        modal.removeEventListener('keydown', activeModalFocusTrap);
+        activeModalFocusTrap = null;
+    }
+    modal.classList.remove('open');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -973,17 +1184,19 @@ function renderItinerary() {
         </div>`;
     }).join('');
 
-    // SortableJS — only in edit mode, handle-based dragging
+    // SortableJS — destroy previous instances, recreate only in edit mode
+    timelineSortables.forEach(s => s.destroy());
+    timelineSortables = [];
     if (editMode) {
         document.querySelectorAll('.timeline').forEach(el => {
-            new Sortable(el, {
+            timelineSortables.push(new Sortable(el, {
                 group: 'itinerary',
                 animation: 200,
                 ghostClass: 'sortable-ghost',
                 handle: '.tl-grip',
                 onEnd: handleItinSort,
                 onAdd: handlePoolDrop
-            });
+            }));
         });
     }
 }
@@ -1035,7 +1248,7 @@ function getDayWalkingEstimate(day) {
     const coords = [];
     for (const it of day.items) {
         if (it.isNote) continue;
-        const p = findPlaceByName(it.name);
+        const p = findPlaceForItem(it);
         if (p && p.lat && p.lng) coords.push({lat: p.lat, lng: p.lng});
     }
     if (coords.length < 2) return null;
@@ -1070,7 +1283,7 @@ function getHoursConflict(it, place) {
 
 function renderTimelineItem(it, day, city) {
     const cityClass = city.toLowerCase();
-    const place = findPlaceByName(it.name);
+    const place = findPlaceForItem(it);
     const note = it.isNote;
     const navUrl = place ? mapsNavUrl(place.name, city, place.lat, place.lng, place.address) : mapsNavUrl(it.name, city);
     const hoursWarn = !note ? getHoursConflict(it, place) : null;
@@ -1092,8 +1305,12 @@ function renderTimelineItem(it, day, city) {
 }
 
 function toggleDay(dayId) {
-    if (expandedDays.has(dayId)) expandedDays.delete(dayId);
-    else expandedDays.add(dayId);
+    if (expandedDays.has(dayId)) {
+        expandedDays.delete(dayId);
+        delete dayMaps[dayId]; // free map instance on collapse
+    } else {
+        expandedDays.add(dayId);
+    }
     renderItinerary();
     if (expandedDays.has(dayId)) initDayMap(dayId);
 }
@@ -1108,7 +1325,7 @@ function initDayMap(dayId) {
     const coords = [];
     for (const it of day.items) {
         if (it.isNote) continue;
-        const p = findPlaceByName(it.name);
+        const p = findPlaceForItem(it);
         if (p && p.lat && p.lng) coords.push({ lat: p.lat, lng: p.lng, name: it.name, cat: p.category });
     }
 
@@ -1174,7 +1391,7 @@ function expandDayMap(dayId) {
     const coords = [];
     for (const it of day.items) {
         if (it.isNote) continue;
-        const p = findPlaceByName(it.name);
+        const p = findPlaceForItem(it);
         if (p && p.lat && p.lng) coords.push({ lat: p.lat, lng: p.lng, name: it.name, cat: p.category });
     }
     if (coords.length === 0) { showToast('No places with coordinates in this day', 'info'); return; }
@@ -1321,7 +1538,8 @@ function toggleVisited(dayId, itemId) {
     item.visited = !item.visited;
     save(); renderItinerary(); renderDashboard();
 
-    if (item.visited && typeof confetti === 'function') {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (item.visited && typeof confetti === 'function' && !prefersReducedMotion) {
         const allDone = day.items.every(i => i.visited);
         if (allDone) {
             confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
@@ -1427,11 +1645,15 @@ function deleteItinItem(dayId, itemId) {
 //  PLACE POOL (unadded places panel)
 // ══════════════════════════════════════════════════════════════
 function getUnaddedPlaces() {
+    const addedIds = new Set();
     const addedNames = new Set();
     state.itinerary.forEach(day => {
-        day.items.forEach(item => addedNames.add(item.name));
+        day.items.forEach(item => {
+            if (item.placeId != null) addedIds.add(item.placeId);
+            if (item.name) addedNames.add(item.name);
+        });
     });
-    return state.places.filter(p => !addedNames.has(p.name));
+    return state.places.filter(p => !addedIds.has(p.id) && !addedNames.has(p.name));
 }
 
 function renderPlacePool() {
@@ -1558,6 +1780,7 @@ function addPlaceToDay(placeId) {
 
     targetDay.items.push({
         id: 'it' + Date.now(),
+        placeId: place.id,
         time: '',
         timeEnd: undefined,
         name: place.name,
@@ -1588,6 +1811,7 @@ function handlePoolDrop(evt) {
 
     const newItem = {
         id: 'it' + Date.now(),
+        placeId: place.id,
         time: '',
         timeEnd: undefined,
         name: place.name,
@@ -1836,13 +2060,15 @@ function handlePlaceSubmit(e) {
         if (p) {
             const oldName = p.name;
             Object.assign(p, data);
-            if (oldName !== data.name) {
-                state.itinerary.forEach(day => {
-                    day.items.forEach(it => {
-                        if (it.name === oldName) it.name = data.name;
-                    });
+            // Update itinerary references: sync name for display, placeId for lookups
+            state.itinerary.forEach(day => {
+                day.items.forEach(it => {
+                    if (it.placeId === p.id || it.name === oldName) {
+                        it.placeId = p.id;
+                        it.name = data.name;
+                    }
                 });
-            }
+            });
         }
     } else {
         data.id = Date.now();

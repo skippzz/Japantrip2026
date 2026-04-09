@@ -33,7 +33,7 @@
             <div class="header-actions">
                 <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">🌙</button>
                 <button class="icon-btn" id="sidebar-btn" title="Menu">☰</button>
-                <button class="icon-btn" id="edit-btn" title="Toggle edit mode">🔒</button>
+                <button class="icon-btn edit-toggle-btn" id="edit-btn" title="Toggle edit mode — enables adding, editing, and deleting">🔒 <span class="edit-label">Edit</span></button>
             </div>
         </div>
     </header>
@@ -43,60 +43,81 @@
     <aside class="sidebar" id="sidebar">
         <button class="sidebar-close" id="sidebar-close">&times;</button>
 
-        <div class="sidebar-section">
-            <h3>✅ To-Do</h3>
-            <ul class="todo-list" id="todo-list"></ul>
-            <div class="todo-add edit-only">
-                <input type="text" id="todo-input" placeholder="Add a task...">
-                <button id="todo-add-btn">+</button>
+        <div class="sidebar-section collapsible">
+            <h3 onclick="this.parentElement.classList.toggle('collapsed')">✅ To-Do</h3>
+            <div class="sidebar-section-body">
+                <ul class="todo-list" id="todo-list"></ul>
+                <div class="todo-add">
+                    <input type="text" id="todo-input" placeholder="Add a task...">
+                    <button id="todo-add-btn">+</button>
+                </div>
             </div>
         </div>
 
-        <div class="sidebar-section">
-            <h3>💾 Data</h3>
-            <div class="data-actions">
-                <button class="btn btn-accent btn-sm" id="export-btn" style="flex:1">📥 Export</button>
-                <button class="btn btn-ghost btn-sm" id="import-btn" style="flex:1">📤 Import</button>
-                <input type="file" id="import-file" accept=".json" style="display:none">
+        <div class="sidebar-section collapsible">
+            <h3 onclick="this.parentElement.classList.toggle('collapsed')">🧳 Trips</h3>
+            <div class="sidebar-section-body">
+                <div id="trip-manager" class="trip-manager"></div>
+                <button class="btn btn-ghost btn-sm" id="new-trip-btn" style="width:100%;margin-top:6px">+ New Trip</button>
             </div>
-            <p class="data-hint">Export saves all your edits as a .json file. Import loads it on any device.</p>
         </div>
 
-        <div class="sidebar-section">
-            <h3>🏨 Hotel Address (Show to Taxi)</h3>
-            <div id="hotel-cards">
-                <div class="hotel-card" data-city="Tokyo">
-                    <div class="hotel-city">Tokyo</div>
-                    <div class="hotel-name-jp" id="hotel-jp-tokyo">ホテル名を入力してください</div>
-                    <div class="hotel-addr-jp" id="hotel-addr-tokyo">住所を入力してください</div>
-                    <div class="hotel-name-en" id="hotel-en-tokyo">Edit mode to set hotel</div>
-                    <div class="hotel-actions">
-                        <button class="btn btn-sm btn-ghost" onclick="copyHotel('tokyo')">📋 Copy</button>
-                        <a class="btn btn-sm btn-navigate" id="hotel-nav-tokyo" href="#" target="_blank">📍 Map</a>
+        <div class="sidebar-section collapsible">
+            <h3 onclick="this.parentElement.classList.toggle('collapsed')">💾 Data & Versions</h3>
+            <div class="sidebar-section-body">
+                <div class="data-actions">
+                    <button class="btn btn-accent btn-sm" id="export-btn" style="flex:1">📥 Export</button>
+                    <button class="btn btn-ghost btn-sm" id="import-btn" style="flex:1">📤 Import</button>
+                    <input type="file" id="import-file" accept=".json" style="display:none">
+                </div>
+                <div class="data-actions" style="margin-top:6px">
+                    <button class="btn btn-ghost btn-sm" id="quicksave-btn" style="flex:1">⚡ Quick Save</button>
+                </div>
+                <div id="saved-versions-list" class="saved-versions-list" style="margin-top:8px"></div>
+                <p class="data-hint" id="storage-usage"></p>
+            </div>
+        </div>
+
+        <div class="sidebar-section collapsible">
+            <h3 onclick="this.parentElement.classList.toggle('collapsed')">🏨 Hotel Address (Show to Taxi)</h3>
+            <div class="sidebar-section-body">
+                <div id="hotel-cards">
+                    <div class="hotel-card" data-city="Tokyo">
+                        <div class="hotel-city">Tokyo</div>
+                        <div class="hotel-name-jp" id="hotel-jp-tokyo">ホテル名を入力してください</div>
+                        <div class="hotel-addr-jp" id="hotel-addr-tokyo">住所を入力してください</div>
+                        <div class="hotel-name-en" id="hotel-en-tokyo">Edit mode to set hotel</div>
+                        <div class="hotel-actions">
+                            <button class="btn btn-sm btn-ghost" onclick="copyHotel('tokyo')">📋 Copy</button>
+                            <a class="btn btn-sm btn-navigate" id="hotel-nav-tokyo" href="#" target="_blank">📍 Map</a>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-ghost edit-only" onclick="openHotelEditor()" style="width:100%;margin-top:.5rem">✏️ Edit Hotels</button>
+            </div>
+        </div>
+
+        <div class="sidebar-section collapsible">
+            <h3 onclick="this.parentElement.classList.toggle('collapsed')">🚨 Emergency</h3>
+            <div class="sidebar-section-body">
+                <div class="emergency-grid">
+                    <div class="emg-item"><span class="emg-num">110</span><span class="emg-label">Police</span></div>
+                    <div class="emg-item"><span class="emg-num">119</span><span class="emg-label">Ambulance / Fire</span></div>
+                    <div class="emg-item"><span class="emg-num">03-3224-5000</span><span class="emg-label">Turkish Embassy</span></div>
+                </div>
+                <div class="emg-extra">
+                    <div style="font-size:.78rem;color:var(--text-2);margin-top:.5rem">
+                        <strong>Lost card:</strong> Call your bank immediately<br>
+                        <strong>Lost passport:</strong> Contact embassy + file police report<br>
+                        <strong>Free Wi-Fi:</strong> Look for "Japan Connected-free Wi-Fi" app
                     </div>
                 </div>
             </div>
-            <button class="btn btn-sm btn-ghost edit-only" onclick="openHotelEditor()" style="width:100%;margin-top:.5rem">✏️ Edit Hotels</button>
         </div>
 
-        <div class="sidebar-section">
-            <h3>🚨 Emergency</h3>
-            <div class="emergency-grid">
-                <div class="emg-item"><span class="emg-num">110</span><span class="emg-label">Police</span></div>
-                <div class="emg-item"><span class="emg-num">119</span><span class="emg-label">Ambulance / Fire</span></div>
-                <div class="emg-item"><span class="emg-num">03-3224-5000</span><span class="emg-label">Turkish Embassy</span></div>
-            </div>
-            <div class="emg-extra">
-                <div style="font-size:.78rem;color:var(--text-2);margin-top:.5rem">
-                    <strong>Lost card:</strong> Call your bank immediately<br>
-                    <strong>Lost passport:</strong> Contact embassy + file police report<br>
-                    <strong>Free Wi-Fi:</strong> Look for "Japan Connected-free Wi-Fi" app
-                </div>
-            </div>
-        </div>
-
-        <div class="sidebar-section">
-            <h3>💱 Currency</h3>
+        <div class="sidebar-section collapsible">
+            <h3 onclick="this.parentElement.classList.toggle('collapsed')">💱 Currency</h3>
+            <div class="sidebar-section-body">
             <div class="currency-widget">
                 <div class="currency-row">
                     <input type="number" id="currency-yen" placeholder="¥ Amount" oninput="convertCurrency('yen')">
@@ -114,37 +135,43 @@
                     <button onclick="setYen(10000)">¥10K</button>
                 </div>
             </div>
-        </div>
-
-        <div class="sidebar-section">
-            <h3>📸 Trip Photos</h3>
-            <p style="font-size:.78rem;color:var(--text-2);margin-bottom:.5rem">Share your photos! Everyone can add to the album.</p>
-            <a class="dash-link" href="#" target="_blank" id="photos-link" style="justify-content:center">📸 Open Shared Album</a>
-            <p class="data-hint" style="margin-top:.4rem">Set the album URL in edit mode: paste your Google Photos shared album link.</p>
-            <div class="edit-only" style="margin-top:.4rem">
-                <input type="text" id="photos-url" placeholder="https://photos.google.com/share/..." style="width:100%;padding:.4rem .55rem;font-size:.76rem;background:var(--bg-3);border:1px solid var(--bg-4);border-radius:6px;color:var(--text-1);outline:none" onchange="savePhotosUrl(this.value)">
             </div>
         </div>
 
-        <div class="sidebar-section">
-            <h3>🔗 Quick Links</h3>
-            <ul class="link-list">
-                <li><a href="https://www.google.com/maps" target="_blank">Google Maps</a></li>
-                <li><a href="https://www.japan-guide.com/" target="_blank">Japan Guide</a></li>
-                <li><a href="https://www.hyperdia.com/" target="_blank">Train Schedule (Hyperdia)</a></li>
-            </ul>
+        <div class="sidebar-section collapsible">
+            <h3 onclick="this.parentElement.classList.toggle('collapsed')">📸 Trip Photos</h3>
+            <div class="sidebar-section-body">
+                <p style="font-size:.78rem;color:var(--text-2);margin-bottom:.5rem">Share your photos! Everyone can add to the album.</p>
+                <a class="dash-link" href="#" target="_blank" id="photos-link" style="justify-content:center">📸 Open Shared Album</a>
+                <p class="data-hint" style="margin-top:.4rem">Set the album URL in edit mode: paste your Google Photos shared album link.</p>
+                <div class="edit-only" style="margin-top:.4rem">
+                    <input type="text" id="photos-url" placeholder="https://photos.google.com/share/..." style="width:100%;padding:.4rem .55rem;font-size:.76rem;background:var(--bg-3);border:1px solid var(--bg-4);border-radius:6px;color:var(--text-1);outline:none" onchange="savePhotosUrl(this.value)">
+                </div>
+            </div>
         </div>
 
-        <div class="sidebar-section">
-            <h3>📋 Trip Rules</h3>
-            <ul class="guideline-list">
-                <li>Keep rooms tidy</li>
-                <li>Be prepared with your packing</li>
-                <li>Text/call to coordinate meetups</li>
-                <li>Stay on schedule for reservations</li>
-                <li>Close windows &amp; doors when out</li>
-                <li><strong>Keep CASH — many places are cash-only</strong></li>
-            </ul>
+        <div class="sidebar-section collapsible">
+            <h3 onclick="this.parentElement.classList.toggle('collapsed')">🔗 Quick Links</h3>
+            <div class="sidebar-section-body">
+                <ul class="link-list">
+                    <li><a href="https://www.google.com/maps" target="_blank">Google Maps</a></li>
+                    <li><a href="https://www.japan-guide.com/" target="_blank">Japan Guide</a></li>
+                    <li><a href="https://www.hyperdia.com/" target="_blank">Train Schedule (Hyperdia)</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="sidebar-section collapsible">
+            <h3 onclick="this.parentElement.classList.toggle('collapsed')">📋 Trip Rules</h3>
+            <div class="sidebar-section-body">
+                <div id="trip-rules-list"></div>
+                <div style="margin-top:6px">
+                    <div class="todo-add">
+                        <input type="text" id="rule-input" placeholder="Add a rule...">
+                        <button id="rule-add-btn">+</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </aside>
 
@@ -196,6 +223,12 @@
             <div class="view-top">
                 <h2>Places to Visit</h2>
                 <button class="btn btn-accent edit-only" id="add-place-btn">+ Add Place</button>
+            </div>
+            <div class="import-bar">
+                <div class="import-bar-inner">
+                    <input type="text" id="smart-import-input" class="search-input" placeholder="Paste a Google Maps link or type a place name...">
+                    <button class="btn btn-accent btn-sm" id="smart-import-btn">+ Import</button>
+                </div>
             </div>
             <div class="places-toolbar">
                 <input type="text" id="place-search" class="search-input" placeholder="Search places...">
@@ -456,9 +489,17 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <!-- html2canvas for shareable day cards -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <!-- App JS -->
-    <script src="script.js"></script>
-    <!-- Google Maps (for map view + edit mode autocomplete) -->
+    <!-- Google Maps callback bridge (must be before module + API script) -->
+    <script>
+        window._gmapsReady = false;
+        window.onGoogleMapsReady = function() {
+            if (window._onMapsReady) window._onMapsReady();
+            else window._gmapsReady = true;
+        };
+    </script>
+    <!-- App JS (ES Module) -->
+    <script type="module" src="src/app.js"></script>
+    <!-- Google Maps -->
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBfw2E-pFd7W0p7-kSqy4VLeaGX8oRqYp8&libraries=places&callback=onGoogleMapsReady"></script>
     <!-- Service Worker -->
     <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
