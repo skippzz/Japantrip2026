@@ -406,6 +406,22 @@ window.toggleSidebar = toggleSidebar;
 // Modals
 window.openModal = openModal;
 window.closeModal = closeModal;
+// Cache clear
+window.clearAppCache = async function() {
+    if (!confirm('Clear all cached files and reload? Your saved data will NOT be deleted.')) return;
+    try {
+        // Unregister service workers
+        const regs = await navigator.serviceWorker?.getRegistrations();
+        for (const reg of (regs || [])) await reg.unregister();
+        // Delete all caches
+        const keys = await caches?.keys();
+        for (const key of (keys || [])) await caches.delete(key);
+        showToast('Cache cleared. Reloading...', 'success');
+        setTimeout(() => window.location.reload(true), 500);
+    } catch (e) {
+        window.location.reload(true);
+    }
+};
 // Trips
 window.switchTrip = switchTrip;
 window.deleteTrip = deleteTrip;
