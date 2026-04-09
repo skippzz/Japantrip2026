@@ -7,6 +7,7 @@ import {
     findPlaceForItem, downloadBlob
 } from './helpers.js';
 import { CATEGORY_ICONS } from './config.js';
+import { TRIP_START, TRIP_END } from './data.js';
 import { showToast } from './toast.js';
 import { getDaySegments, getDaySummary, optimizeRoute } from './routing.js';
 
@@ -18,10 +19,22 @@ import { getDaySegments, getDaySummary, optimizeRoute } from './routing.js';
 
 if (!window._timelineSortables) window._timelineSortables = [];
 
+let itinSearch = '';
+export function setItinSearch(val) { itinSearch = val; }
+
+let rainMode = false;
+export function toggleRainMode() {
+    rainMode = !rainMode;
+    const btn = document.getElementById('rain-toggle');
+    if (btn) btn.classList.toggle('active', rainMode);
+    renderItinerary();
+}
+
 // ══════════════════════════════════════════════════════════════
 //  ITINERARY — VERTICAL TIMELINE
 // ══════════════════════════════════════════════════════════════
 export function renderItinerary() {
+    document.querySelector('.floating-navigate')?.remove();
     const container = document.getElementById('itinerary-list');
     document.getElementById('day-counter').textContent = `${state.itinerary.length} days · May 16 – Jun 2, 2026`;
 
@@ -87,6 +100,30 @@ export function renderItinerary() {
         </div>`;
     }).join('');
 
+    // Search filtering
+    if (itinSearch) {
+        const q = itinSearch.toLowerCase();
+        document.querySelectorAll('.day-card').forEach(card => {
+            const dayId = card.dataset.dayId;
+            const day = state.itinerary.find(d => d.id === dayId);
+            if (!day) return;
+            const hasMatch = day.items.some(it =>
+                it.name?.toLowerCase().includes(q) || it.desc?.toLowerCase().includes(q)
+            );
+            if (!hasMatch) {
+                card.style.display = 'none';
+            }
+            // Highlight matching items
+            card.querySelectorAll('.tl-item').forEach(el => {
+                const itemId = el.dataset.itemId;
+                const item = day.items.find(i => i.id === itemId);
+                if (item && (item.name?.toLowerCase().includes(q) || item.desc?.toLowerCase().includes(q))) {
+                    el.classList.add('search-highlight');
+                }
+            });
+        });
+    }
+
     // Nearby suggestions hint
     if (window._expandedDays.size > 0) {
         document.querySelectorAll('.day-card.expanded').forEach(card => {
@@ -129,6 +166,53 @@ export function renderItinerary() {
                 onAdd: function(evt) { window.handlePoolDrop?.(evt); }
             }));
         });
+    }
+
+    // Day-of-trip mode: auto-expand today and highlight next activity
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (today >= TRIP_START && today <= TRIP_END) {
+        const tripDayIdx = Math.floor((today - TRIP_START) / 86400000);
+        const todayDay = state.itinerary[tripDayIdx];
+        if (todayDay) {
+            if (window._expandedDays.size === 0 || (window._expandedDays.size === 1 && window._expandedDays.has(state.itinerary[0]?.id))) {
+                window._expandedDays.add(todayDay.id);
+            }
+
+            const nowMins = now.getHours() * 60 + now.getMinutes();
+            const card = document.querySelector(`[data-day-id="${todayDay.id}"]`);
+            if (card) {
+                card.classList.add('today-card');
+                const items = todayDay.items.filter(it => !it.visited);
+                for (const it of items) {
+                    if (!it.time) continue;
+                    const timeParts = it.time.trim().split(/\s*[-–]\s*/);
+                    const startStr = timeParts[0];
+                    const match = startStr.match(/(\d{1,2}):?(\d{2})?/);
+                    if (match) {
+                        const h = parseInt(match[1]), m = parseInt(match[2] || '0');
+                        const itemMins = h * 60 + m;
+                        if (itemMins >= nowMins) {
+                            const el = card.querySelector(`[data-item-id="${it.id}"]`);
+                            if (el) {
+                                el.classList.add('next-activity');
+                                const place = findPlaceForItem(it);
+                                if (place) {
+                                    const navUrl = mapsNavUrl(place.name, place.city, place.lat, place.lng, place.address);
+                                    const floatBtn = document.createElement('a');
+                                    floatBtn.href = navUrl;
+                                    floatBtn.target = '_blank';
+                                    floatBtn.className = 'floating-navigate';
+                                    floatBtn.innerHTML = `📍 Navigate to ${place.name}`;
+                                    document.body.querySelector('.main')?.appendChild(floatBtn);
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -186,7 +270,7 @@ export function renderTimelineItem(it, day, city) {
     const navUrl = place ? mapsNavUrl(place.name, city, place.lat, place.lng, place.address) : mapsNavUrl(it.name, city);
     const hoursWarn = !note ? getHoursConflict(it, place) : null;
     return `
-    <div class="tl-item ${it.visited?'visited':''} ${note?'is-note':''}" data-item-id="${it.id}">
+    <div class="tl-item ${it.visited?'visited':''} ${note?'is-note':''} ${rainMode && place && getVenue(place) === 'outdoor' ? 'rain-dimmed' : ''} ${rainMode && place && getVenue(place) === 'indoor' ? 'rain-highlighted' : ''}" data-item-id="${it.id}">
         <span class="tl-grip edit-only-inline" title="Drag to reorder or drop in pool">⠿</span>
         <div class="tl-dot ${note?'':cityClass}"></div>
         ${(it.time || it.timeEnd) ? `<div class="tl-time">${esc([it.time, it.timeEnd].filter(Boolean).join(' – '))}</div>` : ''}

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'japan2026-v20';
+const CACHE_NAME = 'japan2026-v21';
 const ASSETS = [
     './',
     './index.html',
@@ -25,6 +25,7 @@ const ASSETS = [
     './src/modules/place-import.js',
     './src/modules/routing.js',
     './src/modules/trips.js',
+    './src/modules/export.js',
     'https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js',
     'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js',
     'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',

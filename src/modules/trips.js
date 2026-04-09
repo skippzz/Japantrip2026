@@ -232,6 +232,7 @@ export function renderTripManager() {
             <div class="trip-card-header">
                 <div class="trip-card-name">${esc(trip.name)}${isActive ? ' <span class="badge-active">Active</span>' : ''}</div>
                 <div class="trip-card-actions" onclick="event.stopPropagation()">
+                    ${isActive ? `<button onclick="openTripEditor('${trip.id}')" title="Edit trip settings">⚙️</button>` : ''}
                     <button onclick="renameTrip('${trip.id}')" title="Rename">✏️</button>
                     ${!isActive ? `<button onclick="deleteTrip('${trip.id}')" title="Delete">🗑️</button>` : ''}
                 </div>
@@ -286,6 +287,62 @@ export function openNewTripModal() {
     updatePreview();
 
     window.openModal?.('modal-detail');
+}
+
+export function openTripEditor(tripId) {
+    const meta = ensureTripsMeta();
+    const trip = meta.trips.find(t => t.id === (tripId || meta.activeTrip));
+    if (!trip) return;
+
+    const html = `
+        <h2>Edit Trip Settings</h2>
+        <div class="form-group"><label>Trip Name</label><input type="text" id="edit-trip-name" value="${esc(trip.name)}"></div>
+        <div class="form-group"><label>Destination</label><input type="text" id="edit-trip-dest" value="${esc(trip.destination || '')}"></div>
+        <div class="form-row">
+            <div class="form-group"><label>Start Date</label><input type="date" id="edit-trip-start" value="${trip.dateStart || ''}"></div>
+            <div class="form-group"><label>End Date</label><input type="date" id="edit-trip-end" value="${trip.dateEnd || ''}"></div>
+        </div>
+        <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--bg-4)">
+            <h3 style="color:var(--text-2);font-size:.85rem;margin-bottom:.5rem">Danger Zone</h3>
+            <div class="data-actions">
+                <button class="btn btn-ghost btn-sm" onclick="resetTripItinerary()" style="color:#ef4444">Reset Itinerary</button>
+                <button class="btn btn-ghost btn-sm" onclick="deleteTrip('${trip.id}')" style="color:#ef4444">Delete Trip</button>
+            </div>
+        </div>
+        <div class="form-actions" style="margin-top:1rem">
+            <button class="btn btn-ghost" onclick="closeModal('modal-detail')">Cancel</button>
+            <button class="btn btn-accent" onclick="saveTripSettings()">Save Changes</button>
+        </div>`;
+    document.getElementById('detail-content').innerHTML = html;
+    window.openModal?.('modal-detail');
+}
+
+export function saveTripSettings() {
+    const meta = ensureTripsMeta();
+    const trip = meta.trips.find(t => t.id === meta.activeTrip);
+    if (!trip) return;
+
+    const name = document.getElementById('edit-trip-name')?.value?.trim();
+    if (!name) { showToast('Trip name is required.', 'warn'); return; }
+
+    trip.name = name;
+    trip.destination = document.getElementById('edit-trip-dest')?.value?.trim() || '';
+    trip.dateStart = document.getElementById('edit-trip-start')?.value || '';
+    trip.dateEnd = document.getElementById('edit-trip-end')?.value || '';
+
+    saveTripsMeta(meta);
+    renderTripManager();
+    window.closeModal?.('modal-detail');
+    showToast('Trip settings saved.', 'success');
+}
+
+export function resetTripItinerary() {
+    if (!confirm('Reset the entire itinerary? All scheduled activities will be removed. Places will be kept.')) return;
+    state.itinerary.forEach(day => { day.items = []; });
+    save();
+    emit('renderAll');
+    window.closeModal?.('modal-detail');
+    showToast('Itinerary reset.', 'info');
 }
 
 export function createAndSwitchTrip() {

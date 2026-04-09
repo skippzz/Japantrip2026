@@ -9,7 +9,7 @@ import { state, loadState, save, subscribe, emit, exportData, importData,
 import { initTheme, toggleTheme, setMapRefs } from './modules/theme.js';
 import { showToast } from './modules/toast.js';
 import { setStateRef } from './modules/helpers.js';
-import { JAPAN_FACTS } from './modules/data.js';
+import { JAPAN_FACTS, PHRASES } from './modules/data.js';
 import { ENABLE_API_PHOTOS } from './modules/config.js';
 
 // ── Feature Modules ──
@@ -17,10 +17,12 @@ import { renderDashboard, goToToday } from './modules/dashboard.js';
 import { renderItinerary, toggleDay, toggleVisited, handleItinSort,
          addItineraryDay, deleteDay, duplicateDay, openItinItemModal, handleItinItemSubmit,
          deleteItinItem, populateDaySelect, jumpToDay, shareDayCard,
-         optimizeDayRoute } from './modules/itinerary.js';
+         optimizeDayRoute, setItinSearch, toggleRainMode } from './modules/itinerary.js';
+import { exportICS } from './modules/export.js';
 import { renderPlaces, setPlaceFilter, setPlaceSearch, setAreaFilter,
          deletePlace, toggleReserved, updateResField, openDetail,
-         openPlaceModal, handlePlaceSubmit } from './modules/places.js';
+         openPlaceModal, handlePlaceSubmit, setPlaceSort,
+         applyStatusFilter, clearAllFilters, renderReservationSummary } from './modules/places.js';
 import { renderPlacePool, getUnaddedPlaces, getNearbyForDay, setPoolSearch, setPoolFilter,
          addPlaceToDay, handlePoolDrop, handleReturnToPool, populatePoolTargetDay } from './modules/pool.js';
 import { renderPacking, togglePacked, deletePacking, handlePackingSubmit,
@@ -29,13 +31,15 @@ import { renderTodos, toggleTodo, deleteTodo, addTodo,
          renderRules, addRule, deleteRule } from './modules/todos.js';
 import { initMap, updateMapMarkers, fitMapToAll, initAutocomplete,
          initDayMap, expandDayMap, initExpandedDayMaps,
-         startPhotoFetching, expandedDayMapInstance } from './modules/map.js';
+         startPhotoFetching, expandedDayMapInstance, toggleMapCategory } from './modules/map.js';
 import { renderGuide, speakJapanese, translatePhrase, setGuideTab, setPhraseSearch } from './modules/guide.js';
 import { renderHotelCards, copyHotel, openHotelEditor, saveHotelEditor } from './modules/hotels.js';
-import { convertCurrency, setYen, loadPhotosUrl, savePhotosUrl } from './modules/currency.js';
+import { convertCurrency, setYen, loadPhotosUrl, savePhotosUrl,
+         adjustSplitCount, calcSplit, copySplitResult, clearSplit } from './modules/currency.js';
 import { smartImport, handleSmartImport } from './modules/place-import.js';
 import { renderTripManager, switchTrip, deleteTrip, renameTrip,
-         openNewTripModal, createAndSwitchTrip } from './modules/trips.js';
+         openNewTripModal, createAndSwitchTrip,
+         openTripEditor, saveTripSettings, resetTripItinerary } from './modules/trips.js';
 
 // ══════════════════════════════════════════════════════════════
 //  SHARED UI STATE (accessible by modules via window._*)
@@ -170,6 +174,10 @@ function bindEvents() {
     });
     // Place search
     document.getElementById('place-search').addEventListener('input', e => { setPlaceSearch(e.target.value.toLowerCase()); renderPlaces(); });
+    // Place sort
+    document.getElementById('place-sort')?.addEventListener('change', e => { setPlaceSort(e.target.value); renderPlaces(); });
+    // Itinerary search
+    document.getElementById('itin-search')?.addEventListener('input', e => { setItinSearch(e.target.value); renderItinerary(); });
     // Packing tabs
     document.getElementById('packing-tabs').addEventListener('click', e => {
         const t = e.target.closest('.chip'); if (!t) return;
@@ -195,9 +203,15 @@ function bindEvents() {
     document.getElementById('import-file').addEventListener('change', e => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
     document.getElementById('quicksave-btn').addEventListener('click', quickSave);
     document.getElementById('new-trip-btn')?.addEventListener('click', openNewTripModal);
+    document.getElementById('view-reservations-btn')?.addEventListener('click', renderReservationSummary);
+    document.getElementById('export-ics-btn')?.addEventListener('click', exportICS);
+    document.getElementById('rain-toggle')?.addEventListener('click', toggleRainMode);
     // Pool filters
     document.getElementById('pool-search').addEventListener('input', e => { setPoolSearch(e.target.value.toLowerCase()); renderPlacePool(); });
     document.getElementById('pool-city-filter').addEventListener('change', e => { setPoolFilter(e.target.value); renderPlacePool(); });
+    // Bill splitter
+    document.getElementById('split-amount')?.addEventListener('input', calcSplit);
+    document.getElementById('split-count')?.addEventListener('input', calcSplit);
     // Guide tabs
     document.querySelectorAll('[data-gtab]').forEach(btn => btn.addEventListener('click', () => {
         document.querySelectorAll('[data-gtab]').forEach(b => b.classList.remove('active'));
@@ -223,11 +237,103 @@ function bindEvents() {
             document.querySelectorAll('.modal-overlay.open').forEach(m => closeModal(m.id));
         }
     });
+    // Global search (Ctrl+K)
+    document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            openGlobalSearch();
+        }
+    });
     // Map filters
     const mapCityFilter = document.getElementById('map-filter');
     if (mapCityFilter) mapCityFilter.addEventListener('change', e => updateMapMarkers(e.target.value));
     const fitBtn = document.getElementById('map-fit');
     if (fitBtn) fitBtn.addEventListener('click', fitMapToAll);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GLOBAL SEARCH (Ctrl+K)
+// ══════════════════════════════════════════════════════════════
+function openGlobalSearch() {
+    openModal('modal-search');
+    const input = document.getElementById('global-search-input');
+    if (input) { input.value = ''; input.focus(); }
+    document.getElementById('global-search-results').innerHTML = '<div class="data-hint">Type to search places, activities, and phrases...</div>';
+    input?.addEventListener('input', () => runGlobalSearch(input.value));
+}
+
+function runGlobalSearch(query) {
+    const results = document.getElementById('global-search-results');
+    if (!results) return;
+    if (!query || query.trim().length < 2) {
+        results.innerHTML = '<div class="data-hint">Type at least 2 characters...</div>';
+        return;
+    }
+    const q = query.trim().toLowerCase();
+    let html = '';
+
+    // Search places
+    const matchedPlaces = state.places.filter(p =>
+        p.name?.toLowerCase().includes(q) || p.city?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q)
+    ).slice(0, 5);
+    if (matchedPlaces.length) {
+        html += '<div class="search-group-title">Places</div>';
+        html += matchedPlaces.map(p =>
+            `<div class="search-result-item" onclick="closeModal('modal-search'); switchView('places'); setTimeout(()=>openDetail(${p.id}),100)">
+                <span class="search-result-icon">📍</span>
+                <div><div class="search-result-name">${p.name}</div><div class="search-result-meta">${p.city} · ${p.category}</div></div>
+            </div>`
+        ).join('');
+    }
+
+    // Search itinerary items
+    const matchedItems = [];
+    state.itinerary.forEach((day, idx) => {
+        day.items.forEach(it => {
+            if (it.name?.toLowerCase().includes(q) || it.desc?.toLowerCase().includes(q)) {
+                matchedItems.push({ ...it, dayTitle: day.title, dayId: day.id, dayNum: idx + 1 });
+            }
+        });
+    });
+    if (matchedItems.length) {
+        html += '<div class="search-group-title">Activities</div>';
+        html += matchedItems.slice(0, 5).map(it =>
+            `<div class="search-result-item" onclick="closeModal('modal-search'); switchView('itinerary'); setTimeout(()=>jumpToDay('${it.dayId}'),100)">
+                <span class="search-result-icon">📅</span>
+                <div><div class="search-result-name">${it.name}</div><div class="search-result-meta">Day ${it.dayNum}</div></div>
+            </div>`
+        ).join('');
+    }
+
+    // Search todos
+    const matchedTodos = state.todos.filter(t => t.text?.toLowerCase().includes(q));
+    if (matchedTodos.length) {
+        html += '<div class="search-group-title">Todos</div>';
+        html += matchedTodos.slice(0, 3).map(t =>
+            `<div class="search-result-item" onclick="closeModal('modal-search'); toggleSidebar()">
+                <span class="search-result-icon">✅</span>
+                <div><div class="search-result-name">${t.text}</div><div class="search-result-meta">${t.done ? 'Done' : 'Pending'}</div></div>
+            </div>`
+        ).join('');
+    }
+
+    // Search phrases
+    const matchedPhrases = PHRASES.filter(p =>
+        p.en?.toLowerCase().includes(q) || p.jp?.includes(q) || p.rm?.toLowerCase().includes(q)
+    ).slice(0, 3);
+    if (matchedPhrases.length) {
+        html += '<div class="search-group-title">Phrases</div>';
+        html += matchedPhrases.map(p =>
+            `<div class="search-result-item" onclick="closeModal('modal-search'); switchView('guide')">
+                <span class="search-result-icon">🗣️</span>
+                <div><div class="search-result-name">${p.en}</div><div class="search-result-meta">${p.jp} · ${p.rm}</div></div>
+            </div>`
+        ).join('');
+    }
+
+    if (!html) html = '<div class="data-hint">No results found.</div>';
+    results.innerHTML = html;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -251,6 +357,9 @@ window.toggleReserved = toggleReserved;
 window.updateResField = updateResField;
 window.setAreaFilter = setAreaFilter;
 window.openPlaceModal = openPlaceModal;
+window.applyStatusFilter = applyStatusFilter;
+window.clearAllFilters = clearAllFilters;
+window.renderReservationSummary = renderReservationSummary;
 // Pool
 window.addPlaceToDay = addPlaceToDay;
 window.handlePoolDrop = handlePoolDrop;
@@ -274,6 +383,10 @@ window.saveHotelEditor = () => saveHotelEditor(closeModal);
 window.convertCurrency = convertCurrency;
 window.setYen = setYen;
 window.savePhotosUrl = savePhotosUrl;
+window.adjustSplitCount = adjustSplitCount;
+window.calcSplit = calcSplit;
+window.copySplitResult = copySplitResult;
+window.clearSplit = clearSplit;
 // Guide
 window.speakJapanese = speakJapanese;
 window.translatePhrase = translatePhrase;
@@ -292,6 +405,9 @@ window.deleteTrip = deleteTrip;
 window.renameTrip = renameTrip;
 window.openNewTripModal = openNewTripModal;
 window.createAndSwitchTrip = createAndSwitchTrip;
+window.openTripEditor = openTripEditor;
+window.saveTripSettings = saveTripSettings;
+window.resetTripItinerary = resetTripItinerary;
 // Render functions (for cross-module calls)
 window.renderItinerary = renderItinerary;
 window.renderPlacePool = renderPlacePool;
@@ -299,6 +415,7 @@ window.renderDashboard = renderDashboard;
 window.renderPlaces = renderPlaces;
 window.updateMapMarkers = updateMapMarkers;
 window.renderAll = renderAll;
+window.toggleMapCategory = toggleMapCategory;
 window.initDayMap = initDayMap;
 window.startPhotoFetching = startPhotoFetching;
 

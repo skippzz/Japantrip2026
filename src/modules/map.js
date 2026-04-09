@@ -8,6 +8,15 @@ import { getMapStyles } from './theme.js';
 import { parseDayTitle } from './helpers.js';
 
 // ── Module-level state ──
+let hiddenCategories = new Set();
+
+export function toggleMapCategory(checkbox) {
+    const cat = checkbox.dataset.cat;
+    if (checkbox.checked) hiddenCategories.delete(cat);
+    else hiddenCategories.add(cat);
+    updateMapMarkers(document.getElementById('map-filter')?.value || 'all');
+}
+
 let placesService = null;
 let autocompleteWidget = null;
 let photoQueue = [], isProcessingPhotos = false;
@@ -103,6 +112,7 @@ export function updateMapMarkers(cityFilter) {
 
     filtered.forEach(p => {
         if (!p.lat || !p.lng) return;
+        if (hiddenCategories.has(p.category)) return;
         const color = MARKER_COLORS[p.category] || '#3b82f6';
         const marker = new google.maps.Marker({
             position: { lat: p.lat, lng: p.lng }, map: window._gmap, title: p.name,

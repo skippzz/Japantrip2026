@@ -68,10 +68,14 @@
                 <div class="data-actions">
                     <button class="btn btn-accent btn-sm" id="export-btn" style="flex:1">📥 Export</button>
                     <button class="btn btn-ghost btn-sm" id="import-btn" style="flex:1">📤 Import</button>
+                    <button class="btn btn-ghost btn-sm" id="export-ics-btn" style="flex:1">📅 Calendar</button>
                     <input type="file" id="import-file" accept=".json" style="display:none">
                 </div>
                 <div class="data-actions" style="margin-top:6px">
                     <button class="btn btn-ghost btn-sm" id="quicksave-btn" style="flex:1">⚡ Quick Save</button>
+                </div>
+                <div class="data-actions" style="margin-top:6px">
+                    <button class="btn btn-ghost btn-sm" id="view-reservations-btn" style="flex:1">🎫 Reservations</button>
                 </div>
                 <div id="saved-versions-list" class="saved-versions-list" style="margin-top:8px"></div>
                 <p class="data-hint" id="storage-usage"></p>
@@ -139,6 +143,40 @@
         </div>
 
         <div class="sidebar-section collapsible">
+            <h3 onclick="this.parentElement.classList.toggle('collapsed')">🧾 Split Bill</h3>
+            <div class="sidebar-section-body">
+            <div class="split-widget">
+                <div class="currency-row">
+                    <input type="number" id="split-amount" placeholder="¥ Total bill" min="0">
+                    <span class="currency-label">JPY</span>
+                </div>
+                <div class="split-row">
+                    <label class="split-label">People:</label>
+                    <div class="split-people-ctrl">
+                        <button class="btn-round" onclick="adjustSplitCount(-1)">−</button>
+                        <input type="number" id="split-count" value="8" min="1" max="50" style="width:40px;text-align:center">
+                        <button class="btn-round" onclick="adjustSplitCount(1)">+</button>
+                    </div>
+                </div>
+                <div class="split-row">
+                    <label class="split-label">Mode:</label>
+                    <select id="split-mode" onchange="calcSplit()" class="select-sm">
+                        <option value="even">Even split</option>
+                        <option value="percent">By % share</option>
+                        <option value="fixed">Fixed amounts</option>
+                    </select>
+                </div>
+                <div id="split-custom" style="display:none"></div>
+                <div class="split-result" id="split-result"></div>
+                <div class="split-actions">
+                    <button class="btn btn-ghost btn-sm" onclick="copySplitResult()">📋 Copy</button>
+                    <button class="btn btn-ghost btn-sm" onclick="clearSplit()">Clear</button>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <div class="sidebar-section collapsible">
             <h3 onclick="this.parentElement.classList.toggle('collapsed')">📸 Trip Photos</h3>
             <div class="sidebar-section-body">
                 <p style="font-size:.78rem;color:var(--text-2);margin-bottom:.5rem">Share your photos! Everyone can add to the album.</p>
@@ -191,7 +229,9 @@
                     <span class="day-counter" id="day-counter"></span>
                 </div>
                 <div class="view-top-right">
+                    <input type="text" id="itin-search" class="search-input" placeholder="Search activities..." style="max-width:200px">
                     <select id="day-select" class="day-select"></select>
+                    <button class="btn btn-sm rain-toggle" id="rain-toggle" title="Toggle rainy day view — highlights indoor places">☔ Rain</button>
                     <button class="btn btn-accent edit-only" id="add-day-btn">+ Add Day</button>
                 </div>
             </div>
@@ -232,6 +272,14 @@
             </div>
             <div class="places-toolbar">
                 <input type="text" id="place-search" class="search-input" placeholder="Search places...">
+                <select id="place-sort" class="select-sm" style="margin-left:auto">
+                    <option value="default">Sort: Default</option>
+                    <option value="name">Sort: A-Z</option>
+                    <option value="name-desc">Sort: Z-A</option>
+                    <option value="city">Sort: By City</option>
+                    <option value="category">Sort: By Category</option>
+                    <option value="scheduled">Sort: Scheduled First</option>
+                </select>
                 <div class="filter-bar" id="filter-bar">
                     <button class="chip active" data-filter="all">All</button>
                     <button class="chip" data-filter="Tokyo">Tokyo</button>
@@ -249,6 +297,14 @@
                     <button class="chip" data-filter="Onsen">♨️ Onsen</button>
                 </div>
                 <div class="area-bar" id="area-bar" style="display:none"></div>
+                <div class="status-filters" id="status-filters">
+                    <label class="status-filter-item"><input type="checkbox" data-status="scheduled" onchange="applyStatusFilter()"> Scheduled</label>
+                    <label class="status-filter-item"><input type="checkbox" data-status="unscheduled" onchange="applyStatusFilter()"> Not Scheduled</label>
+                    <label class="status-filter-item"><input type="checkbox" data-status="reserved" onchange="applyStatusFilter()"> Reserved</label>
+                    <label class="status-filter-item"><input type="checkbox" data-status="indoor" onchange="applyStatusFilter()"> Indoor</label>
+                    <label class="status-filter-item"><input type="checkbox" data-status="outdoor" onchange="applyStatusFilter()"> Outdoor</label>
+                </div>
+                <div class="active-filters" id="active-filters" style="display:none"></div>
             </div>
             <div class="places-count" id="places-count"></div>
             <div class="places-grid" id="places-grid"></div>
@@ -281,13 +337,13 @@
                     <button class="btn btn-accent" onclick="window.location.reload()">Try Again</button>
                 </div>
             </div>
-            <div class="map-legend">
-                <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Food</span>
-                <span class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>Shopping</span>
-                <span class="legend-item"><span class="legend-dot" style="background:#10b981"></span>Attractions</span>
-                <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>Entertainment</span>
-                <span class="legend-item"><span class="legend-dot" style="background:#ec4899"></span>Hotel</span>
-                <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Onsen</span>
+            <div class="map-legend" id="map-legend">
+                <label class="legend-item legend-toggle"><input type="checkbox" checked data-cat="Food" onchange="toggleMapCategory(this)"><span class="legend-dot" style="background:#f59e0b"></span>Food</label>
+                <label class="legend-item legend-toggle"><input type="checkbox" checked data-cat="Shopping" onchange="toggleMapCategory(this)"><span class="legend-dot" style="background:#8b5cf6"></span>Shopping</label>
+                <label class="legend-item legend-toggle"><input type="checkbox" checked data-cat="Attractions" onchange="toggleMapCategory(this)"><span class="legend-dot" style="background:#10b981"></span>Attractions</label>
+                <label class="legend-item legend-toggle"><input type="checkbox" checked data-cat="Entertainment" onchange="toggleMapCategory(this)"><span class="legend-dot" style="background:#3b82f6"></span>Entertainment</label>
+                <label class="legend-item legend-toggle"><input type="checkbox" checked data-cat="Hotel" onchange="toggleMapCategory(this)"><span class="legend-dot" style="background:#ec4899"></span>Hotel</label>
+                <label class="legend-item legend-toggle"><input type="checkbox" checked data-cat="Onsen" onchange="toggleMapCategory(this)"><span class="legend-dot" style="background:#ef4444"></span>Onsen</label>
             </div>
         </section>
 
@@ -324,6 +380,14 @@
             </div>
             <div id="guide-content"></div>
         </section>
+
+        <!-- Global Search Modal -->
+        <div class="modal-overlay" id="modal-search">
+            <div class="modal modal-search">
+                <input type="text" id="global-search-input" class="search-input" placeholder="Search places, activities, phrases..." autofocus>
+                <div id="global-search-results" class="global-search-results"></div>
+            </div>
+        </div>
 
     </main>
 

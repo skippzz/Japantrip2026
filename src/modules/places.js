@@ -12,6 +12,9 @@ import { showToast } from './toast.js';
 let placeFilter = 'all';
 let areaFilter = 'all';
 let placeSearch = '';
+let placeSort = 'default';
+let statusFilters = new Set();
+export function setPlaceSort(val) { placeSort = val; }
 
 // Allow external code to set filter state (for event binding in app.js)
 export function setPlaceFilter(val) { placeFilter = val; }
@@ -32,6 +35,27 @@ export function getFilteredPlaces() {
         (p.description||'').toLowerCase().includes(placeSearch) ||
         getArea(p).toLowerCase().includes(placeSearch)
     );
+    if (statusFilters.size > 0) {
+        const scheduledIds = new Set();
+        const scheduledNames = new Set();
+        state.itinerary.forEach(d => d.items.forEach(it => {
+            if (it.placeId != null) scheduledIds.add(it.placeId);
+            if (it.name) scheduledNames.add(it.name);
+        }));
+
+        arr = arr.filter(p => {
+            const isScheduled = scheduledIds.has(p.id) || scheduledNames.has(p.name);
+            const isReserved = !!p.reserved;
+            const venue = getVenue(p);
+
+            if (statusFilters.has('scheduled') && !isScheduled) return false;
+            if (statusFilters.has('unscheduled') && isScheduled) return false;
+            if (statusFilters.has('reserved') && !isReserved) return false;
+            if (statusFilters.has('indoor') && venue !== 'indoor' && venue !== 'both') return false;
+            if (statusFilters.has('outdoor') && venue !== 'outdoor' && venue !== 'both') return false;
+            return true;
+        });
+    }
     return arr;
 }
 
@@ -50,7 +74,20 @@ export function getAreasForCurrentFilter() {
 }
 
 export function renderPlaces() {
-    const places = getFilteredPlaces();
+    let places = getFilteredPlaces();
+    if (placeSort === 'name') places.sort((a, b) => a.name.localeCompare(b.name));
+    else if (placeSort === 'name-desc') places.sort((a, b) => b.name.localeCompare(a.name));
+    else if (placeSort === 'city') places.sort((a, b) => a.city.localeCompare(b.city) || a.name.localeCompare(b.name));
+    else if (placeSort === 'category') places.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+    else if (placeSort === 'scheduled') {
+        const scheduled = new Set();
+        state.itinerary.forEach(d => d.items.forEach(it => { if (it.placeId != null) scheduled.add(it.placeId); if (it.name) scheduled.add(it.name); }));
+        places.sort((a, b) => {
+            const aS = scheduled.has(a.id) || scheduled.has(a.name) ? 0 : 1;
+            const bS = scheduled.has(b.id) || scheduled.has(b.name) ? 0 : 1;
+            return aS - bS || a.name.localeCompare(b.name);
+        });
+    }
     document.getElementById('places-count').textContent = `${places.length} place${places.length!==1?'s':''}`;
     // Render area sub-filter bar
     const areaBar = document.getElementById('area-bar');
@@ -106,6 +143,96 @@ export function renderPlaces() {
             </div>
         </div>`;
     }).join('');
+
+    // Update filter badges with counts
+    document.querySelectorAll('#filter-bar .chip[data-filter]').forEach(chip => {
+        const filter = chip.dataset.filter;
+        let count = 0;
+        if (filter === 'all') count = state.places.length;
+        else if (['Tokyo','Kyoto','Osaka','Nara','Fuji','Izu'].includes(filter)) count = state.places.filter(p => p.city === filter).length;
+        else count = state.places.filter(p => p.category === filter).length;
+        let badge = chip.querySelector('.chip-count');
+        if (!badge) { badge = document.createElement('span'); badge.className = 'chip-count'; chip.appendChild(badge); }
+        badge.textContent = count;
+    });
+
+    // Active filter summary
+    const activeEl = document.getElementById('active-filters');
+    if (activeEl) {
+        const active = [];
+        if (placeFilter !== 'all') active.push(placeFilter);
+        if (areaFilter !== 'all') active.push(areaFilter);
+        statusFilters.forEach(s => active.push(s));
+        if (placeSearch) active.push(`"${placeSearch}"`);
+        if (active.length) {
+            activeEl.style.display = '';
+            activeEl.innerHTML = `<span class="active-filters-text">Filters: ${active.join(' + ')} (${places.length} places)</span> <button class="btn btn-ghost btn-sm" onclick="clearAllFilters()">Clear all</button>`;
+        } else {
+            activeEl.style.display = 'none';
+        }
+    }
+}
+
+export function applyStatusFilter() {
+    statusFilters.clear();
+    document.querySelectorAll('#status-filters input:checked').forEach(cb => {
+        statusFilters.add(cb.dataset.status);
+    });
+    renderPlaces();
+}
+
+export function clearAllFilters() {
+    placeFilter = 'all'; areaFilter = 'all'; placeSearch = '';
+    statusFilters.clear();
+    document.getElementById('place-search').value = '';
+    document.querySelectorAll('#filter-bar .chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('#filter-bar .chip[data-filter="all"]')?.classList.add('active');
+    document.querySelectorAll('#status-filters input').forEach(cb => cb.checked = false);
+    if (document.getElementById('place-sort')) document.getElementById('place-sort').value = 'default';
+    renderPlaces();
+}
+
+export function renderReservationSummary() {
+    const reserved = state.places.filter(p => p.reserved);
+    if (reserved.length === 0) {
+        showToast('No reservations yet. Mark places as reserved in the detail view.', 'info');
+        return;
+    }
+
+    const dayMap = new Map();
+    state.itinerary.forEach((day, idx) => {
+        day.items.forEach(it => {
+            const key = it.placeId ?? it.name;
+            if (!dayMap.has(key)) dayMap.set(key, []);
+            dayMap.get(key).push(idx + 1);
+        });
+    });
+
+    let html = '<h2>Reservation Summary</h2>';
+    html += '<div class="res-summary-list">';
+    reserved.forEach(p => {
+        const days = dayMap.get(p.id) || dayMap.get(p.name) || [];
+        const dayStr = days.length ? `Day ${days.join(', ')}` : 'Not scheduled';
+        html += `
+        <div class="res-summary-item">
+            <div class="res-summary-name">${esc(p.name)}</div>
+            <div class="res-summary-meta">
+                <span>${esc(p.city)}</span> · <span>${esc(p.category)}</span> · <span>${dayStr}</span>
+            </div>
+            ${p.confirmationNo ? `<div class="res-summary-field">Confirmation: <strong>${esc(p.confirmationNo)}</strong></div>` : ''}
+            ${p.bookedBy ? `<div class="res-summary-field">Booked by: ${esc(p.bookedBy)}</div>` : ''}
+            ${p.hours ? `<div class="res-summary-field">Hours: ${esc(p.hours)}</div>` : ''}
+            <div class="res-summary-actions">
+                <a href="${mapsNavUrl(p.name, p.city, p.lat, p.lng, p.address)}" target="_blank" class="btn btn-sm btn-ghost">📍 Navigate</a>
+                <button class="btn btn-sm btn-ghost" onclick="openDetail(${p.id})">View</button>
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    html += `<div class="data-hint" style="margin-top:8px">${reserved.length} reservation${reserved.length !== 1 ? 's' : ''}</div>`;
+
+    document.getElementById('detail-content').innerHTML = html;
+    window.openModal?.('modal-detail');
 }
 
 export function deletePlace(id) {

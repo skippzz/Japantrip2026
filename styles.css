@@ -662,6 +662,10 @@ body.edit-mode .timeline-drop-hint:hover { border-color: var(--accent); color: v
 }
 .legend-item { display: flex; align-items: center; gap: .3rem; }
 .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.legend-toggle { cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.legend-toggle input[type="checkbox"] { margin: 0; accent-color: var(--accent); }
+.legend-toggle:has(input:not(:checked)) { opacity: .4; }
+.search-highlight { background: rgba(59, 130, 246, 0.1) !important; border-left: 3px solid var(--accent) !important; }
 
 /* Google Maps info window overrides */
 .gm-style .gm-style-iw-c { background: var(--bg-2) !important; border-radius: 10px !important; padding: 0 !important; }
@@ -1229,6 +1233,29 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .import-bar-inner .search-input { flex: 1; }
 .import-bar-inner .btn { white-space: nowrap; }
 
+/* ── Bill Splitter ── */
+.split-widget { display: flex; flex-direction: column; gap: 8px; }
+.split-row { display: flex; align-items: center; gap: 8px; }
+.split-label { font-size: .78rem; color: var(--text-2); min-width: 50px; }
+.split-people-ctrl { display: flex; align-items: center; gap: 4px; }
+.btn-round {
+    width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--bg-4);
+    background: var(--bg-2); color: var(--text-1); font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: background var(--transition);
+}
+.btn-round:hover { background: var(--bg-3); }
+.split-result { padding: 8px 0; }
+.split-per-person { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
+.split-per-person span { font-size: .75rem; font-weight: 400; color: var(--text-2); }
+.split-local { font-size: .78rem; color: var(--text-2); margin-top: 2px; }
+.split-total { font-size: .72rem; color: var(--text-3); margin-top: 4px; }
+.split-line { font-size: .78rem; color: var(--text-1); padding: 2px 0; }
+.split-warn { font-size: .72rem; color: #ef4444; margin-top: 4px; }
+.split-actions { display: flex; gap: 6px; }
+.split-pct-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.split-pct-label { font-size: .75rem; color: var(--text-2); min-width: 60px; }
+.split-pct-input { width: 60px; padding: 3px 6px; font-size: .78rem; background: var(--bg-3); border: 1px solid var(--bg-4); border-radius: 4px; color: var(--text-1); }
+
 /* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -1268,6 +1295,47 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .translate-bar .phrase-search { flex: 1; }
 .translate-result { min-height: 0; }
 
+/* ── Global Search ── */
+.modal-search { max-width: 520px; width: 95%; padding: 0; overflow: hidden; }
+.modal-search .search-input { width: 100%; padding: 14px 16px; font-size: 1rem; border: none; border-bottom: 1px solid var(--bg-4); border-radius: 12px 12px 0 0; }
+.global-search-results { max-height: 400px; overflow-y: auto; padding: 8px; }
+.search-group-title { font-size: .7rem; font-weight: 700; text-transform: uppercase; color: var(--text-3); padding: 8px 8px 4px; letter-spacing: .05em; }
+.search-result-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; cursor: pointer; transition: background var(--transition); }
+.search-result-item:hover { background: var(--bg-3); }
+.search-result-icon { font-size: 1.1rem; flex-shrink: 0; }
+.search-result-name { font-size: .85rem; font-weight: 500; color: var(--text-1); }
+.search-result-meta { font-size: .72rem; color: var(--text-3); }
+
+/* ── Day-of-Trip Mode ── */
+.today-card { border: 2px solid var(--accent) !important; }
+.today-card .day-header { background: rgba(59, 130, 246, 0.05); }
+.next-activity { background: rgba(59, 130, 246, 0.08) !important; border-left: 3px solid var(--accent) !important; animation: pulse-glow 2s ease-in-out infinite; }
+@keyframes pulse-glow { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.2); } }
+.floating-navigate {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #fff; padding: 10px 20px; border-radius: 24px;
+    font-size: .85rem; font-weight: 600; text-decoration: none; z-index: 100;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4); transition: transform var(--transition);
+    white-space: nowrap;
+}
+.floating-navigate:hover { transform: translateX(-50%) scale(1.05); }
+
+/* ── Filter Improvements ── */
+.chip-count { font-size: .65rem; opacity: .6; margin-left: 3px; }
+.status-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.status-filter-item { display: flex; align-items: center; gap: 4px; font-size: .75rem; color: var(--text-2); cursor: pointer; }
+.status-filter-item input { accent-color: var(--accent); }
+.active-filters { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin-top: 6px; background: var(--bg-2); border-radius: 8px; font-size: .75rem; }
+.active-filters-text { color: var(--text-2); }
+
+/* ── Reservation Summary ── */
+.res-summary-list { display: flex; flex-direction: column; gap: 10px; }
+.res-summary-item { padding: 10px; background: var(--bg-2); border-radius: 8px; border-left: 3px solid var(--accent); }
+.res-summary-name { font-weight: 600; font-size: .9rem; color: var(--text-1); }
+.res-summary-meta { font-size: .75rem; color: var(--text-3); margin-top: 2px; }
+.res-summary-field { font-size: .78rem; color: var(--text-2); margin-top: 3px; }
+.res-summary-actions { display: flex; gap: 6px; margin-top: 6px; }
+
 /* ── Print Stylesheet ── */
 @media print {
     header, .bottom-nav, .sidebar, .sidebar-backdrop,
@@ -1289,3 +1357,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     .tl-name, .tl-desc, .tl-time { color: #000 !important; }
     .place-card { break-inside: avoid; border: 1px solid #ddd; }
 }
+
+/* ── Rainy Day Mode ── */
+.rain-toggle.active { background: var(--accent); color: #fff; }
+.rain-dimmed { opacity: .4; }
+.rain-dimmed .tl-name::after { content: ' ☔ outdoor'; font-size: .7rem; color: #ef4444; opacity: .8; }
+.rain-highlighted { border-left: 3px solid #10b981 !important; }
+.rain-highlighted .tl-name::after { content: ' ✓ indoor'; font-size: .7rem; color: #10b981; opacity: .8; }
