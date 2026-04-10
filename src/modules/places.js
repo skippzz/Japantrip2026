@@ -3,7 +3,7 @@
 import { state, save } from './state.js';
 import {
     esc, getArea, getVenue, getPhotoPath, slugify,
-    mapsSearchUrl, mapsNavUrl
+    mapsSearchUrl, mapsNavUrl, parseDayTitle
 } from './helpers.js';
 import { CATEGORY_ICONS, CITY_COLORS, MARKER_COLORS, ENABLE_API_PHOTOS } from './config.js';
 import { showToast } from './toast.js';
@@ -136,6 +136,7 @@ export function renderPlaces() {
                     ${p.cost?`<span>💰 ${esc(p.cost)}</span>`:''}
                 </div>
                 <div class="card-actions" onclick="event.stopPropagation()">
+                    ${!scheduledDays.length ? `<button class="btn btn-sm btn-accent" onclick="event.stopPropagation(); quickAddToDay(${p.id})" title="Add to itinerary">+ Day</button>` : ''}
                     <a href="${navUrl}" target="_blank" class="btn-navigate">📍 Navigate</a>
                     <button class="btn btn-ghost btn-sm edit-only" onclick="openPlaceModal(${p.id})">✏️</button>
                     <button class="btn btn-ghost btn-sm edit-only" onclick="deletePlace(${p.id})" style="color:var(--red)">🗑️</button>
@@ -389,4 +390,63 @@ export function handlePlaceSubmit(e) {
         if (ENABLE_API_PHOTOS && window._placesService) { window.startPhotoFetching?.(); }
     }
     save(); renderPlaces(); window.updateMapMarkers?.(); window.renderPlacePool?.(); window.renderItinerary?.(); window.renderDashboard?.(); window.closeModal?.('modal-place');
+}
+
+export function quickAddToDay(placeId) {
+    const place = state.places.find(p => p.id === placeId);
+    if (!place) return;
+
+    // Build a quick day picker
+    const dayOptions = state.itinerary.map((d, i) => {
+        const { date, subtitle } = parseDayTitle(d.title);
+        return `<option value="${d.id}">Day ${i+1} — ${date}${subtitle ? ' · ' + subtitle : ''}</option>`;
+    }).join('');
+
+    const html = `
+        <h2>Add "${esc(place.name)}" to Day</h2>
+        <div class="form-group">
+            <label>Select Day</label>
+            <select id="quick-add-day-select" class="select-sm" style="width:100%">
+                ${dayOptions}
+            </select>
+        </div>
+        <div class="form-actions">
+            <button class="btn btn-ghost" onclick="closeModal('modal-detail')">Cancel</button>
+            <button class="btn btn-accent" onclick="confirmQuickAdd(${place.id})">Add to Day</button>
+        </div>`;
+    document.getElementById('detail-content').innerHTML = html;
+    window.openModal?.('modal-detail');
+}
+
+export function confirmQuickAdd(placeId) {
+    const place = state.places.find(p => p.id === placeId);
+    const dayId = document.getElementById('quick-add-day-select')?.value;
+    if (!place || !dayId) return;
+
+    const day = state.itinerary.find(d => d.id === dayId);
+    if (!day) return;
+
+    // Check duplicate
+    if (day.items.some(it => it.placeId === place.id || it.name === place.name)) {
+        if (!confirm(`"${place.name}" is already in this day. Add again?`)) return;
+    }
+
+    day.items.push({
+        id: 'it' + Date.now(),
+        placeId: place.id,
+        time: '',
+        timeEnd: undefined,
+        name: place.name,
+        desc: place.description ? place.description.substring(0, 150) : '',
+        visited: false,
+        isNote: false
+    });
+
+    save();
+    window.closeModal?.('modal-detail');
+    renderPlaces(); // refresh day badges
+    window.renderItinerary?.();
+    window.renderPlacePool?.();
+    window.renderDashboard?.();
+    showToast(`Added "${place.name}" to itinerary!`, 'success');
 }

@@ -38,6 +38,11 @@ export function renderItinerary() {
     const container = document.getElementById('itinerary-list');
     document.getElementById('day-counter').textContent = `${state.itinerary.length} days · May 16 – Jun 2, 2026`;
 
+    if (!state.itinerary.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📅</div><div class="empty-state-text"><strong>No days yet</strong><p>Add your first day to start planning</p></div></div>';
+        return;
+    }
+
     container.innerHTML = state.itinerary.map((day, idx) => {
         const city = getDayCity(day);
         const cityClass = city.toLowerCase();
@@ -155,7 +160,7 @@ export function renderItinerary() {
     // SortableJS — destroy previous instances, recreate only in edit mode
     window._timelineSortables.forEach(s => s.destroy());
     window._timelineSortables = [];
-    if (window._editMode) {
+    if (window._editMode && typeof Sortable !== 'undefined') {
         document.querySelectorAll('.timeline').forEach(el => {
             window._timelineSortables.push(new Sortable(el, {
                 group: 'itinerary',

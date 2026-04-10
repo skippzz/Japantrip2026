@@ -21,6 +21,10 @@ export function renderPacking() {
         <div class="packing-bar"><div class="packing-bar-fill" style="width:${pct}%"></div></div>
         <span class="packing-count">${packed}/${total} packed (${pct}%)</span>`;
 
+    if (total > 0 && packed === total) {
+        document.getElementById('packing-progress').innerHTML += '<div class="packing-complete">🎉 All packed and ready to go!</div>';
+    }
+
     container.innerHTML = items.map(p => `
         <tr class="${p.packed ? 'packed' : ''}">
             <td><input type="checkbox" ${p.packed ? 'checked' : ''} onchange="togglePacked('${p.id}')"></td>

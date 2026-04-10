@@ -50,7 +50,7 @@ export function adjustSplitCount(delta) {
 
 export function calcSplit() {
     const amount = parseFloat(document.getElementById('split-amount')?.value) || 0;
-    const count = parseInt(document.getElementById('split-count')?.value) || 1;
+    const count = Math.max(1, parseInt(document.getElementById('split-count')?.value) || 1);
     const mode = document.getElementById('split-mode')?.value || 'even';
     const resultEl = document.getElementById('split-result');
     const customEl = document.getElementById('split-custom');

@@ -63,10 +63,10 @@ export function openHotelEditor(openModalFn) {
 export function saveHotelEditor(closeModalFn) {
     const hotels = loadHotels();
     hotels.forEach((h, i) => {
-        h.nameJp = document.getElementById(`hed-jp-${i}`).value.trim();
-        h.addrJp = document.getElementById(`hed-addr-${i}`).value.trim();
-        h.nameEn = document.getElementById(`hed-en-${i}`).value.trim();
-        h.mapUrl = document.getElementById(`hed-url-${i}`).value.trim();
+        h.nameJp = document.getElementById(`hed-jp-${i}`)?.value?.trim() ?? h.nameJp;
+        h.addrJp = document.getElementById(`hed-addr-${i}`)?.value?.trim() ?? h.addrJp;
+        h.nameEn = document.getElementById(`hed-en-${i}`)?.value?.trim() ?? h.nameEn;
+        h.mapUrl = document.getElementById(`hed-url-${i}`)?.value?.trim() ?? h.mapUrl;
     });
     saveHotels(hotels);
     renderHotelCards();

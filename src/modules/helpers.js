@@ -37,6 +37,7 @@ export function getDayCity(day) {
 }
 
 export function parseDayTitle(title) {
+    if (!title) return { date: 'Day', subtitle: '' };
     const parts = title.split(' — ');
     return { date: parts[0] || title, subtitle: parts.slice(1).join(' — ') || '' };
 }

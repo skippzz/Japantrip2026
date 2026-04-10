@@ -22,7 +22,8 @@ import { exportICS } from './modules/export.js';
 import { renderPlaces, setPlaceFilter, setPlaceSearch, setAreaFilter,
          deletePlace, toggleReserved, updateResField, openDetail,
          openPlaceModal, handlePlaceSubmit, setPlaceSort,
-         applyStatusFilter, clearAllFilters, renderReservationSummary } from './modules/places.js';
+         applyStatusFilter, clearAllFilters, renderReservationSummary,
+         quickAddToDay, confirmQuickAdd } from './modules/places.js';
 import { renderPlacePool, getUnaddedPlaces, getNearbyForDay, setPoolSearch, setPoolFilter,
          addPlaceToDay, handlePoolDrop, handleReturnToPool, populatePoolTargetDay } from './modules/pool.js';
 import { renderPacking, togglePacked, deletePacking, handlePackingSubmit,
@@ -59,6 +60,7 @@ let activeModalFocusTrap = null;
 
 function openModal(id) {
     const modal = document.getElementById(id);
+    if (!modal) return;
     modal.classList.add('open');
     const focusable = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
     if (focusable.length) {
@@ -75,6 +77,7 @@ function openModal(id) {
 
 function closeModal(id) {
     const modal = document.getElementById(id);
+    if (!modal) return;
     if (id === 'modal-day-map') {
         cleanupExpandedMap();
     }
@@ -190,7 +193,13 @@ function bindEvents() {
         renderPacking();
     });
     // Place import (smart: accepts URLs or search text)
-    document.getElementById('smart-import-btn')?.addEventListener('click', handleSmartImport);
+    document.getElementById('smart-import-btn')?.addEventListener('click', () => {
+        const btn = document.getElementById('smart-import-btn');
+        if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+        handleSmartImport();
+        // Remove loading after 5s max (import is async)
+        setTimeout(() => { if (btn) { btn.classList.remove('loading'); btn.disabled = false; } }, 5000);
+    });
     document.getElementById('smart-import-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); handleSmartImport(); } });
     // Buttons
     document.getElementById('add-place-btn').addEventListener('click', () => openPlaceModal());
@@ -367,6 +376,8 @@ window.openPlaceModal = openPlaceModal;
 window.applyStatusFilter = applyStatusFilter;
 window.clearAllFilters = clearAllFilters;
 window.renderReservationSummary = renderReservationSummary;
+window.quickAddToDay = quickAddToDay;
+window.confirmQuickAdd = confirmQuickAdd;
 // Pool
 window.addPlaceToDay = addPlaceToDay;
 window.handlePoolDrop = handlePoolDrop;
@@ -473,6 +484,14 @@ document.addEventListener('DOMContentLoaded', () => {
     currentView = 'dashboard';
     renderAll();
     bindEvents();
+
+    // First-time edit mode hint
+    if (!localStorage.getItem('editModeHintShown')) {
+        setTimeout(() => {
+            showToast('Tip: Click the 🔒 Edit button in the header to unlock adding, editing, and deleting.', 'info', 8000);
+            localStorage.setItem('editModeHintShown', '1');
+        }, 3000);
+    }
 
     // Google Maps bridge: handle callback regardless of load order
     window._onMapsReady = onMapsReady;
