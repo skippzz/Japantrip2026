@@ -4,7 +4,7 @@ Interactive travel planner for an 18-day Japan trip (May 16 – Jun 2, 2026) bui
 
 ## Live Demo
 
-> After deploying, replace this with your GitHub Pages URL.
+https://skippzz.github.io/japantrip2026/
 
 ## Features
 
@@ -66,42 +66,38 @@ Interactive travel planner for an 18-day Japan trip (May 16 – Jun 2, 2026) bui
 1. **Restrict your API key** (critical for security):
    - Go to [Google Cloud Console > Credentials](https://console.cloud.google.com/apis/credentials)
    - Click your API key > **Application restrictions** > **HTTP referrers**
-   - Add: `yourusername.github.io/*`
+   - Add: `skippzz.github.io/*`
    - Under **API restrictions**, select: Maps JavaScript API, Places API
 
-2. **Create a GitHub repository**:
+2. **Clone and push**:
    ```bash
-   cd "japan iteniary"
-   git init
+   git clone https://github.com/skippzz/japantrip2026.git
+   cd japantrip2026
+   # make your edits
    git add .
-   git commit -m "Initial commit"
-   git remote add origin https://github.com/yourusername/japan-2026.git
-   git push -u origin main
+   git commit -m "Your changes"
+   git push origin main
    ```
 
 3. **Enable GitHub Pages**:
    - Go to repo **Settings** > **Pages**
    - Source: **Deploy from a branch**
    - Branch: **main**, folder: **/ (root)**
-   - Save — site will be live at `https://yourusername.github.io/japan-2026/`
-
-4. **Optional — download place photos**:
-   ```bash
-   pip install requests
-   python fetch_photos.py
-   ```
-   This creates a `photos/` folder with thumbnails. Without it, cards show gradient fallbacks.
+   - Save — site will be live at `https://skippzz.github.io/japantrip2026/`
 
 ## File Structure
 
 ```
 index.html          — main page (single-page app)
 styles.css          — all styling (dark/light themes, responsive)
-script.js           — all application logic (~2100 lines)
+script.js           — legacy application logic (~2500 lines)
+src/app.js          — ES module entry point
+src/modules/        — feature modules (itinerary, map, places, pool,
+                      dashboard, hotels, currency, guide, packing, etc.)
 sw.js               — service worker for offline caching
 manifest.json       — PWA manifest
+photos/             — place thumbnail images (130+ jpgs)
 .gitignore          — excludes dev files from repo
-photos/             — place thumbnails (optional, created by fetch_photos.py)
 ```
 
 ## Data Management
