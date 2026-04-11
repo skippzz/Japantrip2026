@@ -953,6 +953,14 @@ input:invalid:not(:placeholder-shown):not(:focus) {
     flex-shrink: 0; transition: color .15s;
 }
 .toast-close:hover { color: #fff; }
+.toast-action {
+    background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.35);
+    color: #fff; font-size: .76rem; font-weight: 700;
+    padding: .3rem .65rem; border-radius: 6px; cursor: pointer;
+    flex-shrink: 0; transition: background .15s;
+    text-transform: uppercase; letter-spacing: .03em;
+}
+.toast-action:hover { background: rgba(255,255,255,.32); }
 @keyframes toastIn {
     from { opacity: 0; transform: translateY(12px) scale(.95); }
     to   { opacity: 1; transform: translateY(0) scale(1); }

@@ -506,4 +506,58 @@ document.addEventListener('DOMContentLoaded', () => {
             if (mapEl) mapEl.style.display = 'none';
         }
     }, 8000);
+
+    // Service worker: register and wire up an update prompt so users see
+    // new deploys without hunting for a hard-reload. Reloads once when the
+    // new SW takes control, and only after the user clicks "Reload" in the
+    // toast — so it never interrupts mid-edit.
+    registerServiceWorker();
 });
+
+function registerServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+
+    // Reload once when the active SW changes (after the user accepts an update).
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloading) return;
+        reloading = true;
+        window.location.reload();
+    });
+
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+        // Case 1: a new SW is already waiting from a previous visit.
+        if (reg.waiting && navigator.serviceWorker.controller) {
+            promptUpdate(reg.waiting);
+        }
+
+        // Case 2: a new SW starts installing during this session.
+        reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    promptUpdate(newWorker);
+                }
+            });
+        });
+
+        // Check for updates when the tab regains focus — catches users who
+        // leave the app open for days at a time.
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                reg.update().catch(() => {});
+            }
+        });
+    }).catch(err => console.warn('SW registration failed:', err));
+}
+
+let _updatePromptShown = false;
+function promptUpdate(worker) {
+    if (_updatePromptShown) return;
+    _updatePromptShown = true;
+    showToast('A new version is available', 'info', 0, {
+        label: 'Reload',
+        onClick: () => worker.postMessage('SKIP_WAITING'),
+    });
+}

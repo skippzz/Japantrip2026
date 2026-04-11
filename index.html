@@ -566,7 +566,6 @@
     <script type="module" src="src/app.js"></script>
     <!-- Google Maps -->
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBfw2E-pFd7W0p7-kSqy4VLeaGX8oRqYp8&libraries=places&callback=onGoogleMapsReady"></script>
-    <!-- Service Worker -->
-    <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');</script>
+    <!-- Service Worker registration lives in src/app.js so it can wire up update prompts -->
 </body>
 </html>
