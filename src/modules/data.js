@@ -307,8 +307,12 @@ export const TRIP_TEMPLATES = {
 };
 
 export const DEFAULT_ITINERARY = [
-    // TOKYO BLOCK 1 — May 16–18 (Open / Unplanned)
-    { id:"d01", title:"May 16 (Fri) — Tokyo: Arrival", items:[] },
+    // TOKYO BLOCK 1 — May 16–18
+    { id:"d01", title:"May 16 (Fri) — Tokyo: Arrival", items:[
+        { id:"it1771698705393", time:"", name:"Shijo Kawaramachi Onsen Sora Niwa Terrace Kyoto", desc:"Rooftop open-air onsen in the heart of Kyoto's Shijo Kawaramachi shopping district. City views from the terrace baths.", visited:false },
+        { id:"it1771698799921", time:"", name:"Kinkaku-ji (Golden Pavilion)", desc:"Iconic Zen temple covered in gold leaf, reflecting in a mirror pond.", visited:false },
+        { id:"it1771698814016", time:"", name:"Ryoan-ji", desc:"UNESCO Zen temple famous for its enigmatic rock garden — 15 stones on raked white gravel.", visited:false },
+    ]},
     { id:"d02", title:"May 17 (Sat) — Tokyo: Free Day", items:[
         { id:"it1771690169976", time:"", name:"Mt. Fuji 5th Station (Fujinomiya)", desc:"The most popular starting point for climbing Mt. Fuji at 2,400m elevation. Stunning views even without climbing.", visited:false },
     ]},
@@ -316,22 +320,21 @@ export const DEFAULT_ITINERARY = [
 
     // FUJI — May 19–20
     { id:"d04", title:"May 19 (Mon) — Fuji Day 1", items:[
-        { id:"i14", time:"7 AM", name:"Train to Kawaguchiko", desc:"Fuji Excursion from Shinjuku (~2 hrs direct)", visited:false },
+        { id:"i14", time:"7 AM", name:"Train to Kawaguchiko", desc:"Fuji Excursion from Shinjuku (~2 hrs direct)", visited:false, isNote:true },
     ]},
     { id:"d05", title:"May 20 (Tue) — Fuji Day 2", items:[] },
 
     // IZU — May 21
     { id:"d06", title:"May 21 (Wed) — Izu Peninsula", items:[
-        { id:"i20", time:"8 AM", name:"Train to Ito", desc:"Odoriko Express from Kawaguchiko/Tokyo (~1.5 hrs)", visited:false },
-        { id:"i24", time:"6:30 PM", name:"Return to base", desc:"Train back via Mishima or stay at ryokan", visited:false },
+        { id:"i20", time:"8 AM", name:"Train to Ito", desc:"Odoriko Express from Kawaguchiko/Tokyo (~1.5 hrs)", visited:false, isNote:true },
+        { id:"i24", time:"6:30 PM", name:"Return to base", desc:"Train back via Mishima or stay at ryokan", visited:false, isNote:true },
     ]},
 
     // KYOTO — May 22–25
     { id:"d07", title:"May 22 (Thu) — Travel to Kyoto", items:[
-        { id:"it1771698705393", time:"", name:"Shijo Kawaramachi Onsen Sora Niwa Terrace Kyoto", desc:"Rooftop open-air onsen in the heart of Kyoto's Shijo Kawaramachi shopping district. City views from the terrace baths.", visited:false },
         { id:"it1771698901445", time:"", name:"Hayakawa Hamonoten", desc:"Traditional Japanese knife shop at Nishiki Market. Handmade kitchen knives — quintessential Kyoto souvenir.", visited:false },
-        { id:"it1772974502014", time:"15:30", name:"Nishiki Market", desc:"'Kyoto\\'s Kitchen' — 400m covered market with 100+ stalls. Fresh seafood, pickles, matcha sweets, knives.", visited:false },
-        { id:"it1772974779828", time:"", name:"Kawaramachi Shopping", desc:"Explore Shijo-Kawaramachi area shops", visited:false, isNote:true },
+        { id:"it1772974502014", time:"15:30", name:"Nishiki Market", desc:"'Kyoto's Kitchen' — 400m covered market with 100+ stalls. Fresh seafood, pickles, matcha sweets, knives.", visited:false },
+        { id:"it1772974779828", time:"", name:"Kawaramachi Shopping", desc:"Explore the Shijo-Kawaramachi shopping area", visited:false, isNote:true },
         { id:"it1772974821824", time:"", name:"Miltons Bar", desc:"Cocktail bar plan", visited:false, isNote:true },
     ]},
     { id:"d08", title:"May 23 (Fri) — Kyoto", items:[
@@ -341,27 +344,27 @@ export const DEFAULT_ITINERARY = [
         { id:"it1772975484674", time:"11:20", name:"Saga-toriimoto preserved street", desc:"Walk through the atmospheric Meiji-era preserved street", visited:false, isNote:true },
         { id:"it1771698608280", time:"11:30", name:"Otagi Nenbutsuji Temple", desc:"Hidden temple in Arashiyama with 1,200 unique carved stone rakan statues — each with a different expression.", visited:false },
         { id:"it1771698614817", time:"12:30-13:00", name:"Unagi Hirokawa", desc:"Famous grilled eel restaurant in Arashiyama. Rich charcoal-grilled unagi served over rice.", visited:false },
-        { id:"it1773005974632", time:"", name:"Ryoan-ji", desc:"UNESCO Zen temple famous for its enigmatic rock garden — 15 stones on raked white gravel.", visited:false },
-        { id:"it1773005969697", time:"", name:"Kinkaku-ji (Golden Pavilion)", desc:"Iconic Zen temple covered in gold leaf, reflecting in a mirror pond.", visited:false },
-        { id:"it1772977347037", time:"", name:"Hotel terrace onsen break", desc:"Head back to the hotel for a relaxing onsen session", visited:false, isNote:true },
-        { id:"it1771698726545", time:"19:00", name:"Dinner — Kyoto tempura (Gion Horten)", desc:"Tempura dinner in Gion area", visited:false, isNote:true },
-        { id:"it1771698741488", time:"22:00", name:"Late night drinks", desc:"Find a bar in the Gion/Pontocho area", visited:false, isNote:true },
+        { id:"it1772977220590", time:"13:30", name:"Ryoan-ji", desc:"UNESCO Zen temple famous for its enigmatic rock garden — 15 stones on raked white gravel.", visited:false },
+        { id:"it1772976711277", time:"14:00", name:"Kinkaku-ji (Golden Pavilion)", desc:"Iconic Zen temple covered in gold leaf, reflecting in a mirror pond.", visited:false },
+        { id:"it1772977347037", time:"", name:"Hotel terrace onsen", desc:"Head back to the hotel for a relaxing terrace onsen session", visited:false, isNote:true },
+        { id:"it1771698726545", time:"19:00", name:"Kyoto tempura — Gion Horten", desc:"Tempura dinner in the Gion area", visited:false, isNote:true },
+        { id:"it1771698741488", time:"22:00", name:"Late night drinks", desc:"Find a bar in Gion / Pontocho", visited:false, isNote:true },
     ]},
     { id:"d09", title:"May 24 (Sat) — Kyoto", items:[
         { id:"it1772977699571", time:"8:00", name:"Fushimi Inari Taisha", desc:"Thousands of vermillion torii gates forming tunnels up Mount Inari. Full hike ~2-3 hours. Iconic.", visited:false },
         { id:"it1772977993420", time:"11:30-13:00", name:"Kiyomizu-dera", desc:"UNESCO World Heritage hillside temple with famous wooden stage offering panoramic views.", visited:false },
         { id:"it1772978722604", time:"", name:"Yasaka Pagoda (Hokan-ji)", desc:"Iconic five-story pagoda in Higashiyama — THE classic Kyoto photo spot.", visited:false },
-        { id:"it1772978075951", time:"13:00-16:00", name:"Higashiyama walking — Matsubara, Sannenzaka, Ninnenzaka", desc:"Stroll through the traditional lanes connecting Kiyomizu to Yasaka", visited:false, isNote:true },
+        { id:"it1772978075951", time:"13:00-16:00", name:"Higashiyama walking — Matsubara, Sannenzaka, Ninnenzaka", desc:"Stroll the traditional lanes connecting Kiyomizu to Yasaka", visited:false, isNote:true },
         { id:"it1772979079407", time:"", name:"Pontocho Alley", desc:"Atmospheric narrow stone-paved alley along the Kamo River lined with restaurants and teahouses. Lantern-lit.", visited:false },
-        { id:"it1771698786508", time:"", name:"Gion evening — spot maiko/geisha", desc:"Walk through Gion's Hanamikoji street at dusk to see maiko heading to appointments", visited:false, isNote:true },
-        { id:"it1772978628455", time:"", name:"Yasaka Shrine", desc:"Grand vermillion shrine at the east end of Shijo-dori, gateway to Gion", visited:false },
+        { id:"it1771698786508", time:"", name:"Gion evening — spot maiko/geisha", desc:"Walk through Gion's Hanamikoji street at dusk", visited:false, isNote:true },
+        { id:"it1772978628455", time:"", name:"Yasaka Shrine", desc:"Grand vermillion shrine at the east end of Shijo-dori, gateway to Gion", visited:false, isNote:true },
     ]},
     { id:"d10", title:"May 25 (Sun) — Kyoto: Last Day", items:[
         { id:"it1772978862536", time:"", name:"Nanzen-ji Temple", desc:"Impressive Zen temple with massive Sanmon gate and photogenic brick Suirokaku aqueduct.", visited:false },
-        { id:"it1772978861442", time:"", name:"Philosopher\\'s Path", desc:"Scenic 2km stone path along a cherry-tree-lined canal connecting Nanzen-ji to Ginkaku-ji.", visited:false },
-        { id:"it1772978967968", time:"", name:"Ginkaku-ji (Silver Pavilion)", desc:"Understated Zen temple with exquisite moss garden and sand cone", visited:false },
-        { id:"it1772978950844", time:"", name:"Daigo-ji Temple", desc:"UNESCO temple famous for cherry blossoms and a five-story pagoda", visited:false },
-        { id:"it1772979053828", time:"", name:"Nijo Castle", desc:"UNESCO World Heritage castle (1603). Famous \\'nightingale floors\\' that chirp when walked on.", visited:false },
+        { id:"it1772978861442", time:"", name:"Philosopher's Path", desc:"Scenic 2km stone path along a cherry-tree-lined canal connecting Nanzen-ji to Ginkaku-ji.", visited:false },
+        { id:"it1772978967968", time:"", name:"Ginkaku-ji (Silver Pavilion)", desc:"Understated Zen temple with exquisite moss garden and sand cone", visited:false, isNote:true },
+        { id:"it1772978950844", time:"", name:"Daigo-ji Temple", desc:"UNESCO temple famous for cherry blossoms and a five-story pagoda", visited:false, isNote:true },
+        { id:"it1772979053828", time:"", name:"Nijo Castle", desc:"UNESCO World Heritage castle (1603). Famous 'nightingale floors' that chirp when walked on.", visited:false },
         { id:"it1772979040923", time:"", name:"Samurai experience activity", desc:"Try a sword-fighting or samurai dress-up experience", visited:false, isNote:true },
         { id:"it1772979097305", time:"", name:"KANADE", desc:"Stylish modern cafe in Higashiyama serving matcha desserts, coffee and light meals in a traditional setting.", visited:false },
         { id:"it1772979066571", time:"", name:"teamLab Biovortex Kyoto", desc:"Newest teamLab museum — immersive nature-themed digital art installations.", visited:false },
@@ -369,27 +372,27 @@ export const DEFAULT_ITINERARY = [
 
     // TRANSITION + OSAKA — May 26–29
     { id:"d11", title:"May 26 (Mon) — Kyoto → Osaka", items:[
-        { id:"i45", time:"10 AM", name:"Train Kyoto → Osaka", desc:"JR Special Rapid (~30 min)", visited:false },
+        { id:"i45", time:"10 AM", name:"Train Kyoto → Osaka", desc:"JR Special Rapid (~30 min)", visited:false, isNote:true },
         { id:"it1772980109262", time:"", name:"Osaka Castle", desc:"Iconic 16th-century castle and symbol of Osaka. 8-floor museum with panoramic city views from the top.", visited:false },
         { id:"it1772980111520", time:"", name:"Hokoku Shrine", desc:"Grand Shinto shrine in Osaka Castle Park dedicated to Toyotomi Hideyoshi.", visited:false },
-        { id:"it1772980129753", time:"", name:"Umeda Sky Building", desc:"Floating Garden Observatory — panoramic city views from the rooftop", visited:false },
-        { id:"it1772980145148", time:"", name:"Grand Front Osaka shopping", desc:"Browse shops and grab food at the Grand Front complex near Umeda", visited:false, isNote:true },
+        { id:"it1772980129753", time:"", name:"Umeda Sky Building", desc:"Floating Garden Observatory — panoramic city views from the rooftop", visited:false, isNote:true },
+        { id:"it1772980145148", time:"", name:"Grand Front Osaka", desc:"Browse shops and grab food at the Grand Front complex near Umeda", visited:false, isNote:true },
         { id:"it1772981946857", time:"", name:"Tsutenkaku", desc:"Iconic 103m tower in Shinsekai district. Observation deck with city views plus the Billiken lucky god statue.", visited:false },
     ]},
     { id:"d12", title:"May 27 (Tue) — Nara Day Trip", items:[
-        { id:"i50", time:"9 AM", name:"Train Osaka → Nara", desc:"JR or Kintetsu (~45 min from Namba)", visited:false },
-        { id:"it1772979537019", time:"", name:"Isuien Garden", desc:"Elegant Meiji-era Japanese garden with borrowed scenery of Todai-ji\\'s roof.", visited:false },
+        { id:"i50", time:"9 AM", name:"Train Osaka → Nara", desc:"JR or Kintetsu (~45 min from Namba)", visited:false, isNote:true },
+        { id:"it1772979537019", time:"", name:"Isuien Garden", desc:"Elegant Meiji-era Japanese garden with borrowed scenery of Todai-ji's roof.", visited:false },
         { id:"it1772979537920", time:"", name:"Kasuga Taisha Shrine", desc:"Ancient Shinto shrine (768 AD) with thousands of stone and bronze lanterns.", visited:false },
         { id:"it1772979538314", time:"", name:"Manyo Botanical Gardens", desc:"Beautiful garden in Nara Park featuring plants mentioned in ancient Japanese poetry (Manyoshu).", visited:false },
         { id:"it1772979538917", time:"", name:"Nara National Museum", desc:"Premier museum for Buddhist art — stunning sculptures, scrolls and temple treasures.", visited:false },
-        { id:"it1772979539344", time:"", name:"Todai-ji Temple", desc:"World\\'s largest wooden building housing a 15m tall bronze Great Buddha. UNESCO World Heritage.", visited:false },
+        { id:"it1772979539344", time:"", name:"Todai-ji Temple", desc:"World's largest wooden building housing a 15m tall bronze Great Buddha. UNESCO World Heritage.", visited:false },
         { id:"it1772979539808", time:"", name:"Ukimido Pavilion", desc:"Elegant hexagonal floating pavilion on Sagi-ike Pond. Beautiful reflections at dawn.", visited:false },
         { id:"it1772979540248", time:"", name:"Yoshikien Garden", desc:"Three adjacent gardens near Todai-ji. Free for foreign tourists with passport.", visited:false },
         { id:"it1772979540772", time:"", name:"Harushika Sake Brewery", desc:"Historic sake brewery offering tastings of 5 varieties for ¥500.", visited:false },
         { id:"it1772979541216", time:"", name:"Meoto Daikokusha", desc:"Small shrine for married couple deities — popular for love and marriage blessings.", visited:false },
-        { id:"i50i", time:"2 PM", name:"Return to Osaka", desc:"Train back, evening in Dotonbori", visited:false },
-        { id:"it1772981088590", time:"15:00", name:"Kuromon Market", desc:"'Osaka's Kitchen' — fresh seafood, street food, and snacks", visited:false },
-        { id:"it1772981167813", time:"", name:"Dotonbori", desc:"Osaka\\'s most famous entertainment district — neon lights, Glico Running Man sign, canal walks and street food.", visited:false },
+        { id:"i50i", time:"2 PM", name:"Return to Osaka", desc:"Train back, evening in Dotonbori", visited:false, isNote:true },
+        { id:"it1772981088590", time:"15:00", name:"Kuromon Market", desc:"'Osaka's Kitchen' — fresh seafood, street food, and snacks", visited:false, isNote:true },
+        { id:"it1772981167813", time:"", name:"Dotonbori", desc:"Osaka's most famous entertainment district — neon lights, Glico Running Man sign, canal walks and street food.", visited:false },
         { id:"it1772981309316", time:"", name:"Hozen-ji Temple", desc:"Tiny atmospheric temple in a stone-paved alley near Dotonbori. Moss-covered Fudo Myoo statue.", visited:false },
         { id:"it1772981265954", time:"", name:"Wagyu dinner", desc:"Find a great wagyu spot in Namba/Dotonbori area", visited:false, isNote:true },
         { id:"it1772981346001", time:"22:00", name:"Hollow Bar", desc:"Late night cocktails", visited:false, isNote:true },
@@ -401,13 +404,13 @@ export const DEFAULT_ITINERARY = [
 
     // TOKYO BLOCK 2 — May 29 – Jun 2
     { id:"d14", title:"May 29 (Thu) — Osaka → Tokyo", items:[
-        { id:"i53", time:"10 AM", name:"Shinkansen to Tokyo", desc:"Bullet train back (~2h30)", visited:false },
+        { id:"i53", time:"10 AM", name:"Shinkansen to Tokyo", desc:"Bullet train back (~2h30)", visited:false, isNote:true },
     ]},
     { id:"d15", title:"May 30 (Fri) — Tokyo", items:[] },
     { id:"d16", title:"May 31 (Sat) — Tokyo", items:[] },
     { id:"d17", title:"Jun 1 (Sun) — Tokyo: Last Full Day", items:[] },
     { id:"d18", title:"Jun 2 (Mon) — Departure", items:[
-        { id:"i69", time:"", name:"Fly home", desc:"Check out, head to Narita/Haneda. Safe travels!", visited:false },
+        { id:"i69", time:"", name:"Fly home", desc:"Check out, head to Narita/Haneda. Safe travels!", visited:false, isNote:true },
     ]},
 ];
 
