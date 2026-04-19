@@ -5,13 +5,15 @@ export const PLACE_AREAS = {
     // TOKYO — Shinjuku
     1:'Shinjuku', 9:'Shinjuku', 14:'Shinjuku', 35:'Shinjuku', 37:'Shinjuku',
     41:'Shinjuku', 42:'Shinjuku', 101:'Shinjuku', 121:'Shinjuku', 45:'Shinjuku',
+    141:'Shinjuku', 142:'Shinjuku', 143:'Shinjuku',
     // TOKYO — Ginza
-    2:'Ginza', 8:'Ginza', 18:'Ginza', 20:'Ginza',
+    2:'Ginza', 8:'Ginza', 18:'Ginza', 20:'Ginza', 136:'Ginza', 137:'Ginza',
     // TOKYO — Shibuya
     3:'Shibuya', 7:'Shibuya', 10:'Shibuya', 11:'Shibuya', 17:'Shibuya',
     19:'Shibuya', 21:'Shibuya', 25:'Shibuya', 30:'Shibuya', 31:'Shibuya', 38:'Shibuya', 43:'Shibuya',
+    138:'Shibuya', 139:'Shibuya',
     // TOKYO — Harajuku
-    23:'Harajuku', 29:'Harajuku', 100:'Harajuku',
+    23:'Harajuku', 29:'Harajuku', 100:'Harajuku', 140:'Harajuku',
     // TOKYO — Asakusa
     5:'Asakusa', 6:'Asakusa', 13:'Asakusa', 26:'Asakusa', 27:'Asakusa', 51:'Asakusa',
     // TOKYO — Tokyo Station
@@ -78,6 +80,8 @@ export const PLACE_VENUE = {
     86:'indoor',91:'indoor',96:'indoor',100:'indoor',101:'indoor',102:'indoor',107:'indoor',
     108:'indoor',109:'indoor',110:'indoor',113:'indoor',118:'indoor',120:'indoor',125:'indoor',
     127:'indoor',129:'indoor',130:'indoor',131:'indoor',
+    136:'indoor',137:'indoor',138:'indoor',139:'indoor',140:'indoor',
+    142:'indoor',143:'indoor',
     // outdoor places
     5:'outdoor',6:'outdoor',13:'outdoor',15:'outdoor',26:'outdoor',27:'outdoor',28:'outdoor',
     33:'outdoor',40:'outdoor',50:'outdoor',51:'outdoor',52:'outdoor',53:'outdoor',54:'outdoor',
@@ -88,7 +92,7 @@ export const PLACE_VENUE = {
     103:'outdoor',104:'outdoor',105:'outdoor',106:'outdoor',111:'outdoor',112:'outdoor',
     114:'outdoor',115:'outdoor',116:'outdoor',117:'outdoor',119:'outdoor',122:'outdoor',
     123:'outdoor',124:'outdoor',126:'outdoor',128:'outdoor',132:'outdoor',133:'outdoor',
-    134:'outdoor',135:'outdoor',
+    134:'outdoor',135:'outdoor',141:'outdoor',
     // both (indoor option available)
     16:'both',32:'both',46:'both',63:'both',
 };
@@ -229,6 +233,14 @@ export const DEFAULT_PLACES = [
     { id:133, name:"Saiko Nenba-hama",city:"Fuji",category:"Attractions",description:"Scenic lakeside beach on Lake Saiko with beautiful Mt. Fuji views and clear water. Great for photos.",hours:"24 hours",cost:"Free",address:"Saiko, Fujikawaguchiko, Minamitsuru, Yamanashi",lat:35.4905,lng:138.6898 },
     { id:134, name:"Fuji-Honcho Main Street",city:"Fuji",category:"Attractions",description:"Charming shopping street in Fujiyoshida with Mt. Fuji backdrop. Retro storefronts, local shops and cafes.",hours:"Varies by shop",cost:"Free to walk",address:"Honcho, Fujiyoshida, Yamanashi",lat:35.4875,lng:138.8028,notes:"Great for Fuji photos down the street." },
     { id:135, name:"Sasuke Inari Shrine",city:"Tokyo",category:"Attractions",description:"Hidden hillside shrine in Kamakura with dozens of red torii gates winding through the forest. Mystical atmosphere.",hours:"24 hours",cost:"Free",address:"2-22-12 Sasuke, Kamakura, Kanagawa 248-0017",lat:35.3213,lng:139.5459,notes:"Day trip from Tokyo (~1hr by train)." },
+    { id:136, name:"MUJI Ginza (Flagship)",city:"Tokyo",category:"Shopping",description:"Six-floor flagship store in Ginza. Home goods, clothing, food market, MUJI Diner and Café MUJI on the upper floors.",hours:"11:00 – 21:00",cost:"¥–¥¥",address:"3-3-5 Ginza, Chuo City, Tokyo 104-0061",lat:35.6728,lng:139.7630,notes:"Houses MUJI Hotel Ginza on floors 6–10." },
+    { id:137, name:"GU Ginza (Flagship)",city:"Tokyo",category:"Shopping",description:"Uniqlo's trend-focused sister brand — affordable streetwear and seasonal drops. Flagship store on Chuo-dori.",hours:"11:00 – 21:00",cost:"¥",address:"5-7-7 Ginza, Chuo City, Tokyo 104-0061",lat:35.6710,lng:139.7638 },
+    { id:138, name:"Shibuya Loft",city:"Tokyo",category:"Shopping",description:"Seven floors of lifestyle, stationery, cosmetics and variety goods in the heart of Shibuya.",hours:"11:00 – 21:00",cost:"¥–¥¥",address:"21-1 Udagawacho, Shibuya City, Tokyo 150-0042",lat:35.6615,lng:139.6975 },
+    { id:139, name:"Levi's Store Shibuya",city:"Tokyo",category:"Shopping",description:"Levi's store in Shibuya offering in-store Tailor Shop service — custom-fit jeans, chain-stitch hemming and repairs.",hours:"11:00 – 21:00",cost:"¥¥",address:"Shibuya City, Tokyo",lat:35.6598,lng:139.7006,notes:"Ask about the custom tailoring service." },
+    { id:140, name:"CHERMSIDE SANDWICH Harajuku Takeshita Dori",city:"Tokyo",category:"Food",description:"Viral sandwich and café on Takeshita-dori. Fluffy Japanese-style sandos with creative fillings.",hours:"11:00 – 19:00",cost:"~¥700–1,500",address:"Takeshita-dori, Jingumae, Shibuya City, Tokyo",lat:35.6705,lng:139.7035 },
+    { id:141, name:"Shinjuku Gyoen National Garden",city:"Tokyo",category:"Attractions",description:"Expansive landscape garden blending English, French formal and traditional Japanese styles. Famous cherry blossom spot.",hours:"09:00 – 18:00",cost:"¥500",address:"11 Naitomachi, Shinjuku City, Tokyo 160-0014",lat:35.6852,lng:139.7100,notes:"Closed Mondays." },
+    { id:142, name:"SAKE MARKET Shinjuku",city:"Tokyo",category:"Food",description:"Shinjuku sake-tasting bar with 100+ varieties of Japanese sake available to try by the glass.",hours:"17:00 – late",cost:"¥¥",address:"Shinjuku City, Tokyo",lat:35.6938,lng:139.7036 },
+    { id:143, name:"Kappo Shishikura (割烹 ししくら)",city:"Tokyo",category:"Food",description:"Traditional kappo-style multi-course Japanese dining — seasonal ingredients prepared at the counter.",hours:"17:00 – 23:00",cost:"¥¥¥",address:"Shinjuku, Tokyo",lat:35.6920,lng:139.7020,notes:"Reservation recommended." },
 ];
 
 export const DEFAULT_TODOS = [
@@ -313,8 +325,28 @@ export const DEFAULT_ITINERARY = [
         { id:"it1771698799921", time:"", name:"Kinkaku-ji (Golden Pavilion)", desc:"Iconic Zen temple covered in gold leaf, reflecting in a mirror pond.", visited:false },
         { id:"it1771698814016", time:"", name:"Ryoan-ji", desc:"UNESCO Zen temple famous for its enigmatic rock garden — 15 stones on raked white gravel.", visited:false },
     ]},
-    { id:"d02", title:"May 17 (Sat) — Tokyo: Free Day", items:[
-        { id:"it1771690169976", time:"", name:"Mt. Fuji 5th Station (Fujinomiya)", desc:"The most popular starting point for climbing Mt. Fuji at 2,400m elevation. Stunning views even without climbing.", visited:false },
+    { id:"d02", title:"May 17 (Sat) — Tokyo: Shibuya / Harajuku / Shinjuku", items:[
+        { id:"it1776225600001", time:"9:00", name:"Günaydın — wake up", desc:"", visited:false, isNote:true },
+        { id:"it1776225600002", time:"9:30", name:"Kahvaltı — breakfast", desc:"", visited:false, isNote:true },
+        { id:"it1776225600003", time:"", name:"MUJI Ginza (Flagship)", desc:"Six-floor flagship store in Ginza. Home goods, clothing, food market, MUJI Diner and Café MUJI on the upper floors.", visited:false },
+        { id:"it1776225600004", time:"", name:"GU Ginza (Flagship)", desc:"Uniqlo's trend-focused sister brand — affordable streetwear and seasonal drops. Flagship store on Chuo-dori.", visited:false },
+        { id:"it1776225600005", time:"", name:"Shibuya Loft", desc:"Seven floors of lifestyle, stationery, cosmetics and variety goods in the heart of Shibuya.", visited:false },
+        { id:"it1776225600006", time:"", name:"Shibuya 109", desc:"Iconic cylindrical fashion building — 10 floors of trendy Japanese pop fashion, streetwear and accessories.", visited:false },
+        { id:"it1776225600007", time:"", name:"Shibuya Sky", desc:"Open-air rooftop observation deck on the 46th floor of Scramble Square (229m). 360° panoramic views.", visited:false },
+        { id:"it1776225600008", time:"13:00", name:"Head to Harajuku", desc:"", visited:false, isNote:true },
+        { id:"it1776225600009", time:"", name:"Meiji Shrine", desc:"Major Shinto shrine in a 170-acre forested park near Harajuku. Dedicated to Emperor Meiji. Serene atmosphere.", visited:false },
+        { id:"it1776225600010", time:"", name:"Takeshita Street", desc:"Harajuku's famous pedestrian shopping street — colourful fashion boutiques, crepe stands, quirky shops.", visited:false },
+        { id:"it1776225600011", time:"", name:"CHERMSIDE SANDWICH Harajuku Takeshita Dori", desc:"Viral sandwich and café on Takeshita-dori. Fluffy Japanese-style sandos with creative fillings.", visited:false },
+        { id:"it1776225600012", time:"", name:"Sando", desc:"Grab a sando here", visited:false, isNote:true },
+        { id:"it1776225600013", time:"", name:"Levi's Store Shibuya", desc:"Levi's store in Shibuya offering in-store Tailor Shop service — custom-fit jeans, chain-stitch hemming and repairs.", visited:false },
+        { id:"it1776225600014", time:"", name:"Custom jean", desc:"Remember: get a custom-fitted jean", visited:false, isNote:true },
+        { id:"it1776225600015", time:"", name:"Head to Shinjuku", desc:"", visited:false, isNote:true },
+        { id:"it1776225600016", time:"", name:"Shinjuku Gyoen National Garden", desc:"Expansive landscape garden blending English, French formal and traditional Japanese styles. Famous cherry blossom spot.", visited:false },
+        { id:"it1776225600017", time:"", name:"Kabukicho", desc:"Tokyo's famous entertainment and nightlife district in Shinjuku. Neon streets, arcades, late-night eats.", visited:false },
+        { id:"it1776225600018", time:"", name:"Omakase dinner", desc:"No reservation yet — find an omakase spot", visited:false, isNote:true },
+        { id:"it1776225600019", time:"", name:"Shinjuku Golden Gai", desc:"Network of 6 narrow alleys with 200+ tiny bars, each seating 5–10 people. Eclectic themed bars.", visited:false },
+        { id:"it1776225600020", time:"", name:"SAKE MARKET Shinjuku", desc:"Shinjuku sake-tasting bar with 100+ varieties of Japanese sake available to try by the glass.", visited:false },
+        { id:"it1776225600021", time:"", name:"Kappo Shishikura (割烹 ししくら)", desc:"Traditional kappo-style multi-course Japanese dining — seasonal ingredients prepared at the counter.", visited:false },
     ]},
     { id:"d03", title:"May 18 (Sun) — Tokyo: Free Day", items:[] },
 
