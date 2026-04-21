@@ -7,17 +7,23 @@ export const PLACE_AREAS = {
     41:'Shinjuku', 42:'Shinjuku', 101:'Shinjuku', 121:'Shinjuku', 45:'Shinjuku',
     141:'Shinjuku', 142:'Shinjuku', 143:'Shinjuku',
     // TOKYO — Ginza
-    2:'Ginza', 8:'Ginza', 18:'Ginza', 20:'Ginza', 136:'Ginza', 137:'Ginza',
+    2:'Ginza', 8:'Ginza', 18:'Ginza', 20:'Ginza', 136:'Ginza',
     // TOKYO — Shibuya
     3:'Shibuya', 7:'Shibuya', 10:'Shibuya', 11:'Shibuya', 17:'Shibuya',
     19:'Shibuya', 21:'Shibuya', 25:'Shibuya', 30:'Shibuya', 31:'Shibuya', 38:'Shibuya', 43:'Shibuya',
-    138:'Shibuya', 139:'Shibuya',
+    139:'Shibuya', 155:'Shibuya',
     // TOKYO — Harajuku
     23:'Harajuku', 29:'Harajuku', 100:'Harajuku', 140:'Harajuku',
     // TOKYO — Asakusa
-    5:'Asakusa', 6:'Asakusa', 13:'Asakusa', 26:'Asakusa', 27:'Asakusa', 51:'Asakusa',
+    5:'Asakusa', 6:'Asakusa', 13:'Asakusa', 26:'Asakusa', 27:'Asakusa', 51:'Asakusa', 145:'Asakusa',
     // TOKYO — Tokyo Station
     12:'Tokyo Station', 16:'Tokyo Station', 24:'Tokyo Station',
+    // TOKYO — Chiyoda (Imperial Palace)
+    144:'Chiyoda',
+    // TOKYO — Akihabara
+    146:'Akihabara',
+    // TOKYO — Roppongi
+    147:'Roppongi',
     // TOKYO — Other areas
     4:'Nihonbashi', 15:'Tsukiji', 28:'Oshiage', 22:'Ikebukuro', 44:'Ikebukuro',
     34:'Azabudai', 32:'Minato', 36:'Minato', 39:'Shimokitazawa',
@@ -57,8 +63,9 @@ export const PLACE_AREAS = {
 
     // FUJI
     53:'Kawaguchiko', 59:'Kawaguchiko', 99:'Kawaguchiko', 116:'Kawaguchiko', 125:'Kawaguchiko',
+    148:'Kawaguchiko', 149:'Kawaguchiko',
     98:'Lake Saiko', 133:'Lake Saiko',
-    54:'Fujiyoshida', 114:'Fujiyoshida', 134:'Fujiyoshida',
+    54:'Fujiyoshida', 114:'Fujiyoshida', 134:'Fujiyoshida', 150:'Fujiyoshida',
     52:'Fujinomiya', 97:'Fujinomiya',
     55:'Oshino', 115:'Yamanakako',
 
@@ -66,6 +73,9 @@ export const PLACE_AREAS = {
     56:'Ito', 57:'Ito', 103:'Ito', 104:'Ito', 117:'Ito',
     58:'Shuzenji', 123:'Shuzenji', 124:'Shuzenji',
     122:'Kawazu', 60:'Numazu',
+
+    // HAKONE
+    151:'Hakone', 152:'Hakone', 153:'Hakone', 154:'Hakone',
 };
 
 export const PLACE_VENUE = {
@@ -80,8 +90,8 @@ export const PLACE_VENUE = {
     86:'indoor',91:'indoor',96:'indoor',100:'indoor',101:'indoor',102:'indoor',107:'indoor',
     108:'indoor',109:'indoor',110:'indoor',113:'indoor',118:'indoor',120:'indoor',125:'indoor',
     127:'indoor',129:'indoor',130:'indoor',131:'indoor',
-    136:'indoor',137:'indoor',138:'indoor',139:'indoor',140:'indoor',
-    142:'indoor',143:'indoor',
+    136:'indoor',139:'indoor',140:'indoor',142:'indoor',143:'indoor',
+    145:'indoor',146:'indoor',147:'indoor',155:'indoor',
     // outdoor places
     5:'outdoor',6:'outdoor',13:'outdoor',15:'outdoor',26:'outdoor',27:'outdoor',28:'outdoor',
     33:'outdoor',40:'outdoor',50:'outdoor',51:'outdoor',52:'outdoor',53:'outdoor',54:'outdoor',
@@ -93,8 +103,10 @@ export const PLACE_VENUE = {
     114:'outdoor',115:'outdoor',116:'outdoor',117:'outdoor',119:'outdoor',122:'outdoor',
     123:'outdoor',124:'outdoor',126:'outdoor',128:'outdoor',132:'outdoor',133:'outdoor',
     134:'outdoor',135:'outdoor',141:'outdoor',
+    144:'outdoor',148:'outdoor',149:'outdoor',150:'outdoor',
+    152:'outdoor',153:'outdoor',154:'outdoor',
     // both (indoor option available)
-    16:'both',32:'both',46:'both',63:'both',
+    16:'both',32:'both',46:'both',63:'both',151:'both',
 };
 
 export const DEFAULT_PLACES = [
@@ -115,10 +127,10 @@ export const DEFAULT_PLACES = [
     { id:15, name:"Unitora Nakadori (Tsukiji)",city:"Tokyo",category:"Food",description:"Popular udon stall at Tsukiji Outer Market serving fresh handmade udon with dashi broth.",hours:"07:00 – 18:00",cost:"~¥500–1,000",address:"Tsukiji Outer Market, Chuo City, Tokyo",lat:35.6654,lng:139.7707,notes:"Cash only. Get there early." },
     { id:16, name:"Tokyo Ramen Street",city:"Tokyo",category:"Food",description:"Ramen alley inside Tokyo Station with multiple acclaimed shops — try different regional styles.",hours:"07:30 – 23:00",cost:"~¥900–1,500",address:"Tokyo Ramen Street, Tokyo Station, Chiyoda, Tokyo",lat:35.6812,lng:139.7669,notes:"Multiple shops" },
     { id:17, name:"Kakigoya by the Sea",city:"Tokyo",category:"Food",description:"Seasonal oyster restaurant serving fresh grilled oysters. Reservation recommended in winter.",hours:"17:00 – 22:00",cost:"~¥3,000–5,000",address:"Shibuya, Tokyo",lat:35.6562,lng:139.6980 },
-    { id:18, name:"GU",city:"Tokyo",category:"Shopping",description:"Uniqlo's trendy sister brand offering affordable casual fashion. Multiple floors in the Ginza flagship.",hours:"11:00 – 21:00",cost:"¥¥",address:"5 Chome-7-7 Ginza, Chuo City, Tokyo 104-0061",lat:35.6697,lng:139.7638,notes:"Near Uniqlo Ginza" },
+    { id:18, name:"GU Ginza (Flagship)",city:"Tokyo",category:"Shopping",description:"Uniqlo's trend-focused sister brand — affordable streetwear and seasonal drops. Flagship store on Chuo-dori, connected to Uniqlo Ginza.",hours:"11:00 – 21:00",cost:"¥",address:"5-7-7 Ginza, Chuo City, Tokyo 104-0061",lat:35.6697,lng:139.7638,notes:"Adjacent to Uniqlo Ginza" },
     { id:19, name:"Shibuya 109",city:"Tokyo",category:"Shopping",description:"Iconic cylindrical fashion building — 10 floors of trendy Japanese pop fashion, streetwear and accessories.",hours:"10:00 – 21:00",cost:"¥–¥¥",address:"2-29-1 Dogenzaka, Shibuya City, Tokyo 150-0043",lat:35.6593,lng:139.6983 },
     { id:20, name:"Uniqlo Ginza",city:"Tokyo",category:"Shopping",description:"World's largest Uniqlo flagship — 12 floors of clothing. Connected to GU. Automatic self-checkout.",hours:"11:00 – 21:00",cost:"¥–¥¥",address:"6-9-5 Ginza, Chuo City, Tokyo 104-0061",lat:35.6706,lng:139.7649,notes:"12 floors!" },
-    { id:21, name:"LOFT",city:"Tokyo",category:"Shopping",description:"Japanese lifestyle store — stationery, home goods, beauty, travel accessories and unique gifts.",hours:"11:00 – 21:00",cost:"¥–¥¥",address:"21-1 Udagawacho, Shibuya City, Tokyo",lat:35.6620,lng:139.6985,notes:"Great for souvenirs" },
+    { id:21, name:"Shibuya Loft",city:"Tokyo",category:"Shopping",description:"Seven floors of lifestyle, stationery, cosmetics, home goods and variety souvenirs in the heart of Shibuya.",hours:"11:00 – 21:00",cost:"¥–¥¥",address:"21-1 Udagawacho, Shibuya City, Tokyo 150-0042",lat:35.6620,lng:139.6985,notes:"Great for souvenirs" },
     { id:22, name:"Animate Ikebukuro",city:"Tokyo",category:"Shopping",description:"World's largest anime store — 9 floors of manga, anime figures, merchandise, CDs and doujinshi.",hours:"11:00 – 20:00",cost:"¥–¥¥¥",address:"1-20-7 Higashi-Ikebukuro, Toshima City, Tokyo",lat:35.7295,lng:139.7188,notes:"Anime paradise" },
     { id:23, name:"Takeshita Street",city:"Tokyo",category:"Shopping",description:"Harajuku's famous pedestrian shopping street — colourful fashion boutiques, crepe stands, quirky shops.",hours:"10:00 – 20:00",cost:"¥–¥¥",address:"Takeshita-dori, Jingumae, Shibuya City, Tokyo",lat:35.6702,lng:139.7027,notes:"Crowded on weekends" },
     { id:24, name:"Tokyo Character Street",city:"Tokyo",category:"Shopping",description:"Underground area in Tokyo Station with official stores for Pokémon, Ghibli, Sanrio, etc.",hours:"10:00 – 20:30",cost:"¥–¥¥",address:"First Avenue Tokyo Station B1, Chiyoda, Tokyo",lat:35.6809,lng:139.7673,notes:"Inside Tokyo Station" },
@@ -234,13 +246,23 @@ export const DEFAULT_PLACES = [
     { id:134, name:"Fuji-Honcho Main Street",city:"Fuji",category:"Attractions",description:"Charming shopping street in Fujiyoshida with Mt. Fuji backdrop. Retro storefronts, local shops and cafes.",hours:"Varies by shop",cost:"Free to walk",address:"Honcho, Fujiyoshida, Yamanashi",lat:35.4875,lng:138.8028,notes:"Great for Fuji photos down the street." },
     { id:135, name:"Sasuke Inari Shrine",city:"Tokyo",category:"Attractions",description:"Hidden hillside shrine in Kamakura with dozens of red torii gates winding through the forest. Mystical atmosphere.",hours:"24 hours",cost:"Free",address:"2-22-12 Sasuke, Kamakura, Kanagawa 248-0017",lat:35.3213,lng:139.5459,notes:"Day trip from Tokyo (~1hr by train)." },
     { id:136, name:"MUJI Ginza (Flagship)",city:"Tokyo",category:"Shopping",description:"Six-floor flagship store in Ginza. Home goods, clothing, food market, MUJI Diner and Café MUJI on the upper floors.",hours:"11:00 – 21:00",cost:"¥–¥¥",address:"3-3-5 Ginza, Chuo City, Tokyo 104-0061",lat:35.6728,lng:139.7630,notes:"Houses MUJI Hotel Ginza on floors 6–10." },
-    { id:137, name:"GU Ginza (Flagship)",city:"Tokyo",category:"Shopping",description:"Uniqlo's trend-focused sister brand — affordable streetwear and seasonal drops. Flagship store on Chuo-dori.",hours:"11:00 – 21:00",cost:"¥",address:"5-7-7 Ginza, Chuo City, Tokyo 104-0061",lat:35.6710,lng:139.7638 },
-    { id:138, name:"Shibuya Loft",city:"Tokyo",category:"Shopping",description:"Seven floors of lifestyle, stationery, cosmetics and variety goods in the heart of Shibuya.",hours:"11:00 – 21:00",cost:"¥–¥¥",address:"21-1 Udagawacho, Shibuya City, Tokyo 150-0042",lat:35.6615,lng:139.6975 },
     { id:139, name:"Levi's Store Shibuya",city:"Tokyo",category:"Shopping",description:"Levi's store in Shibuya offering in-store Tailor Shop service — custom-fit jeans, chain-stitch hemming and repairs.",hours:"11:00 – 21:00",cost:"¥¥",address:"Shibuya City, Tokyo",lat:35.6598,lng:139.7006,notes:"Ask about the custom tailoring service." },
     { id:140, name:"CHERMSIDE SANDWICH Harajuku Takeshita Dori",city:"Tokyo",category:"Food",description:"Viral sandwich and café on Takeshita-dori. Fluffy Japanese-style sandos with creative fillings.",hours:"11:00 – 19:00",cost:"~¥700–1,500",address:"Takeshita-dori, Jingumae, Shibuya City, Tokyo",lat:35.6705,lng:139.7035 },
     { id:141, name:"Shinjuku Gyoen National Garden",city:"Tokyo",category:"Attractions",description:"Expansive landscape garden blending English, French formal and traditional Japanese styles. Famous cherry blossom spot.",hours:"09:00 – 18:00",cost:"¥500",address:"11 Naitomachi, Shinjuku City, Tokyo 160-0014",lat:35.6852,lng:139.7100,notes:"Closed Mondays." },
     { id:142, name:"SAKE MARKET Shinjuku",city:"Tokyo",category:"Food",description:"Shinjuku sake-tasting bar with 100+ varieties of Japanese sake available to try by the glass.",hours:"17:00 – late",cost:"¥¥",address:"Shinjuku City, Tokyo",lat:35.6938,lng:139.7036 },
     { id:143, name:"Kappo Shishikura (割烹 ししくら)",city:"Tokyo",category:"Food",description:"Traditional kappo-style multi-course Japanese dining — seasonal ingredients prepared at the counter.",hours:"17:00 – 23:00",cost:"¥¥¥",address:"Shinjuku, Tokyo",lat:35.6920,lng:139.7020,notes:"Reservation recommended." },
+    { id:144, name:"Tokyo Imperial Palace",city:"Tokyo",category:"Attractions",description:"Primary residence of the Emperor of Japan. Beautiful East Gardens, moats and stone walls of the original Edo Castle.",hours:"East Gardens 09:00 – 16:30",cost:"Free",address:"1-1 Chiyoda, Chiyoda City, Tokyo 100-8111",lat:35.6852,lng:139.7528,notes:"East Gardens closed Mondays and Fridays." },
+    { id:145, name:"Suzukien (Nanaya Asakusa)",city:"Tokyo",category:"Food",description:"Famous matcha ice cream shop offering seven levels of matcha intensity — level 7 is the world's strongest matcha gelato.",hours:"11:00 – 17:00",cost:"~¥500–900",address:"3-4-3 Asakusa, Taito City, Tokyo 111-0032",lat:35.7156,lng:139.7972,notes:"Expect queues on weekends." },
+    { id:146, name:"Don Quijote Akihabara",city:"Tokyo",category:"Shopping",description:"Multi-floor discount store packed with electronics, cosmetics, snacks, souvenirs and otaku goods. Open late.",hours:"09:00 – 05:00",cost:"¥–¥¥",address:"4-3-3 Soto-Kanda, Chiyoda City, Tokyo 101-0021",lat:35.7020,lng:139.7719,notes:"Tax-free with passport. AKB48 theatre upstairs." },
+    { id:147, name:"The Burlesque Tokyo (Roppongi)",city:"Tokyo",category:"Entertainment",description:"Roppongi burlesque show venue — live dance, cabaret and drinks in a theatrical setting.",hours:"19:00 – late",cost:"¥¥¥",address:"5-16-5 Roppongi, Minato City, Tokyo 106-0032",lat:35.6625,lng:139.7320,notes:"Reservation recommended." },
+    { id:148, name:"Oishi Park",city:"Fuji",category:"Attractions",description:"Lakeside park on the north shore of Lake Kawaguchiko with seasonal flower beds and a classic Mt. Fuji view across the lake.",hours:"24 hours",cost:"Free",address:"2585-85 Oishi, Fujikawaguchiko, Minamitsuru, Yamanashi",lat:35.5215,lng:138.7533,notes:"Lavender (Jun–Jul), kochia (Sep–Oct)." },
+    { id:149, name:"Lake Kawaguchiko North Shore",city:"Fuji",category:"Attractions",description:"The north shore of Lake Kawaguchiko — best walking/cycling path for iconic Mt. Fuji reflections across the water.",hours:"24 hours",cost:"Free",address:"Kawaguchiko north shore, Fujikawaguchiko, Yamanashi",lat:35.5225,lng:138.7560,notes:"Bike rental available near Oishi Park." },
+    { id:150, name:"Fuji-Q Highland",city:"Fuji",category:"Attractions",description:"Thrill-ride theme park at the foot of Mt. Fuji. Record-breaking roller coasters plus Naruto X Boruto Ninja World attraction area.",hours:"09:00 – 17:00 (varies)",cost:"¥6,500+ (day pass)",address:"5-6-1 Shinnishihara, Fujiyoshida, Yamanashi 403-0017",lat:35.4878,lng:138.7810,notes:"Check opening days — some coasters close in bad weather.",url:"https://www.fujiq.jp/en/" },
+    { id:151, name:"Hakone Open-Air Museum",city:"Hakone",category:"Attractions",description:"Extensive outdoor sculpture park with works by Moore, Rodin and others — plus an indoor Picasso pavilion with 300+ pieces.",hours:"09:00 – 17:00",cost:"¥2,000",address:"1121 Ninotaira, Hakone, Ashigarashimo, Kanagawa 250-0407",lat:35.2450,lng:139.0550,notes:"Easy walk from Chokoku-no-Mori Station." },
+    { id:152, name:"Owakudani",city:"Hakone",category:"Attractions",description:"Active volcanic valley with sulphurous vents and Mt. Fuji views. Famous kuro-tamago (black eggs) boiled in the hot springs.",hours:"09:00 – 17:00 (weather dependent)",cost:"Free (ropeway fare separate)",address:"Sengokuhara, Hakone, Ashigarashimo, Kanagawa",lat:35.2437,lng:139.0199,notes:"Accessed via Hakone Ropeway. Can close for volcanic activity." },
+    { id:153, name:"Hakone Sightseeing Cruise (Pirate Ship)",city:"Hakone",category:"Attractions",description:"Pirate-ship-styled cruise across Lake Ashi between Togendai, Hakone-machi and Motohakone-ko ports. Mt. Fuji views on clear days.",hours:"09:30 – 17:00",cost:"¥1,200 (single), ¥2,220 (round)",address:"Togendai Port, Hakone, Kanagawa",lat:35.2176,lng:139.0066,notes:"Three ornate ship designs." },
+    { id:154, name:"Hakone Shrine",city:"Hakone",category:"Attractions",description:"Ancient shrine in a cedar forest by Lake Ashi. The iconic 'Peace Torii' stands in the water — famous photo spot.",hours:"24 hours (shrine), Peace Torii best early morning",cost:"Free",address:"80-1 Motohakone, Hakone, Ashigarashimo, Kanagawa 250-0522",lat:35.2062,lng:139.0255,notes:"Queues at Peace Torii can be very long." },
+    { id:155, name:"MEGA Don Quijote Shibuya",city:"Tokyo",category:"Shopping",description:"Flagship Shibuya MEGA Don Quijote — seven floors of electronics, snacks, cosmetics, costumes and souvenirs. Tax-free for tourists.",hours:"24 hours",cost:"¥–¥¥",address:"28-6 Udagawacho, Shibuya City, Tokyo 150-0042",lat:35.6625,lng:139.6981,notes:"Tax-free with passport." },
 ];
 
 export const DEFAULT_TODOS = [
@@ -348,18 +370,56 @@ export const DEFAULT_ITINERARY = [
         { id:"it1776225600020", time:"", name:"SAKE MARKET Shinjuku", desc:"Shinjuku sake-tasting bar with 100+ varieties of Japanese sake available to try by the glass.", visited:false },
         { id:"it1776225600021", time:"", name:"Kappo Shishikura (割烹 ししくら)", desc:"Traditional kappo-style multi-course Japanese dining — seasonal ingredients prepared at the counter.", visited:false },
     ]},
-    { id:"d03", title:"May 18 (Sun) — Tokyo: Free Day", items:[] },
+    { id:"d03", title:"May 18 (Sun) — Tokyo: Ginza / Asakusa / Akihabara / Roppongi", items:[
+        { id:"it1776312000001", time:"9:00", name:"Günaydın — wake up", desc:"", visited:false, isNote:true },
+        { id:"it1776312000002", time:"9:30", name:"Kahvaltı in Ginza", desc:"Breakfast in Ginza", visited:false, isNote:true },
+        { id:"it1776312000003", time:"10:00", name:"Uniqlo Ginza", desc:"World's largest Uniqlo flagship — 12 floors of clothing. Connected to GU. Automatic self-checkout.", visited:false },
+        { id:"it1776312000004", time:"", name:"Tokyo Imperial Palace", desc:"Primary residence of the Emperor of Japan. Beautiful East Gardens, moats and stone walls of the original Edo Castle.", visited:false },
+        { id:"it1776312000005", time:"", name:"Head to Asakusa", desc:"", visited:false, isNote:true },
+        { id:"it1776312000006", time:"", name:"Nakamise Shopping Street", desc:"Historic 250m shopping street leading to Senso-ji — traditional snacks, souvenirs and crafts since Edo period.", visited:false },
+        { id:"it1776312000007", time:"", name:"Suzukien (Nanaya Asakusa)", desc:"Famous matcha ice cream shop offering seven levels of matcha intensity — level 7 is the world's strongest matcha gelato.", visited:false },
+        { id:"it1776312000008", time:"", name:"Senso-ji Temple", desc:"Tokyo's oldest Buddhist temple (645 AD) in Asakusa. Iconic Kaminarimon gate with giant red lantern.", visited:false },
+        { id:"it1776312000009", time:"15:00", name:"ASAKUSA SUMO CLUB", desc:"Experience sumo firsthand — watch practice, learn rules, try sumo moves with retired wrestlers.", visited:false },
+        { id:"it1776312000010", time:"", name:"Rezervasyon yap", desc:"Book Asakusa Sumo Club in advance", visited:false, isNote:true },
+        { id:"it1776312000011", time:"", name:"Akihabara shopping", desc:"Explore Akihabara — electronics, anime, arcades", visited:false, isNote:true },
+        { id:"it1776312000012", time:"", name:"Don Quijote Akihabara", desc:"Multi-floor discount store packed with electronics, cosmetics, snacks, souvenirs and otaku goods. Open late.", visited:false },
+        { id:"it1776312000013", time:"", name:"Back to hotel", desc:"Freshen up before dinner", visited:false, isNote:true },
+        { id:"it1776312000014", time:"", name:"Bar Centifolia", desc:"Upscale cocktail bar in Ginza known for refined atmosphere and creative cocktails. Reservation recommended.", visited:false },
+        { id:"it1776312000015", time:"", name:"The Burlesque Tokyo (Roppongi)", desc:"Roppongi burlesque show venue — live dance, cabaret and drinks in a theatrical setting.", visited:false },
+        { id:"it1776312000016", time:"", name:"Takip et — follow up", desc:"Follow up on Roppongi burlesque show booking", visited:false, isNote:true },
+    ]},
 
     // FUJI — May 19–20
     { id:"d04", title:"May 19 (Mon) — Fuji Day 1", items:[
-        { id:"i14", time:"7 AM", name:"Train to Kawaguchiko", desc:"Fuji Excursion from Shinjuku (~2 hrs direct)", visited:false, isNote:true },
+        { id:"it1776398400001", time:"7:30", name:"Hotel checkout", desc:"Check out of Tokyo hotel", visited:false, isNote:true },
+        { id:"it1776398400002", time:"8:30", name:"JR Train (Shinjuku → Kawaguchiko)", desc:"Fuji Excursion from Shinjuku (~2 hrs direct)", visited:false, isNote:true },
+        { id:"it1776398400003", time:"10:40", name:"Arrive at hotel", desc:"Check in / drop bags at Kawaguchiko accommodation", visited:false, isNote:true },
+        { id:"it1776398400004", time:"", name:"Onsen + Fuji-area lakes nature walk", desc:"Afternoon plan: relax in an onsen and walk the lakes around Mt. Fuji", visited:false, isNote:true },
+        { id:"it1776398400005", time:"", name:"Oshino Hakkai", desc:"Eight crystal-clear spring water ponds fed by snowmelt from Mt. Fuji. Traditional thatched-roof farmhouses.", visited:false },
+        { id:"it1776398400006", time:"", name:"Ubuya", desc:"Famous luxury ryokan on Lake Kawaguchi with every room facing Mt. Fuji. Iconic Fuji views from the bath.", visited:false },
     ]},
-    { id:"d05", title:"May 20 (Tue) — Fuji Day 2", items:[] },
+    { id:"d05", title:"May 20 (Tue) — Fuji Day 2", items:[
+        { id:"it1776484800001", time:"", name:"Fuji-Q Highland", desc:"Thrill-ride theme park at the foot of Mt. Fuji. Record-breaking roller coasters plus Naruto X Boruto Ninja World attraction area.", visited:false },
+        { id:"it1776484800002", time:"", name:"Naruto X Boruto Ninja World (optional)", desc:"İsteğe bağlı — Naruto-themed zone inside Fuji-Q Highland", visited:false, isNote:true },
+        { id:"it1776484800003", time:"", name:"Lunch", desc:"Yemek", visited:false, isNote:true },
+        { id:"it1776484800004", time:"", name:"Oishi Park", desc:"Lakeside park on the north shore of Lake Kawaguchiko with seasonal flower beds and a classic Mt. Fuji view across the lake.", visited:false },
+        { id:"it1776484800005", time:"", name:"Lake Kawaguchiko North Shore", desc:"The north shore of Lake Kawaguchiko — best walking/cycling path for iconic Mt. Fuji reflections across the water.", visited:false },
+        { id:"it1776484800006", time:"", name:"Chureito Pagoda", desc:"Iconic five-story red pagoda with Mt. Fuji in the background — one of Japan's most photographed spots. 398 steps up.", visited:false },
+        { id:"it1776484800007", time:"", name:"Go at sunset", desc:"Sunset is the best time at Chureito Pagoda", visited:false, isNote:true },
+        { id:"it1776484800008", time:"", name:"Dinner", desc:"Yemek", visited:false, isNote:true },
+    ]},
 
-    // IZU — May 21
-    { id:"d06", title:"May 21 (Wed) — Izu Peninsula", items:[
-        { id:"i20", time:"8 AM", name:"Train to Ito", desc:"Odoriko Express from Kawaguchiko/Tokyo (~1.5 hrs)", visited:false, isNote:true },
-        { id:"i24", time:"6:30 PM", name:"Return to base", desc:"Train back via Mishima or stay at ryokan", visited:false, isNote:true },
+    // HAKONE — May 21
+    { id:"d06", title:"May 21 (Wed) — Hakone", items:[
+        { id:"it1776571200001", time:"", name:"Kahvaltı — breakfast", desc:"", visited:false, isNote:true },
+        { id:"it1776571200002", time:"", name:"Hakone Open-Air Museum", desc:"Extensive outdoor sculpture park with works by Moore, Rodin and others — plus an indoor Picasso pavilion with 300+ pieces.", visited:false },
+        { id:"it1776571200003", time:"", name:"Hakone Tozan Train → Gora", desc:"Switchback mountain railway from Hakone-Yumoto to Gora Station", visited:false, isNote:true },
+        { id:"it1776571200004", time:"", name:"Hakone Ropeway", desc:"Cable car over the volcanic ridge with Mt. Fuji views on clear days", visited:false, isNote:true },
+        { id:"it1776571200005", time:"", name:"Owakudani", desc:"Active volcanic valley with sulphurous vents and Mt. Fuji views. Famous kuro-tamago (black eggs) boiled in the hot springs.", visited:false },
+        { id:"it1776571200006", time:"", name:"Togendai", desc:"Ropeway terminal and Lake Ashi pirate-ship port", visited:false, isNote:true },
+        { id:"it1776571200007", time:"", name:"Hakone Sightseeing Cruise (Pirate Ship)", desc:"Pirate-ship-styled cruise across Lake Ashi between Togendai, Hakone-machi and Motohakone-ko ports. Mt. Fuji views on clear days.", visited:false },
+        { id:"it1776571200008", time:"", name:"Hakone Shrine", desc:"Ancient shrine in a cedar forest by Lake Ashi. The iconic 'Peace Torii' stands in the water — famous photo spot.", visited:false },
+        { id:"it1776571200009", time:"", name:"Dinner", desc:"Yemek", visited:false, isNote:true },
     ]},
 
     // KYOTO — May 22–25
