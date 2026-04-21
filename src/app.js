@@ -40,7 +40,9 @@ import { convertCurrency, setYen, loadPhotosUrl, savePhotosUrl,
 import { smartImport, handleSmartImport } from './modules/place-import.js';
 import { renderTripManager, switchTrip, deleteTrip, renameTrip,
          openNewTripModal, createAndSwitchTrip,
-         openTripEditor, saveTripSettings, resetTripItinerary } from './modules/trips.js';
+         openTripEditor, saveTripSettings, resetTripItinerary,
+         openTemplatesGallery, useTemplateForNewTrip,
+         applyTemplateToCurrentTrip, confirmOverrideWithTemplate } from './modules/trips.js';
 
 // ══════════════════════════════════════════════════════════════
 //  SHARED UI STATE (accessible by modules via window._*)
@@ -215,6 +217,7 @@ function bindEvents() {
     document.getElementById('import-file').addEventListener('change', e => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
     document.getElementById('quicksave-btn').addEventListener('click', quickSave);
     document.getElementById('new-trip-btn')?.addEventListener('click', openNewTripModal);
+    document.getElementById('browse-templates-btn')?.addEventListener('click', openTemplatesGallery);
     document.getElementById('view-reservations-btn')?.addEventListener('click', renderReservationSummary);
     document.getElementById('export-ics-btn')?.addEventListener('click', exportICS);
     document.getElementById('rain-toggle')?.addEventListener('click', toggleRainMode);
@@ -442,6 +445,10 @@ window.createAndSwitchTrip = createAndSwitchTrip;
 window.openTripEditor = openTripEditor;
 window.saveTripSettings = saveTripSettings;
 window.resetTripItinerary = resetTripItinerary;
+window.openTemplatesGallery = openTemplatesGallery;
+window.useTemplateForNewTrip = useTemplateForNewTrip;
+window.applyTemplateToCurrentTrip = applyTemplateToCurrentTrip;
+window.confirmOverrideWithTemplate = confirmOverrideWithTemplate;
 // Render functions (for cross-module calls)
 window.renderItinerary = renderItinerary;
 window.renderPlacePool = renderPlacePool;

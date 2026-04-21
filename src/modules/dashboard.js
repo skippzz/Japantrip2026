@@ -124,6 +124,7 @@ export function renderDashboard() {
                 <div class="dash-link" onclick="switchView('places')">📍 All Places</div>
                 <div class="dash-link" onclick="switchView('map')">🗺️ Map View</div>
                 <div class="dash-link" onclick="switchView('packing')">🎒 Packing List</div>
+                <div class="dash-link" onclick="openTemplatesGallery()">🧩 Browse Trip Templates</div>
                 <div class="dash-link" onclick="toggleSidebar()">📥 Export / Import</div>
                 <div class="dash-link" onclick="switchView('itinerary')">📌 ${unaddedCount} Unadded Places</div>
             </div>

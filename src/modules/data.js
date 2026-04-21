@@ -285,60 +285,7 @@ export const DEFAULT_RULES = [
     "Keep CASH — many places are cash-only",
 ];
 
-// ── Templates for new trip creation ──
-export const TRIP_TEMPLATES = {
-    japan: {
-        name: 'Japan Trip',
-        todos: [
-            "Book flight tickets",
-            "Book accommodations",
-            "Create packing list",
-            "Plan travel itinerary",
-            "Make restaurant and attraction reservations",
-            "Purchase JR Pass / transportation passes",
-            "Purchase e-SIM or pocket WiFi",
-            "Learn basic Japanese phrases",
-            "Check passport validity",
-            "Set up Suica on phone",
-        ],
-        rules: [
-            "Keep rooms tidy",
-            "Be prepared with your packing",
-            "Text/call to coordinate meetups",
-            "Stay on schedule for reservations",
-            "Close windows & doors when out",
-            "Keep CASH — many places are cash-only",
-            "Take shoes off indoors",
-            "Bow when greeting",
-            "Be quiet on public transport",
-        ],
-    },
-    general: {
-        name: 'General Trip',
-        todos: [
-            "Book flights",
-            "Book accommodation",
-            "Create packing list",
-            "Plan daily itinerary",
-            "Make reservations",
-            "Get travel insurance",
-            "Check visa requirements",
-            "Download offline maps",
-        ],
-        rules: [
-            "Stay together or communicate meetup plans",
-            "Keep valuables secure",
-            "Respect local customs",
-            "Stay on schedule for group activities",
-            "Keep emergency contacts accessible",
-        ],
-    },
-    minimal: {
-        name: 'Minimal (blank)',
-        todos: [],
-        rules: [],
-    },
-};
+// ── Templates for new trip creation — defined below DEFAULT_* exports (TDZ) ──
 
 export const DEFAULT_ITINERARY = [
     // TOKYO BLOCK 1 — May 16–18
@@ -526,6 +473,53 @@ export const DEFAULT_PACKING = [
     { id:"pk17",name:"Day backpack",cat:"Miscellaneous",qty:1,notes:"Foldable",packed:false },
     { id:"pk18",name:"Umbrella",cat:"Miscellaneous",qty:1,notes:"Compact",packed:false },
 ];
+
+// ── Templates for new trip creation ──
+// A template seeds a trip with an itinerary, places, todos, rules and packing.
+// placeIds references ids in DEFAULT_PLACES — resolved at trip creation time.
+export const TRIP_TEMPLATES = {
+    japanFull18d: {
+        name: 'Japan Full (18 days)',
+        description: 'Tokyo · Fuji · Hakone · Kyoto · Osaka · Nara — the full 18-day default plan with curated activities for every day.',
+        durationDays: 18,
+        itinerary: DEFAULT_ITINERARY,
+        placeIds: DEFAULT_PLACES.map(p => p.id),
+        packing: DEFAULT_PACKING,
+        todos: [
+            "Book flight tickets",
+            "Book accommodations",
+            "Create packing list",
+            "Plan travel itinerary",
+            "Make restaurant and attraction reservations",
+            "Purchase JR Pass / transportation passes",
+            "Purchase e-SIM or pocket WiFi",
+            "Learn basic Japanese phrases",
+            "Check passport validity",
+            "Set up Suica on phone",
+        ],
+        rules: [
+            "Keep rooms tidy",
+            "Be prepared with your packing",
+            "Text/call to coordinate meetups",
+            "Stay on schedule for reservations",
+            "Close windows & doors when out",
+            "Keep CASH — many places are cash-only",
+            "Take shoes off indoors",
+            "Bow when greeting",
+            "Be quiet on public transport",
+        ],
+    },
+    blank: {
+        name: 'Blank Trip',
+        description: 'Start from scratch — no itinerary, no places, no todos. Build your trip from the ground up.',
+        durationDays: null,
+        itinerary: [],
+        placeIds: [],
+        packing: [],
+        todos: [],
+        rules: [],
+    },
+};
 
 export const JAPAN_FACTS = [
     'Japan has 5.52 million vending machines — one for every 23 people.',

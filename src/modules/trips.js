@@ -3,7 +3,101 @@
 import { state, save, emit, setStorageKey } from './state.js';
 import { esc, setStateRef } from './helpers.js';
 import { showToast } from './toast.js';
-import { TRIP_TEMPLATES } from './data.js';
+import { TRIP_TEMPLATES, DEFAULT_PLACES } from './data.js';
+
+// ── Template seeding helpers ──
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// Date-only prefix: "Jun 1 (Tue)". Used when a template provides a descriptive suffix.
+function formatDatePrefix(date) {
+    return `${MONTH_NAMES[date.getMonth()]} ${date.getDate()} (${DAY_NAMES[date.getDay()]})`;
+}
+
+// Fallback prefix with Day N: "Jun 1 (Tue) — Day 1". Used when no template suffix exists.
+function formatDayPrefix(date, dayIndex) {
+    return `${formatDatePrefix(date)} — Day ${dayIndex + 1}`;
+}
+
+// Templates store titles like "May 16 (Fri) — Tokyo: Arrival".
+// Rewrite using the user's actual dateStart; keep the descriptive suffix after " — ".
+function rewriteDayTitle(templateTitle, date, dayIndex) {
+    if (!templateTitle) return formatDayPrefix(date, dayIndex);
+    const splitIdx = templateTitle.indexOf(' — ');
+    const suffix = splitIdx === -1 ? templateTitle.trim() : templateTitle.slice(splitIdx + 3).trim();
+    return suffix ? `${formatDatePrefix(date)} — ${suffix}` : formatDayPrefix(date, dayIndex);
+}
+
+// Deep-clone items and regenerate their ids to avoid collisions with other trips.
+function cloneItemsWithFreshIds(items, dayIdx) {
+    if (!Array.isArray(items)) return [];
+    const base = Date.now();
+    return items.map((item, i) => ({
+        ...item,
+        id: 'it' + base + '-' + dayIdx + '-' + i,
+    }));
+}
+
+// Build itinerary from a template, anchored at dateStart.
+// Returns { itinerary, extendedDays } where extendedDays > 0 means user's range was shorter
+// than the template and extra days were appended to reach template length.
+function buildItineraryFromTemplate(template, dateStart, userDayCount) {
+    if (!template?.itinerary?.length) return { itinerary: [], extendedDays: 0 };
+    const templateDays = template.itinerary.length;
+    const targetDays = Math.max(userDayCount || 0, templateDays);
+    const start = dateStart ? new Date(dateStart) : new Date();
+    const itinerary = [];
+    for (let i = 0; i < targetDays; i++) {
+        const date = new Date(start.getTime() + i * 86400000);
+        const src = template.itinerary[i];
+        const id = 'd' + String(i + 1).padStart(2, '0');
+        if (src) {
+            itinerary.push({
+                id,
+                title: rewriteDayTitle(src.title, date, i),
+                items: cloneItemsWithFreshIds(src.items, i),
+            });
+        } else {
+            itinerary.push({ id, title: formatDayPrefix(date, i), items: [] });
+        }
+    }
+    return { itinerary, extendedDays: Math.max(0, templateDays - (userDayCount || 0)) };
+}
+
+// Resolve a template's placeIds into full place objects from DEFAULT_PLACES.
+// Unknown ids are silently skipped.
+function resolvePlaceIds(placeIds) {
+    if (!Array.isArray(placeIds) || !placeIds.length) return [];
+    const byId = new Map(DEFAULT_PLACES.map(p => [p.id, p]));
+    return placeIds
+        .map(id => byId.get(id))
+        .filter(Boolean)
+        .map(p => JSON.parse(JSON.stringify(p))); // deep clone so trip edits don't mutate defaults
+}
+
+// Merge b into a by key extractor; existing entries in a are preserved.
+function mergeAdditive(a, b, keyFn) {
+    const seen = new Set(a.map(keyFn));
+    const out = [...a];
+    for (const item of b) {
+        const k = keyFn(item);
+        if (k == null || seen.has(k)) continue;
+        seen.add(k);
+        out.push(item);
+    }
+    return out;
+}
+
+// Compute end date given a start date + day count.
+function addDays(dateStartStr, days) {
+    if (!dateStartStr) return '';
+    const d = new Date(dateStartStr);
+    d.setDate(d.getDate() + days - 1);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
 
 const TRIPS_META_KEY = 'travelPlannerTrips';
 
@@ -115,14 +209,31 @@ export function createTrip(name, destination, dateStart, dateEnd, templateKey) {
     const meta = ensureTripsMeta();
     const id = 'trip-' + Date.now();
     const storageKey = 'tripData-' + id;
-    const template = TRIP_TEMPLATES[templateKey] || TRIP_TEMPLATES.general;
+    const template = TRIP_TEMPLATES[templateKey] || TRIP_TEMPLATES.blank;
+
+    // Compute user's day count from date range (if provided).
+    let userDayCount = 0;
+    if (dateStart && dateEnd) {
+        const s = new Date(dateStart), e = new Date(dateEnd);
+        userDayCount = Math.ceil((e - s) / 86400000) + 1;
+    }
+
+    // Build itinerary from template — extends user's range if shorter than template.
+    const { itinerary, extendedDays } = buildItineraryFromTemplate(template, dateStart, userDayCount);
+
+    // If template is longer than user's range, extend trip's dateEnd to match template length.
+    let effectiveDateEnd = dateEnd || '';
+    if (extendedDays > 0 && dateStart && template.durationDays) {
+        effectiveDateEnd = addDays(dateStart, template.durationDays);
+        showToast(`Extended trip to ${template.durationDays} days to fit template.`, 'info');
+    }
 
     const trip = {
         id,
         name: name.trim(),
         destination: destination || '',
         dateStart: dateStart || '',
-        dateEnd: dateEnd || '',
+        dateEnd: effectiveDateEnd,
         created: Date.now(),
         storageKey,
     };
@@ -132,27 +243,13 @@ export function createTrip(name, destination, dateStart, dateEnd, templateKey) {
 
     // Initialize state from template
     const newState = {
-        places: [],
-        todos: template.todos.map((text, i) => ({ id: 'td' + (Date.now() + i), text, done: false })),
-        rules: [...template.rules],
-        itinerary: [],
-        packing: [],
+        places: resolvePlaceIds(template.placeIds),
+        todos: (template.todos || []).map((text, i) => ({ id: 'td' + (Date.now() + i), text, done: false })),
+        rules: [...(template.rules || [])],
+        itinerary,
+        packing: (template.packing || []).map(p => ({ ...p, id: p.id || 'pk' + (Date.now() + Math.random()) })),
         version: state.version
     };
-
-    // Generate itinerary days from date range
-    if (dateStart && dateEnd) {
-        const start = new Date(dateStart);
-        const end = new Date(dateEnd);
-        const days = Math.ceil((end - start) / 86400000) + 1;
-        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        for (let i = 0; i < Math.min(days, 60); i++) {
-            const d = new Date(start.getTime() + i * 86400000);
-            const title = `${monthNames[d.getMonth()]} ${d.getDate()} (${dayNames[d.getDay()]}) — Day ${i + 1}`;
-            newState.itinerary.push({ id: 'd' + String(i + 1).padStart(2, '0'), title, items: [] });
-        }
-    }
 
     try {
         localStorage.setItem(storageKey, JSON.stringify(newState));
@@ -269,7 +366,7 @@ export function openNewTripModal() {
             <div class="form-group"><label>End Date</label><input type="date" id="new-trip-end"></div>
         </div>
         <div class="form-group">
-            <label>Template (todos & rules)</label>
+            <label>Template</label>
             <select id="new-trip-template">
                 ${templateOptions}
             </select>
@@ -286,11 +383,7 @@ export function openNewTripModal() {
     const preview = document.getElementById('template-preview');
     const updatePreview = () => {
         const t = TRIP_TEMPLATES[sel.value];
-        if (t && preview) {
-            preview.textContent = t.todos.length
-                ? `${t.todos.length} todos, ${t.rules.length} rules`
-                : 'Blank — no todos or rules';
-        }
+        if (t && preview) preview.textContent = templateStats(t);
     };
     sel?.addEventListener('change', updatePreview);
     updatePreview();
@@ -361,7 +454,7 @@ export function createAndSwitchTrip() {
     const dest = document.getElementById('new-trip-dest')?.value;
     const start = document.getElementById('new-trip-start')?.value;
     const end = document.getElementById('new-trip-end')?.value;
-    const template = document.getElementById('new-trip-template')?.value || 'general';
+    const template = document.getElementById('new-trip-template')?.value || 'blank';
 
     const trip = createTrip(name, dest, start, end, template);
     if (trip) {
@@ -369,4 +462,130 @@ export function createAndSwitchTrip() {
         switchTrip(trip.id);
         renderTripManager();
     }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TEMPLATES GALLERY
+// ══════════════════════════════════════════════════════════════
+
+// Stats shown on each template card.
+function templateStats(t) {
+    const days = t.itinerary?.length || 0;
+    const items = (t.itinerary || []).reduce((n, d) => n + (d.items?.length || 0), 0);
+    const places = t.placeIds?.length || 0;
+    const todos = t.todos?.length || 0;
+    return `${days} day${days !== 1 ? 's' : ''} · ${items} activit${items !== 1 ? 'ies' : 'y'} · ${places} place${places !== 1 ? 's' : ''} · ${todos} todo${todos !== 1 ? 's' : ''}`;
+}
+
+export function openTemplatesGallery() {
+    const cards = Object.entries(TRIP_TEMPLATES).map(([key, t]) => `
+        <div class="template-card">
+            <div class="template-card-title">${esc(t.name)}</div>
+            <div class="template-card-desc">${esc(t.description || '')}</div>
+            <div class="template-card-stats">${templateStats(t)}</div>
+            <div class="template-card-actions">
+                <button class="btn btn-accent btn-sm" onclick="useTemplateForNewTrip('${key}')">Use for new trip</button>
+                <button class="btn btn-ghost btn-sm" onclick="applyTemplateToCurrentTrip('${key}')">Apply to current trip</button>
+            </div>
+        </div>`).join('');
+
+    const html = `
+        <h2>Trip Templates</h2>
+        <p class="data-hint" style="margin-bottom:1rem">Starter templates with pre-built itineraries and curated places. Use for a new trip or apply to your current one.</p>
+        <div class="template-grid">${cards}</div>
+        <div class="form-actions" style="margin-top:1rem">
+            <button class="btn btn-ghost" onclick="closeModal('modal-detail')">Close</button>
+        </div>`;
+    document.getElementById('detail-content').innerHTML = html;
+    window.openModal?.('modal-detail');
+}
+
+// Opens the New Trip modal with a template pre-selected.
+export function useTemplateForNewTrip(templateKey) {
+    openNewTripModal();
+    // After the modal renders, select the template and refresh preview.
+    requestAnimationFrame(() => {
+        const sel = document.getElementById('new-trip-template');
+        if (sel) {
+            sel.value = templateKey;
+            sel.dispatchEvent(new Event('change'));
+        }
+    });
+}
+
+// Apply a template to the CURRENT active trip.
+// Shows a 3-option warning modal: Create new trip · Override current · Cancel.
+export function applyTemplateToCurrentTrip(templateKey) {
+    const template = TRIP_TEMPLATES[templateKey];
+    if (!template) { showToast('Template not found.', 'error'); return; }
+
+    const activeTrip = getActiveTrip();
+    const activeName = activeTrip?.name || 'current trip';
+
+    const html = `
+        <h2>Apply "${esc(template.name)}"?</h2>
+        <p style="margin:.5rem 0 1rem;color:var(--text-2)">
+            This will <strong>replace the itinerary</strong> of "<strong>${esc(activeName)}</strong>".
+            Places, todos, rules and packing from the template will be <strong>added</strong> to your existing ones (duplicates by id/text are skipped — nothing is removed).
+        </p>
+        <p class="data-hint" style="margin-bottom:1rem">⚠️ The replace cannot be undone. Consider exporting a JSON backup from the sidebar first.</p>
+        <div class="template-warning-actions">
+            <button class="btn btn-accent" onclick="useTemplateForNewTrip('${templateKey}')">Create new trip instead</button>
+            <button class="btn btn-ghost" onclick="confirmOverrideWithTemplate('${templateKey}')" style="color:#ef4444">Override current trip</button>
+            <button class="btn btn-ghost" onclick="closeModal('modal-detail')">Cancel</button>
+        </div>`;
+    document.getElementById('detail-content').innerHTML = html;
+    window.openModal?.('modal-detail');
+}
+
+// Actually perform the override after the user confirms in the warning modal.
+export function confirmOverrideWithTemplate(templateKey) {
+    const template = TRIP_TEMPLATES[templateKey];
+    if (!template) return;
+    const activeTrip = getActiveTrip();
+    if (!activeTrip) { showToast('No active trip.', 'error'); return; }
+
+    // Work out the user's day count from current trip dates, if any.
+    let userDayCount = 0;
+    if (activeTrip.dateStart && activeTrip.dateEnd) {
+        const s = new Date(activeTrip.dateStart), e = new Date(activeTrip.dateEnd);
+        userDayCount = Math.ceil((e - s) / 86400000) + 1;
+    }
+
+    // REPLACE itinerary.
+    const { itinerary, extendedDays } = buildItineraryFromTemplate(template, activeTrip.dateStart, userDayCount);
+    state.itinerary = itinerary;
+
+    // If template extends beyond current trip length, bump the trip's dateEnd.
+    if (extendedDays > 0 && activeTrip.dateStart && template.durationDays) {
+        activeTrip.dateEnd = addDays(activeTrip.dateStart, template.durationDays);
+        const meta = ensureTripsMeta();
+        const stored = meta.trips.find(t => t.id === activeTrip.id);
+        if (stored) stored.dateEnd = activeTrip.dateEnd;
+        saveTripsMeta(meta);
+        showToast(`Extended trip to ${template.durationDays} days to fit template.`, 'info');
+    }
+
+    // ADDITIVE merge for places, todos, rules, packing.
+    const templatePlaces = resolvePlaceIds(template.placeIds);
+    state.places = mergeAdditive(state.places || [], templatePlaces, p => p.id);
+
+    const templateTodos = (template.todos || []).map((text, i) => ({ id: 'td' + (Date.now() + i), text, done: false }));
+    state.todos = mergeAdditive(state.todos || [], templateTodos, t => (t.text || '').trim().toLowerCase());
+
+    state.rules = mergeAdditive(state.rules || [], [...(template.rules || [])], r => (r || '').trim().toLowerCase());
+
+    const templatePacking = (template.packing || []).map(p => ({ ...p, id: p.id || 'pk' + (Date.now() + Math.random()) }));
+    state.packing = mergeAdditive(state.packing || [], templatePacking, p => (p.name || '').trim().toLowerCase());
+
+    // Clean up map instances (day ids may have changed).
+    Object.keys(window._dayMaps || {}).forEach(k => delete window._dayMaps[k]);
+    window._expandedDays?.clear();
+    if (state.itinerary[0]) window._expandedDays?.add(state.itinerary[0].id);
+
+    save();
+    emit('renderAll');
+    renderTripManager();
+    window.closeModal?.('modal-detail');
+    showToast(`Applied "${template.name}" to ${activeTrip.name}.`, 'success');
 }
