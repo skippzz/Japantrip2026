@@ -481,6 +481,9 @@ export const TRIP_TEMPLATES = {
     japanFull18d: {
         name: 'Japan Full (18 days)',
         description: 'Tokyo · Fuji · Hakone · Kyoto · Osaka · Nara — the full 18-day default plan with curated activities for every day.',
+        featured: true,
+        tags: ['Japan', 'Multi-city', '18 days', 'Featured'],
+        destinations: ['Tokyo', 'Fuji', 'Hakone', 'Kyoto', 'Osaka', 'Nara'],
         durationDays: 18,
         itinerary: DEFAULT_ITINERARY,
         placeIds: DEFAULT_PLACES.map(p => p.id),
@@ -512,6 +515,9 @@ export const TRIP_TEMPLATES = {
     blank: {
         name: 'Blank Trip',
         description: 'Start from scratch — no itinerary, no places, no todos. Build your trip from the ground up.',
+        featured: false,
+        tags: ['Blank'],
+        destinations: [],
         durationDays: null,
         itinerary: [],
         placeIds: [],
@@ -520,6 +526,10 @@ export const TRIP_TEMPLATES = {
         rules: [],
     },
 };
+
+// User-defined templates live in localStorage under this key as a map of
+// { [key]: template }. Same schema as TRIP_TEMPLATES entries.
+export const USER_TEMPLATES_KEY = 'userTripTemplates';
 
 export const JAPAN_FACTS = [
     'Japan has 5.52 million vending machines — one for every 23 people.',

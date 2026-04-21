@@ -1,9 +1,9 @@
 // ── Trips: Multi-trip management, trip setup, trip switching ──
 
-import { state, save, emit, setStorageKey } from './state.js';
+import { state, save, emit, setStorageKey, autoSaveVersion } from './state.js';
 import { esc, setStateRef } from './helpers.js';
 import { showToast } from './toast.js';
-import { TRIP_TEMPLATES, DEFAULT_PLACES } from './data.js';
+import { TRIP_TEMPLATES, DEFAULT_PLACES, USER_TEMPLATES_KEY } from './data.js';
 
 // ── Template seeding helpers ──
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -183,8 +183,8 @@ function loadTripState(trip) {
         const raw = localStorage.getItem(trip.storageKey);
         if (raw) {
             const s = JSON.parse(raw);
-            // Copy loaded state into the shared state object
-            Object.assign(state, { places: [], todos: [], itinerary: [], packing: [] });
+            // Reset all keyed collections so switching trips never leaks data from the previous one.
+            Object.assign(state, { places: [], todos: [], itinerary: [], packing: [], rules: [] });
             Object.assign(state, s);
             setStateRef(state);
             return;
@@ -195,6 +195,7 @@ function loadTripState(trip) {
     state.todos = [];
     state.itinerary = [];
     state.packing = [];
+    state.rules = [];
     setStateRef(state);
 }
 
@@ -468,31 +469,117 @@ export function createAndSwitchTrip() {
 //  TEMPLATES GALLERY
 // ══════════════════════════════════════════════════════════════
 
-// Stats shown on each template card.
-function templateStats(t) {
+// ── User templates (localStorage-backed) ──
+function loadUserTemplates() {
+    try { return JSON.parse(localStorage.getItem(USER_TEMPLATES_KEY)) || {}; }
+    catch { return {}; }
+}
+function saveUserTemplates(map) {
+    try { localStorage.setItem(USER_TEMPLATES_KEY, JSON.stringify(map)); return true; }
+    catch { showToast('Could not save template — storage may be full.', 'error'); return false; }
+}
+
+// Returns merged built-in + user templates, with a `_source` marker on each.
+function getAllTemplates() {
+    const built = Object.fromEntries(
+        Object.entries(TRIP_TEMPLATES).map(([k, t]) => [k, { ...t, _source: 'built-in' }])
+    );
+    const user = Object.fromEntries(
+        Object.entries(loadUserTemplates()).map(([k, t]) => [k, { ...t, _source: 'user' }])
+    );
+    return { ...built, ...user };
+}
+
+// Numeric stats for a template.
+function computeTemplateStats(t) {
     const days = t.itinerary?.length || 0;
     const items = (t.itinerary || []).reduce((n, d) => n + (d.items?.length || 0), 0);
     const places = t.placeIds?.length || 0;
     const todos = t.todos?.length || 0;
-    return `${days} day${days !== 1 ? 's' : ''} · ${items} activit${items !== 1 ? 'ies' : 'y'} · ${places} place${places !== 1 ? 's' : ''} · ${todos} todo${todos !== 1 ? 's' : ''}`;
+    const rules = t.rules?.length || 0;
+    const packing = t.packing?.length || 0;
+    return { days, items, places, todos, rules, packing };
 }
 
-export function openTemplatesGallery() {
-    const cards = Object.entries(TRIP_TEMPLATES).map(([key, t]) => `
-        <div class="template-card">
-            <div class="template-card-title">${esc(t.name)}</div>
-            <div class="template-card-desc">${esc(t.description || '')}</div>
-            <div class="template-card-stats">${templateStats(t)}</div>
-            <div class="template-card-actions">
-                <button class="btn btn-accent btn-sm" onclick="useTemplateForNewTrip('${key}')">Use for new trip</button>
-                <button class="btn btn-ghost btn-sm" onclick="applyTemplateToCurrentTrip('${key}')">Apply to current trip</button>
+// Two-line stat grid used on cards.
+function templateStatsGrid(t) {
+    const s = computeTemplateStats(t);
+    return `
+        <div class="template-stats-grid">
+            <div><span class="num">${s.days}</span> day${s.days !== 1 ? 's' : ''}</div>
+            <div><span class="num">${s.places}</span> place${s.places !== 1 ? 's' : ''}</div>
+            <div><span class="num">${s.items}</span> item${s.items !== 1 ? 's' : ''}</div>
+            <div><span class="num">${s.todos}</span> todo${s.todos !== 1 ? 's' : ''}</div>
+        </div>`;
+}
+
+function renderTemplateCard(key, t) {
+    const isUser = t._source === 'user';
+    const badge = t.featured
+        ? '<span class="template-badge template-badge-featured">Recommended</span>'
+        : isUser ? '<span class="template-badge template-badge-user">Yours</span>' : '';
+    const dests = (t.destinations && t.destinations.length)
+        ? `<div class="template-card-dests">${t.destinations.map(d => `<span class="template-dest-chip">${esc(d)}</span>`).join('')}</div>`
+        : '';
+    const userActions = isUser ? `
+        <button class="template-icon-btn" onclick="event.stopPropagation(); exportTemplate('${key}')" title="Export template JSON">⬇</button>
+        <button class="template-icon-btn" onclick="event.stopPropagation(); deleteUserTemplate('${key}')" title="Delete template">🗑</button>
+    ` : '';
+    return `
+        <div class="template-card ${t.featured ? 'is-featured' : ''}">
+            <div class="template-card-header">
+                <div class="template-card-title">${esc(t.name)}</div>
+                <div class="template-card-icons">${userActions}</div>
             </div>
-        </div>`).join('');
+            ${badge ? `<div class="template-card-badges">${badge}</div>` : ''}
+            <div class="template-card-desc">${esc(t.description || '')}</div>
+            ${dests}
+            ${templateStatsGrid(t)}
+            <div class="template-card-actions">
+                <button class="btn btn-accent btn-sm" onclick="useTemplateForNewTrip('${key}')">Use this template</button>
+                <button class="btn btn-ghost btn-sm" onclick="openTemplatePreview('${key}')">Preview</button>
+                <button class="btn btn-ghost btn-sm" onclick="applyTemplateToCurrentTrip('${key}')">Apply to current</button>
+            </div>
+        </div>`;
+}
+
+// Collect unique tags across all templates (for filter chips).
+function collectTags(templates) {
+    const set = new Set();
+    Object.values(templates).forEach(t => (t.tags || []).forEach(tag => set.add(tag)));
+    return [...set].sort();
+}
+
+export function openTemplatesGallery(activeTag = '') {
+    const all = getAllTemplates();
+    const tags = collectTags(all);
+    const filtered = activeTag
+        ? Object.fromEntries(Object.entries(all).filter(([, t]) => (t.tags || []).includes(activeTag)))
+        : all;
+
+    const tagChips = tags.map(tag => `
+        <button class="template-tag-chip ${tag === activeTag ? 'active' : ''}" onclick="openTemplatesGallery('${esc(tag).replace(/'/g, "\\'")}')">${esc(tag)}</button>
+    `).join('');
+
+    const allChip = `<button class="template-tag-chip ${!activeTag ? 'active' : ''}" onclick="openTemplatesGallery('')">All</button>`;
+
+    const cards = Object.entries(filtered)
+        .sort(([, a], [, b]) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
+        .map(([key, t]) => renderTemplateCard(key, t))
+        .join('');
 
     const html = `
-        <h2>Trip Templates</h2>
-        <p class="data-hint" style="margin-bottom:1rem">Starter templates with pre-built itineraries and curated places. Use for a new trip or apply to your current one.</p>
-        <div class="template-grid">${cards}</div>
+        <div class="template-gallery-header">
+            <h2>Trip Templates</h2>
+            <div class="template-gallery-toolbar">
+                <button class="btn btn-ghost btn-sm" onclick="openSaveCurrentAsTemplate()">💾 Save current as template</button>
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('template-import-file').click()">📥 Import JSON</button>
+                <input type="file" id="template-import-file" accept=".json,application/json" style="display:none" onchange="importTemplateFromFile(this.files[0])">
+            </div>
+        </div>
+        <p class="data-hint" style="margin-bottom:.75rem">Starter templates with pre-built itineraries and curated places. Use for a new trip, apply to your current one, or preview the day-by-day breakdown first.</p>
+        <div class="template-tag-chips">${allChip}${tagChips}</div>
+        <div class="template-grid">${cards || '<div class="data-hint" style="padding:1rem 0">No templates match this filter.</div>'}</div>
         <div class="form-actions" style="margin-top:1rem">
             <button class="btn btn-ghost" onclick="closeModal('modal-detail')">Close</button>
         </div>`;
@@ -500,92 +587,398 @@ export function openTemplatesGallery() {
     window.openModal?.('modal-detail');
 }
 
-// Opens the New Trip modal with a template pre-selected.
+// Read-only day-by-day preview of a template.
+export function openTemplatePreview(templateKey) {
+    const all = getAllTemplates();
+    const t = all[templateKey];
+    if (!t) { showToast('Template not found.', 'error'); return; }
+
+    const days = (t.itinerary || []).map((d, i) => {
+        const items = (d.items || []).map(it => `
+            <li class="preview-item ${it.isNote ? 'is-note' : ''}">
+                ${it.time ? `<span class="preview-time">${esc(it.time)}</span>` : ''}
+                <span class="preview-name">${esc(it.name || '(untitled)')}</span>
+                ${it.desc ? `<span class="preview-desc">${esc(it.desc)}</span>` : ''}
+            </li>
+        `).join('');
+        return `
+            <details class="preview-day" ${i < 2 ? 'open' : ''}>
+                <summary>${esc(d.title || `Day ${i + 1}`)} <span class="preview-count">${(d.items || []).length}</span></summary>
+                ${items ? `<ul class="preview-items">${items}</ul>` : '<p class="data-hint" style="margin:.5rem 0 .25rem">(empty day)</p>'}
+            </details>`;
+    }).join('');
+
+    const html = `
+        <h2>Preview — ${esc(t.name)}</h2>
+        <p class="data-hint" style="margin-bottom:.75rem">${esc(t.description || '')}</p>
+        ${templateStatsGrid(t)}
+        <div class="template-preview-body">
+            ${days || '<p class="data-hint">This template has no itinerary days.</p>'}
+        </div>
+        <div class="form-actions" style="margin-top:1rem;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="openTemplatesGallery('')">← Back to gallery</button>
+            <button class="btn btn-accent" onclick="useTemplateForNewTrip('${templateKey}')">Use for new trip</button>
+            <button class="btn btn-ghost" onclick="applyTemplateToCurrentTrip('${templateKey}')">Apply to current</button>
+        </div>`;
+    document.getElementById('detail-content').innerHTML = html;
+    window.openModal?.('modal-detail');
+}
+
+// Opens the New Trip modal with a template pre-selected. If invoked from the
+// replace-warning flow, we also pre-fill trip name + dates from the active trip
+// so the user doesn't have to retype them.
 export function useTemplateForNewTrip(templateKey) {
     openNewTripModal();
-    // After the modal renders, select the template and refresh preview.
+    const activeTrip = getActiveTrip();
+    const all = getAllTemplates();
+    const template = all[templateKey];
     requestAnimationFrame(() => {
         const sel = document.getElementById('new-trip-template');
         if (sel) {
             sel.value = templateKey;
             sel.dispatchEvent(new Event('change'));
         }
+        // Pre-fill name suggestion from template.
+        const nameInput = document.getElementById('new-trip-name');
+        if (nameInput && !nameInput.value && template) {
+            nameInput.value = template.name;
+        }
+        // Pre-fill dates from active trip (if it has any) as a starting suggestion.
+        const startInput = document.getElementById('new-trip-start');
+        const endInput = document.getElementById('new-trip-end');
+        if (startInput && endInput && activeTrip) {
+            if (!startInput.value && activeTrip.dateStart) startInput.value = activeTrip.dateStart;
+            if (!endInput.value && activeTrip.dateEnd) endInput.value = activeTrip.dateEnd;
+        }
     });
 }
 
+// ── Diff computation for apply-warning preview ──
+function computeApplyDiff(template, currentState, currentTrip) {
+    const templateStats = computeTemplateStats(template);
+    const current = {
+        days: currentState.itinerary?.length || 0,
+        items: (currentState.itinerary || []).reduce((n, d) => n + (d.items?.length || 0), 0),
+        places: currentState.places?.length || 0,
+        todos: currentState.todos?.length || 0,
+        rules: currentState.rules?.length || 0,
+        packing: currentState.packing?.length || 0,
+    };
+    // Places merge — count how many new place ids the template will add.
+    const currentPlaceIds = new Set((currentState.places || []).map(p => p.id));
+    const newPlaceCount = (template.placeIds || []).filter(id => !currentPlaceIds.has(id)).length;
+    // Todos merge by lowercased text.
+    const currentTodoText = new Set((currentState.todos || []).map(t => (t.text || '').trim().toLowerCase()));
+    const newTodoCount = (template.todos || []).filter(t => !currentTodoText.has((t || '').trim().toLowerCase())).length;
+    // Rules merge by lowercased text.
+    const currentRuleText = new Set((currentState.rules || []).map(r => (r || '').trim().toLowerCase()));
+    const newRuleCount = (template.rules || []).filter(r => !currentRuleText.has((r || '').trim().toLowerCase())).length;
+    // Packing merge by lowercased name.
+    const currentPackText = new Set((currentState.packing || []).map(p => (p.name || '').trim().toLowerCase()));
+    const newPackingCount = (template.packing || []).filter(p => !currentPackText.has((p.name || '').trim().toLowerCase())).length;
+
+    // Day extension — use trip's current dateStart/dateEnd as user day count.
+    let userDayCount = 0;
+    if (currentTrip?.dateStart && currentTrip?.dateEnd) {
+        const s = new Date(currentTrip.dateStart), e = new Date(currentTrip.dateEnd);
+        if (!isNaN(s) && !isNaN(e)) userDayCount = Math.ceil((e - s) / 86400000) + 1;
+    }
+    const templateDays = templateStats.days;
+    const extensionDays = Math.max(0, templateDays - userDayCount);
+    const afterDays = Math.max(userDayCount, templateDays);
+
+    return {
+        current,
+        template: templateStats,
+        after: {
+            days: afterDays,
+            items: templateStats.items,                  // itinerary is replaced
+            places: current.places + newPlaceCount,
+            todos: current.todos + newTodoCount,
+            rules: current.rules + newRuleCount,
+            packing: current.packing + newPackingCount,
+        },
+        delta: {
+            places: newPlaceCount,
+            todos: newTodoCount,
+            rules: newRuleCount,
+            packing: newPackingCount,
+            extensionDays,
+        },
+    };
+}
+
 // Apply a template to the CURRENT active trip.
-// Shows a 3-option warning modal: Create new trip · Override current · Cancel.
+// Shows a diff-preview modal with 3 actions: create new trip · replace · cancel.
 export function applyTemplateToCurrentTrip(templateKey) {
-    const template = TRIP_TEMPLATES[templateKey];
+    const all = getAllTemplates();
+    const template = all[templateKey];
     if (!template) { showToast('Template not found.', 'error'); return; }
 
     const activeTrip = getActiveTrip();
-    const activeName = activeTrip?.name || 'current trip';
+    if (!activeTrip) { showToast('No active trip — create one first.', 'warn'); return; }
+
+    // Require a valid dateStart before we can rewrite day titles.
+    if (!activeTrip.dateStart) {
+        const html = `
+            <h2>Set a start date first</h2>
+            <p style="margin:.5rem 0 1rem;color:var(--text-2)">
+                "<strong>${esc(activeTrip.name)}</strong>" has no start date, so we can't rewrite the
+                template's day titles. Set a start date in <strong>Edit Trip Settings</strong> and try again.
+            </p>
+            <div class="form-actions">
+                <button class="btn btn-ghost" onclick="closeModal('modal-detail')">Cancel</button>
+                <button class="btn btn-accent" onclick="openTripEditor('${activeTrip.id}')">Open Trip Settings</button>
+            </div>`;
+        document.getElementById('detail-content').innerHTML = html;
+        window.openModal?.('modal-detail');
+        return;
+    }
+
+    const diff = computeApplyDiff(template, state, activeTrip);
+    const blankTemplate = (template.itinerary?.length || 0) === 0;
+
+    const row = (label, current, after, deltaText) => `
+        <tr>
+            <td>${label}</td>
+            <td class="num">${current}</td>
+            <td class="num">${after}${deltaText ? ` <span class="delta">${deltaText}</span>` : ''}</td>
+        </tr>`;
+
+    const extensionNote = diff.delta.extensionDays > 0
+        ? `<p class="diff-extension-note">⚠ Your trip is ${diff.current.days} days; this template is ${diff.template.days} days. The trip end date will be extended by <strong>${diff.delta.extensionDays} day${diff.delta.extensionDays !== 1 ? 's' : ''}</strong>.</p>`
+        : '';
+
+    const blankWarning = blankTemplate
+        ? `<p class="diff-extension-note">⚠ This is the blank template — applying it will <strong>empty all itinerary days</strong>.</p>`
+        : '';
 
     const html = `
-        <h2>Apply "${esc(template.name)}"?</h2>
-        <p style="margin:.5rem 0 1rem;color:var(--text-2)">
-            This will <strong>replace the itinerary</strong> of "<strong>${esc(activeName)}</strong>".
-            Places, todos, rules and packing from the template will be <strong>added</strong> to your existing ones (duplicates by id/text are skipped — nothing is removed).
+        <h2>Apply "${esc(template.name)}" to "${esc(activeTrip.name)}"?</h2>
+        <p style="margin:.5rem 0 .75rem;color:var(--text-2)">
+            Itinerary will be <strong>replaced</strong>. Places, todos, rules and packing will be <strong>merged additively</strong> (duplicates skipped — nothing removed).
         </p>
-        <p class="data-hint" style="margin-bottom:1rem">⚠️ The replace cannot be undone. Consider exporting a JSON backup from the sidebar first.</p>
+        <p class="data-hint" style="margin-bottom:.75rem">A snapshot of your current state will be saved automatically — you can restore it from Saved Versions in the sidebar if something goes wrong.</p>
+        ${extensionNote}
+        ${blankWarning}
+        <table class="diff-table">
+            <thead><tr><th></th><th>Current</th><th>After apply</th></tr></thead>
+            <tbody>
+                ${row('Itinerary days', diff.current.days, diff.after.days, diff.delta.extensionDays > 0 ? `+${diff.delta.extensionDays}` : '')}
+                ${row('Activities', diff.current.items, diff.after.items, '(replaced)')}
+                ${row('Places', diff.current.places, diff.after.places, diff.delta.places > 0 ? `+${diff.delta.places} new` : '')}
+                ${row('Todos', diff.current.todos, diff.after.todos, diff.delta.todos > 0 ? `+${diff.delta.todos} new` : '')}
+                ${row('Rules', diff.current.rules, diff.after.rules, diff.delta.rules > 0 ? `+${diff.delta.rules} new` : '')}
+                ${row('Packing', diff.current.packing, diff.after.packing, diff.delta.packing > 0 ? `+${diff.delta.packing} new` : '')}
+            </tbody>
+        </table>
         <div class="template-warning-actions">
-            <button class="btn btn-accent" onclick="useTemplateForNewTrip('${templateKey}')">Create new trip instead</button>
-            <button class="btn btn-ghost" onclick="confirmOverrideWithTemplate('${templateKey}')" style="color:#ef4444">Override current trip</button>
+            <button class="btn btn-accent" onclick="useTemplateForNewTrip('${templateKey}')">🆕 Create new trip instead</button>
+            <button class="btn btn-danger" id="replace-confirm-btn" onclick="confirmReplaceWithTemplate('${templateKey}')">⚠ Replace "${esc(activeTrip.name)}"</button>
             <button class="btn btn-ghost" onclick="closeModal('modal-detail')">Cancel</button>
         </div>`;
     document.getElementById('detail-content').innerHTML = html;
     window.openModal?.('modal-detail');
 }
 
-// Actually perform the override after the user confirms in the warning modal.
-export function confirmOverrideWithTemplate(templateKey) {
-    const template = TRIP_TEMPLATES[templateKey];
+// Perform the replace after the user confirms in the diff-preview modal.
+// Auto-snapshots the current state to saved-versions for undo.
+export function confirmReplaceWithTemplate(templateKey) {
+    const all = getAllTemplates();
+    const template = all[templateKey];
     if (!template) return;
     const activeTrip = getActiveTrip();
     if (!activeTrip) { showToast('No active trip.', 'error'); return; }
+    if (!activeTrip.dateStart) { showToast('Trip needs a start date first.', 'warn'); return; }
 
-    // Work out the user's day count from current trip dates, if any.
-    let userDayCount = 0;
-    if (activeTrip.dateStart && activeTrip.dateEnd) {
-        const s = new Date(activeTrip.dateStart), e = new Date(activeTrip.dateEnd);
-        userDayCount = Math.ceil((e - s) / 86400000) + 1;
-    }
+    // Loading state on the confirm button so the user sees something happening.
+    const btn = document.getElementById('replace-confirm-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Applying…'; btn.classList.add('is-loading'); }
 
-    // REPLACE itinerary.
-    const { itinerary, extendedDays } = buildItineraryFromTemplate(template, activeTrip.dateStart, userDayCount);
-    state.itinerary = itinerary;
+    // Defer the heavy work so the button state repaints first.
+    setTimeout(() => {
+        // Auto-snapshot BEFORE mutating anything.
+        const snapName = `Before applying "${template.name}" — ${new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`;
+        autoSaveVersion(snapName);
 
-    // If template extends beyond current trip length, bump the trip's dateEnd.
-    if (extendedDays > 0 && activeTrip.dateStart && template.durationDays) {
-        activeTrip.dateEnd = addDays(activeTrip.dateStart, template.durationDays);
-        const meta = ensureTripsMeta();
-        const stored = meta.trips.find(t => t.id === activeTrip.id);
-        if (stored) stored.dateEnd = activeTrip.dateEnd;
-        saveTripsMeta(meta);
-        showToast(`Extended trip to ${template.durationDays} days to fit template.`, 'info');
-    }
+        let userDayCount = 0;
+        if (activeTrip.dateStart && activeTrip.dateEnd) {
+            const s = new Date(activeTrip.dateStart), e = new Date(activeTrip.dateEnd);
+            if (!isNaN(s) && !isNaN(e)) userDayCount = Math.ceil((e - s) / 86400000) + 1;
+        }
 
-    // ADDITIVE merge for places, todos, rules, packing.
-    const templatePlaces = resolvePlaceIds(template.placeIds);
-    state.places = mergeAdditive(state.places || [], templatePlaces, p => p.id);
+        // REPLACE itinerary.
+        const { itinerary, extendedDays } = buildItineraryFromTemplate(template, activeTrip.dateStart, userDayCount);
+        state.itinerary = itinerary;
 
-    const templateTodos = (template.todos || []).map((text, i) => ({ id: 'td' + (Date.now() + i), text, done: false }));
-    state.todos = mergeAdditive(state.todos || [], templateTodos, t => (t.text || '').trim().toLowerCase());
+        // If template extends beyond current trip length, bump the trip's dateEnd.
+        if (extendedDays > 0 && activeTrip.dateStart && template.durationDays) {
+            activeTrip.dateEnd = addDays(activeTrip.dateStart, template.durationDays);
+            const meta = ensureTripsMeta();
+            const stored = meta.trips.find(t => t.id === activeTrip.id);
+            if (stored) stored.dateEnd = activeTrip.dateEnd;
+            saveTripsMeta(meta);
+        }
 
-    state.rules = mergeAdditive(state.rules || [], [...(template.rules || [])], r => (r || '').trim().toLowerCase());
+        // ADDITIVE merge for places, todos, rules, packing.
+        const templatePlaces = resolvePlaceIds(template.placeIds);
+        state.places = mergeAdditive(state.places || [], templatePlaces, p => p.id);
 
-    const templatePacking = (template.packing || []).map(p => ({ ...p, id: p.id || 'pk' + (Date.now() + Math.random()) }));
-    state.packing = mergeAdditive(state.packing || [], templatePacking, p => (p.name || '').trim().toLowerCase());
+        const templateTodos = (template.todos || []).map((text, i) => ({ id: 'td' + (Date.now() + i), text, done: false }));
+        state.todos = mergeAdditive(state.todos || [], templateTodos, t => (t.text || '').trim().toLowerCase());
 
-    // Clean up map instances (day ids may have changed).
-    Object.keys(window._dayMaps || {}).forEach(k => delete window._dayMaps[k]);
-    window._expandedDays?.clear();
-    if (state.itinerary[0]) window._expandedDays?.add(state.itinerary[0].id);
+        state.rules = mergeAdditive(state.rules || [], [...(template.rules || [])], r => (r || '').trim().toLowerCase());
 
-    save();
-    emit('renderAll');
-    renderTripManager();
-    window.closeModal?.('modal-detail');
-    showToast(`Applied "${template.name}" to ${activeTrip.name}.`, 'success');
+        const templatePacking = (template.packing || []).map(p => ({ ...p, id: p.id || 'pk' + (Date.now() + Math.random()) }));
+        state.packing = mergeAdditive(state.packing || [], templatePacking, p => (p.name || '').trim().toLowerCase());
+
+        // Clean up map instances (day ids may have changed).
+        Object.keys(window._dayMaps || {}).forEach(k => delete window._dayMaps[k]);
+        window._expandedDays?.clear();
+        if (state.itinerary[0]) window._expandedDays?.add(state.itinerary[0].id);
+
+        save();
+        emit('renderAll');
+        renderTripManager();
+        window.closeModal?.('modal-detail');
+        const extensionMsg = extendedDays > 0 ? ` (trip extended to ${template.durationDays} days)` : '';
+        showToast(`Replaced "${activeTrip.name}" with "${template.name}"${extensionMsg}. Previous state saved.`, 'success');
+    }, 20);
+}
+
+// Back-compat: keep the old export name so any external caller doesn't break.
+export const confirmOverrideWithTemplate = confirmReplaceWithTemplate;
+
+// ══════════════════════════════════════════════════════════════
+//  SAVE CURRENT TRIP AS TEMPLATE
+// ══════════════════════════════════════════════════════════════
+export function openSaveCurrentAsTemplate() {
+    const activeTrip = getActiveTrip();
+    const stats = {
+        days: state.itinerary?.length || 0,
+        places: state.places?.length || 0,
+        items: (state.itinerary || []).reduce((n, d) => n + (d.items?.length || 0), 0),
+    };
+
+    const html = `
+        <h2>Save current trip as template</h2>
+        <p class="data-hint" style="margin-bottom:1rem">This saves your current itinerary, places, todos, rules and packing into a reusable template. Templates are stored locally in your browser.</p>
+        <div class="form-group"><label>Template name *</label><input type="text" id="save-tpl-name" placeholder="e.g. Tokyo Week" value="${esc(activeTrip?.name || '')}"></div>
+        <div class="form-group"><label>Description</label><textarea id="save-tpl-desc" rows="2" placeholder="What is this template good for?"></textarea></div>
+        <div class="form-group"><label>Tags (comma separated)</label><input type="text" id="save-tpl-tags" placeholder="e.g. Japan, City Break, 7 days"></div>
+        <div class="form-group"><label>Destinations (comma separated)</label><input type="text" id="save-tpl-dests" placeholder="e.g. Tokyo, Kyoto"></div>
+        <div class="data-hint" style="margin:.5rem 0 1rem">Will include: ${stats.days} days · ${stats.items} activities · ${stats.places} places · ${state.todos?.length || 0} todos · ${state.rules?.length || 0} rules · ${state.packing?.length || 0} packing items.</div>
+        <div class="form-actions">
+            <button class="btn btn-ghost" onclick="openTemplatesGallery('')">Back</button>
+            <button class="btn btn-accent" onclick="confirmSaveCurrentAsTemplate()">Save template</button>
+        </div>`;
+    document.getElementById('detail-content').innerHTML = html;
+    window.openModal?.('modal-detail');
+}
+
+export function confirmSaveCurrentAsTemplate() {
+    const name = document.getElementById('save-tpl-name')?.value?.trim();
+    if (!name) { showToast('Template name is required.', 'warn'); return; }
+    const description = document.getElementById('save-tpl-desc')?.value?.trim() || '';
+    const tagsRaw = document.getElementById('save-tpl-tags')?.value || '';
+    const destsRaw = document.getElementById('save-tpl-dests')?.value || '';
+    const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+    const destinations = destsRaw.split(',').map(d => d.trim()).filter(Boolean);
+
+    const key = 'user-' + Date.now();
+    const days = state.itinerary?.length || 0;
+    const template = {
+        name,
+        description,
+        tags: tags.length ? tags : ['User'],
+        destinations,
+        featured: false,
+        durationDays: days || null,
+        // Deep-clone so future edits to the live trip don't mutate the template.
+        itinerary: JSON.parse(JSON.stringify(state.itinerary || [])),
+        placeIds: (state.places || []).map(p => p.id).filter(id => id != null),
+        packing: JSON.parse(JSON.stringify(state.packing || [])),
+        todos: (state.todos || []).map(t => t.text).filter(Boolean),
+        rules: [...(state.rules || [])],
+        createdAt: Date.now(),
+    };
+
+    const userTemplates = loadUserTemplates();
+    userTemplates[key] = template;
+    if (!saveUserTemplates(userTemplates)) return;
+    showToast(`Saved template: "${name}"`, 'success');
+    openTemplatesGallery('');
+}
+
+export function deleteUserTemplate(key) {
+    const userTemplates = loadUserTemplates();
+    const t = userTemplates[key];
+    if (!t) return;
+    if (!confirm(`Delete template "${t.name}"? This cannot be undone.`)) return;
+    delete userTemplates[key];
+    saveUserTemplates(userTemplates);
+    showToast(`Deleted template: "${t.name}"`, 'info');
+    openTemplatesGallery('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TEMPLATE IMPORT / EXPORT
+// ══════════════════════════════════════════════════════════════
+export function exportTemplate(key) {
+    const all = getAllTemplates();
+    const t = all[key];
+    if (!t) { showToast('Template not found.', 'error'); return; }
+    // Strip runtime-only fields.
+    const payload = { ...t };
+    delete payload._source;
+    const blob = new Blob([JSON.stringify({ type: 'travel-planner-template', version: 1, template: payload }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (t.name || 'template').replace(/[^a-z0-9_-]+/gi, '-').toLowerCase() + '.template.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Exported template: "${t.name}"`, 'success');
+}
+
+export function importTemplateFromFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const text = String(e.target.result).replace(/^﻿/, '').trim();
+            const payload = JSON.parse(text);
+            // Accept either the wrapped shape (type/version/template) or a raw template object.
+            const template = payload?.template || payload;
+            if (!template || typeof template !== 'object' || !template.name) {
+                showToast('Invalid template file — missing name.', 'error');
+                return;
+            }
+            // Coerce required fields to safe defaults.
+            const safe = {
+                name: String(template.name),
+                description: String(template.description || ''),
+                tags: Array.isArray(template.tags) ? template.tags : ['Imported'],
+                destinations: Array.isArray(template.destinations) ? template.destinations : [],
+                featured: false,
+                durationDays: Number.isFinite(template.durationDays) ? template.durationDays : (Array.isArray(template.itinerary) ? template.itinerary.length : null),
+                itinerary: Array.isArray(template.itinerary) ? template.itinerary : [],
+                placeIds: Array.isArray(template.placeIds) ? template.placeIds : [],
+                packing: Array.isArray(template.packing) ? template.packing : [],
+                todos: Array.isArray(template.todos) ? template.todos : [],
+                rules: Array.isArray(template.rules) ? template.rules : [],
+                createdAt: Date.now(),
+                imported: true,
+            };
+            const userTemplates = loadUserTemplates();
+            const key = 'user-' + Date.now();
+            userTemplates[key] = safe;
+            if (!saveUserTemplates(userTemplates)) return;
+            showToast(`Imported template: "${safe.name}"`, 'success');
+            openTemplatesGallery('');
+        } catch (err) {
+            showToast('Failed to read template file: ' + err.message, 'error');
+        }
+    };
+    reader.readAsText(file);
 }

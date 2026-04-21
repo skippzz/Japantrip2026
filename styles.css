@@ -1300,6 +1300,18 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .badge-active { font-size: .65rem; background: var(--accent); color: #fff; padding: 1px 6px; border-radius: 8px; font-weight: 500; }
 
 /* ── Trip Templates Gallery ── */
+.template-gallery-header { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.template-gallery-toolbar { display: flex; gap: .35rem; flex-wrap: wrap; }
+
+.template-tag-chips { display: flex; gap: .35rem; flex-wrap: wrap; margin: .25rem 0 .75rem; }
+.template-tag-chip {
+    font-size: .75rem; padding: .25rem .65rem; border-radius: 12px;
+    background: var(--bg-2); border: 1px solid var(--bg-4); color: var(--text-2);
+    cursor: pointer; transition: all var(--transition);
+}
+.template-tag-chip:hover { background: var(--bg-3); }
+.template-tag-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
 .template-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -1309,16 +1321,100 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
     padding: .85rem; border-radius: 10px;
     background: var(--bg-2); border: 1px solid var(--bg-4);
     display: flex; flex-direction: column; gap: .4rem;
+    position: relative;
 }
-.template-card-title { font-size: .95rem; font-weight: 600; color: var(--text-1); }
+.template-card.is-featured { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.template-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: .4rem; }
+.template-card-title { font-size: .95rem; font-weight: 600; color: var(--text-1); flex: 1; min-width: 0; }
+.template-card-icons { display: flex; gap: .2rem; }
+.template-icon-btn {
+    background: none; border: none; cursor: pointer; font-size: .85rem;
+    padding: 2px 6px; border-radius: 4px; opacity: .55; color: var(--text-2);
+    transition: opacity var(--transition), background var(--transition);
+}
+.template-icon-btn:hover { opacity: 1; background: var(--bg-3); }
+
+.template-card-badges { display: flex; gap: .3rem; flex-wrap: wrap; }
+.template-badge {
+    font-size: .65rem; font-weight: 600; letter-spacing: .02em;
+    padding: 2px 7px; border-radius: 9px; text-transform: uppercase;
+}
+.template-badge-featured { background: var(--accent); color: #fff; }
+.template-badge-user { background: var(--bg-4); color: var(--text-2); }
+
 .template-card-desc { font-size: .8rem; color: var(--text-2); line-height: 1.35; }
-.template-card-stats { font-size: .72rem; color: var(--text-3); margin-top: auto; }
-.template-card-actions { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .4rem; }
-.template-card-actions .btn { flex: 1; min-width: 110px; }
+.template-card-dests { display: flex; gap: .25rem; flex-wrap: wrap; }
+.template-dest-chip {
+    font-size: .7rem; color: var(--text-3); background: var(--bg-3);
+    padding: 1px 7px; border-radius: 8px;
+}
+
+.template-stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: .15rem .75rem;
+    font-size: .75rem; color: var(--text-2); margin-top: .35rem;
+}
+.template-stats-grid .num { font-weight: 600; color: var(--text-1); }
+
+.template-card-actions { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .5rem; }
+.template-card-actions .btn { flex: 1; min-width: 90px; }
+
+/* Apply/Replace warning modal */
+.diff-table {
+    width: 100%; border-collapse: collapse; margin: .75rem 0;
+    font-size: .82rem;
+}
+.diff-table th, .diff-table td {
+    padding: .4rem .5rem; border-bottom: 1px solid var(--bg-4); text-align: left;
+}
+.diff-table thead th { font-size: .72rem; color: var(--text-3); text-transform: uppercase; letter-spacing: .04em; }
+.diff-table td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.diff-table .delta { font-size: .72rem; color: var(--accent); margin-left: .3rem; }
+.diff-extension-note {
+    margin: .4rem 0; padding: .5rem .75rem; border-radius: 6px;
+    background: rgba(239, 68, 68, .08); border: 1px solid rgba(239, 68, 68, .2);
+    color: var(--text-1); font-size: .82rem;
+}
+
 .template-warning-actions {
     display: flex; flex-direction: column; gap: .5rem; margin-top: 1rem;
 }
-.template-warning-actions .btn { width: 100%; }
+.template-warning-actions .btn { width: 100%; justify-content: center; }
+
+/* Solid danger button — used for destructive confirmations */
+.btn.btn-danger {
+    background: #ef4444; border-color: #ef4444; color: #fff;
+}
+.btn.btn-danger:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
+.btn.btn-danger.is-loading { opacity: .7; cursor: wait; }
+
+/* Template preview modal */
+.template-preview-body { max-height: 55vh; overflow-y: auto; margin-top: .75rem; }
+.preview-day { border-top: 1px solid var(--bg-4); padding: .35rem 0; }
+.preview-day > summary {
+    cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--text-1);
+    padding: .35rem 0; list-style: none; display: flex; align-items: center; gap: .4rem;
+}
+.preview-day > summary::-webkit-details-marker { display: none; }
+.preview-day > summary::before { content: '▸'; display: inline-block; transition: transform var(--transition); font-size: .7rem; color: var(--text-3); }
+.preview-day[open] > summary::before { transform: rotate(90deg); }
+.preview-count { font-size: .7rem; color: var(--text-3); background: var(--bg-3); padding: 1px 6px; border-radius: 8px; margin-left: auto; font-weight: 500; }
+.preview-items { list-style: none; padding: 0 0 .35rem 1rem; margin: 0; }
+.preview-item { padding: .25rem 0; font-size: .8rem; color: var(--text-2); display: flex; gap: .4rem; flex-wrap: wrap; align-items: baseline; }
+.preview-item.is-note { font-style: italic; color: var(--text-3); }
+.preview-time { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text-1); min-width: 3.5em; }
+.preview-name { font-weight: 500; color: var(--text-1); }
+.preview-item.is-note .preview-name { color: var(--text-2); font-weight: 400; }
+.preview-desc { color: var(--text-3); flex: 1 1 100%; padding-left: 3.9em; font-size: .75rem; }
+
+/* Empty-state prompt on dashboard */
+.empty-state-card {
+    margin-top: 1rem; padding: 1.1rem; border-radius: 10px;
+    background: var(--bg-2); border: 1px dashed var(--bg-4);
+    text-align: center;
+}
+.empty-state-card h3 { margin: 0 0 .35rem; font-size: .95rem; color: var(--text-1); }
+.empty-state-card p { margin: 0 0 .75rem; font-size: .8rem; color: var(--text-2); }
+.empty-state-card .btn { min-width: 170px; }
 
 /* ── Travel Segments ── */
 .tl-travel-segment {

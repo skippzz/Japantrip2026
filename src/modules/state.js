@@ -176,6 +176,26 @@ function saveSavedVersions(versions) {
     catch { showToast('Could not save version list — storage may be full.', 'error'); }
 }
 
+// Non-interactive snapshot — used by destructive flows (e.g. template replace) to
+// guarantee an undo point. Silently drops oldest if at MAX_SAVED_VERSIONS.
+export function autoSaveVersion(name) {
+    try {
+        const versions = getSavedVersions();
+        if (versions.length >= MAX_SAVED_VERSIONS) versions.pop();
+        versions.unshift({
+            name,
+            timestamp: Date.now(),
+            snapshot: JSON.parse(JSON.stringify(state)),
+            auto: true,
+        });
+        saveSavedVersions(versions);
+        renderSavedVersions();
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 export function quickSave() {
     const defaultName = new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
     const name = prompt('Name this save:', defaultName);

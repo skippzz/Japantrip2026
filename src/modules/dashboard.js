@@ -60,12 +60,22 @@ export function renderDashboard() {
             </div>`;
     }).join('');
 
+    // Empty-state onboarding — only when the trip has no activities scheduled yet.
+    const emptyStateHtml = (totalActivities === 0) ? `
+        <div class="empty-state-card">
+            <h3>Start from a template?</h3>
+            <p>Your trip has no scheduled activities yet. Browse starter templates to kickstart your itinerary, or build from scratch.</p>
+            <button class="btn btn-accent" onclick="openTemplatesGallery()">🧩 Browse Trip Templates</button>
+        </div>` : '';
+
     el.innerHTML = `
         <div class="dash-hero">
             <div class="dash-title">Japan 2026</div>
             <div class="dash-subtitle">May 16 – Jun 2 · ${state.itinerary.length} days · ${citySet.size} cities</div>
             ${heroExtra}
         </div>
+
+        ${emptyStateHtml}
 
         <div class="dash-grid">
             <div class="dash-stat" onclick="switchView('places')">

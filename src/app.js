@@ -42,7 +42,10 @@ import { renderTripManager, switchTrip, deleteTrip, renameTrip,
          openNewTripModal, createAndSwitchTrip,
          openTripEditor, saveTripSettings, resetTripItinerary,
          openTemplatesGallery, useTemplateForNewTrip,
-         applyTemplateToCurrentTrip, confirmOverrideWithTemplate } from './modules/trips.js';
+         applyTemplateToCurrentTrip, confirmOverrideWithTemplate,
+         confirmReplaceWithTemplate, openTemplatePreview,
+         openSaveCurrentAsTemplate, confirmSaveCurrentAsTemplate,
+         deleteUserTemplate, exportTemplate, importTemplateFromFile } from './modules/trips.js';
 
 // ══════════════════════════════════════════════════════════════
 //  SHARED UI STATE (accessible by modules via window._*)
@@ -449,6 +452,13 @@ window.openTemplatesGallery = openTemplatesGallery;
 window.useTemplateForNewTrip = useTemplateForNewTrip;
 window.applyTemplateToCurrentTrip = applyTemplateToCurrentTrip;
 window.confirmOverrideWithTemplate = confirmOverrideWithTemplate;
+window.confirmReplaceWithTemplate = confirmReplaceWithTemplate;
+window.openTemplatePreview = openTemplatePreview;
+window.openSaveCurrentAsTemplate = openSaveCurrentAsTemplate;
+window.confirmSaveCurrentAsTemplate = confirmSaveCurrentAsTemplate;
+window.deleteUserTemplate = deleteUserTemplate;
+window.exportTemplate = exportTemplate;
+window.importTemplateFromFile = importTemplateFromFile;
 // Render functions (for cross-module calls)
 window.renderItinerary = renderItinerary;
 window.renderPlacePool = renderPlacePool;
