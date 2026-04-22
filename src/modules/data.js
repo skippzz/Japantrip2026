@@ -77,8 +77,8 @@ export const PLACE_AREAS = {
     // HAKONE
     151:'Hakone', 152:'Hakone', 153:'Hakone', 154:'Hakone', 158:'Hakone',
 
-    // OSAKA — Namba (hotel)
-    159:'Namba',
+    // OSAKA — Nishinari (hotel)
+    159:'Nishinari',
 
     // TOKYO — Shiodome/Minato (Park Hotel)
     160:'Minato',
@@ -273,7 +273,7 @@ export const DEFAULT_PLACES = [
     { id:156, name:"Hotel Gracery Ginza",city:"Tokyo",category:"Hotel",description:"Modern mid-range hotel in Ginza, walking distance to Tsukiji, Tokyo Station and the Imperial Palace — our Tokyo Block 1 base (16–19 May).",hours:"Check-in 15:00 / Check-out 11:00",cost:"¥¥",address:"2-10-1 Ginza, Chuo City, Tokyo 104-0061",lat:35.6719,lng:139.7666,notes:"Our Tokyo arrival hotel." },
     { id:157, name:"HOTEL MYSTAYS Fuji Onsen Resort",city:"Fuji",category:"Hotel",description:"Onsen hotel on the shores of Lake Yamanakako with Mt. Fuji views — our Fuji base (19–21 May).",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥",address:"3234 Azakengamine, Yamanakako, Minamitsuru, Yamanashi 401-0501",lat:35.4052,lng:138.8579,notes:"Our Fuji hotel. Large communal onsen on site." },
     { id:158, name:"Yumoto Fujiya Hotel",city:"Hakone",category:"Hotel",description:"Hot-spring hotel in Hakone-Yumoto at the foot of Mt. Hakone, with indoor and outdoor onsen baths and easy access to the Hakone Tozan line — our Hakone base (21–22 May).",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥",address:"256 Yumoto, Hakone, Ashigarashimo, Kanagawa 250-0311",lat:35.2304,lng:139.1066,notes:"Our Hakone hotel. Historic onsen ryokan-style property." },
-    { id:159, name:"Shirakabanoyado Hiko (白樺の宿 彦)",city:"Osaka",category:"Hotel",description:"Traditional Japanese inn — our Osaka base (26–29 May). Confirm exact address on arrival.",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥",address:"Osaka (confirm exact address)",lat:34.6650,lng:135.5023,notes:"Our Osaka accommodation." },
+    { id:159, name:"Shirakabanoyado Hiko (白樺の宿 彦)",city:"Osaka",category:"Hotel",description:"Traditional Japanese inn in Nishinari — our Osaka base (26–29 May). Near Dobutsuen-mae / Shinsekai, walkable to Tsutenkaku and short train to Namba/Dotonbori.",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥",address:"1-9-13 Asahi, Nishinari Ward, Osaka 557-0032",lat:34.6495,lng:135.5063,notes:"Our Osaka accommodation." },
     { id:160, name:"Park Hotel Tokyo",city:"Tokyo",category:"Hotel",description:"Sleek art-focused hotel on floors 25–34 of the Shiodome Media Tower with panoramic Tokyo Tower views — our Tokyo Block 2 base (29 May – 2 Jun).",hours:"Check-in 15:00 / Check-out 12:00",cost:"¥¥¥",address:"1-7-1 Higashi-Shimbashi, Minato City, Tokyo 105-7227",lat:35.6642,lng:139.7598,notes:"Our Tokyo departure hotel." },
 ];
 
@@ -432,7 +432,7 @@ export const DEFAULT_ITINERARY = [
     { id:"d11", title:"May 26 (Mon) — Kyoto → Osaka", items:[
         { id:"it1777262400001", time:"", name:"Check out — Sora Niwa Terrace Kyoto", desc:"Bags, last rooftop onsen dip, head to station", visited:false, isNote:true },
         { id:"i45", time:"10 AM", name:"Train Kyoto → Osaka", desc:"JR Special Rapid (~30 min)", visited:false, isNote:true },
-        { id:"it1777262400002", time:"", name:"Shirakabanoyado Hiko (白樺の宿 彦)", desc:"Traditional Japanese inn — our Osaka base (26–29 May). Confirm exact address on arrival.", visited:false },
+        { id:"it1777262400002", time:"", name:"Shirakabanoyado Hiko (白樺の宿 彦)", desc:"Traditional Japanese inn in Nishinari — our Osaka base (26–29 May). Near Dobutsuen-mae / Shinsekai, walkable to Tsutenkaku and short train to Namba/Dotonbori.", visited:false },
         { id:"it1777262400003", time:"", name:"Check in — Shirakabanoyado Hiko", desc:"Drop bags, freshen up", visited:false, isNote:true },
         { id:"it1772980109262", time:"", name:"Osaka Castle", desc:"Iconic 16th-century castle and symbol of Osaka. 8-floor museum with panoramic city views from the top.", visited:false },
         { id:"it1772980111520", time:"", name:"Hokoku Shrine", desc:"Grand Shinto shrine in Osaka Castle Park dedicated to Toyotomi Hideyoshi.", visited:false },
@@ -629,7 +629,7 @@ export const DEFAULT_HOTELS = [
     { city:'Fuji',            nameJp:'ホテルマイステイズ富士温泉リゾート', addrJp:'〒401-0501 山梨県南都留郡山中湖村平野字堰ヶ峰3234', nameEn:'HOTEL MYSTAYS Fuji Onsen Resort', mapUrl:'https://www.google.com/maps?q=HOTEL+MYSTAYS+Fuji+Onsen+Resort' },
     { city:'Hakone',          nameJp:'湯本富士屋ホテル', addrJp:'〒250-0311 神奈川県足柄下郡箱根町湯本256', nameEn:'Yumoto Fujiya Hotel', mapUrl:'https://www.google.com/maps?q=Yumoto+Fujiya+Hotel' },
     { city:'Kyoto',           nameJp:'四条河原町温泉 空庭テラス京都', addrJp:'〒600-8002 京都府京都市下京区四条河原町', nameEn:'Shijo Kawaramachi Onsen Sora Niwa Terrace Kyoto', mapUrl:'https://www.google.com/maps?q=Shijo+Kawaramachi+Onsen+Sora+Niwa+Terrace+Kyoto' },
-    { city:'Osaka',           nameJp:'白樺の宿 彦', addrJp:'大阪府（詳細住所確認中）', nameEn:'Shirakabanoyado Hiko', mapUrl:'https://www.google.com/maps?q=%E7%99%BD%E6%A8%BA%E3%81%AE%E5%AE%BF+%E5%BD%A6' },
+    { city:'Osaka',           nameJp:'白樺の宿 彦', addrJp:'〒557-0032 大阪府大阪市西成区旭1丁目9-13', nameEn:'Shirakabanoyado Hiko', mapUrl:'https://www.google.com/maps?q=%E7%99%BD%E6%A8%BA%E3%81%AE%E5%AE%BF+%E5%BD%A6+%E8%A5%BF%E6%88%90%E5%8C%BA' },
     { city:'Tokyo (departure)', nameJp:'パークホテル東京', addrJp:'〒105-7227 東京都港区東新橋1-7-1', nameEn:'Park Hotel Tokyo', mapUrl:'https://www.google.com/maps?q=Park+Hotel+Tokyo' },
 ];
 
