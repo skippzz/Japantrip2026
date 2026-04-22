@@ -7,7 +7,7 @@ export const PLACE_AREAS = {
     41:'Shinjuku', 42:'Shinjuku', 101:'Shinjuku', 121:'Shinjuku', 45:'Shinjuku',
     141:'Shinjuku', 142:'Shinjuku', 143:'Shinjuku',
     // TOKYO — Ginza
-    2:'Ginza', 8:'Ginza', 18:'Ginza', 20:'Ginza', 136:'Ginza',
+    2:'Ginza', 8:'Ginza', 18:'Ginza', 20:'Ginza', 136:'Ginza', 156:'Ginza',
     // TOKYO — Shibuya
     3:'Shibuya', 7:'Shibuya', 10:'Shibuya', 11:'Shibuya', 17:'Shibuya',
     19:'Shibuya', 21:'Shibuya', 25:'Shibuya', 30:'Shibuya', 31:'Shibuya', 38:'Shibuya', 43:'Shibuya',
@@ -67,7 +67,7 @@ export const PLACE_AREAS = {
     98:'Lake Saiko', 133:'Lake Saiko',
     54:'Fujiyoshida', 114:'Fujiyoshida', 134:'Fujiyoshida', 150:'Fujiyoshida',
     52:'Fujinomiya', 97:'Fujinomiya',
-    55:'Oshino', 115:'Yamanakako',
+    55:'Oshino', 115:'Yamanakako', 157:'Yamanakako',
 
     // IZU
     56:'Ito', 57:'Ito', 103:'Ito', 104:'Ito', 117:'Ito',
@@ -75,7 +75,13 @@ export const PLACE_AREAS = {
     122:'Kawazu', 60:'Numazu',
 
     // HAKONE
-    151:'Hakone', 152:'Hakone', 153:'Hakone', 154:'Hakone',
+    151:'Hakone', 152:'Hakone', 153:'Hakone', 154:'Hakone', 158:'Hakone',
+
+    // OSAKA — Namba (hotel)
+    159:'Namba',
+
+    // TOKYO — Shiodome/Minato (Park Hotel)
+    160:'Minato',
 };
 
 export const PLACE_VENUE = {
@@ -92,6 +98,7 @@ export const PLACE_VENUE = {
     127:'indoor',129:'indoor',130:'indoor',131:'indoor',
     136:'indoor',139:'indoor',140:'indoor',142:'indoor',143:'indoor',
     145:'indoor',146:'indoor',147:'indoor',155:'indoor',
+    156:'indoor',157:'indoor',158:'indoor',159:'indoor',160:'indoor',
     // outdoor places
     5:'outdoor',6:'outdoor',13:'outdoor',15:'outdoor',26:'outdoor',27:'outdoor',28:'outdoor',
     33:'outdoor',40:'outdoor',50:'outdoor',51:'outdoor',52:'outdoor',53:'outdoor',54:'outdoor',
@@ -229,7 +236,7 @@ export const DEFAULT_PLACES = [
     { id:117, name:"Tsubaki-hana Garden",city:"Izu",category:"Attractions",description:"Tranquil botanical garden with camellia varieties, seasonal flowers and coastal views.",hours:"09:00 – 17:00",cost:"¥500",address:"Ito, Shizuoka",lat:34.8640,lng:139.1265 },
     { id:118, name:"Onigiri Ranma",city:"Kyoto",category:"Food",description:"Artisanal onigiri shop — handcrafted with premium rice and creative fillings.",hours:"08:00 – 15:00",cost:"~¥300–600",address:"20-2 Susukinobabacho, Saga-Tenryuji, Ukyo Ward, Kyoto (Arashiyama)",lat:35.0164,lng:135.6718,notes:"Popular — may have queues" },
     { id:119, name:"Hokoku Shrine",city:"Osaka",category:"Attractions",description:"Grand Shinto shrine in Osaka Castle Park dedicated to Toyotomi Hideyoshi.",hours:"06:00 – 17:00",cost:"Free",address:"Osaka Castle Park, Chuo Ward, Osaka",lat:34.6865,lng:135.5264 },
-    { id:120, name:"Shijo Kawaramachi Onsen Sora Niwa Terrace Kyoto",city:"Kyoto",category:"Onsen",description:"Rooftop open-air onsen in the heart of Kyoto's Shijo Kawaramachi shopping district. City views from the terrace baths.",hours:"06:00 – 00:00",cost:"~¥1,500–2,500",address:"Shijo Kawaramachi, Shimogyo Ward, Kyoto 600-8002",lat:35.0037,lng:135.7688,notes:"Towel rental available. Great after a long day walking." },
+    { id:120, name:"Shijo Kawaramachi Onsen Sora Niwa Terrace Kyoto",city:"Kyoto",category:"Hotel",description:"Kyoto hotel in the heart of the Shijo Kawaramachi shopping district, featuring a rooftop open-air onsen with city views — our Kyoto base (22–26 May).",hours:"Check-in 15:00 / Check-out 11:00",cost:"¥¥",address:"Shijo Kawaramachi, Shimogyo Ward, Kyoto 600-8002",lat:35.0037,lng:135.7688,notes:"Our Kyoto hotel. Rooftop terrace onsen open to guests." },
     { id:121, name:"Keio Plaza Hotel Tokyo",city:"Tokyo",category:"Hotel",description:"Grand luxury hotel in Shinjuku with panoramic views, multiple restaurants and excellent transport access.",hours:"Check-in 14:00 / Check-out 11:00",cost:"¥¥¥",address:"2-2-1 Nishi-Shinjuku, Shinjuku City, Tokyo 160-8330",lat:35.6933,lng:139.6917,notes:"Direct access to Shinjuku Station west exit." },
     { id:122, name:"Amagiso",city:"Izu",category:"Onsen",description:"Famous riverside onsen ryokan in Kawazu. Stunning open-air baths perched over the river with waterfall views.",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥¥",address:"359-1 Kawazu, Kawazu-cho, Kamo-gun, Shizuoka 413-0501",lat:34.7558,lng:138.9698,notes:"Iconic waterfall-view rotenburo. Book well in advance." },
     { id:123, name:"Ryokufuso",city:"Izu",category:"Hotel",description:"Traditional Japanese ryokan near Shuzenji. Tranquil garden setting with private onsen baths.",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥¥",address:"Shuzenji, Izu, Shizuoka",lat:34.9725,lng:138.9340,notes:"Ryokan with kaiseki dinner included." },
@@ -263,6 +270,11 @@ export const DEFAULT_PLACES = [
     { id:153, name:"Hakone Sightseeing Cruise (Pirate Ship)",city:"Hakone",category:"Attractions",description:"Pirate-ship-styled cruise across Lake Ashi between Togendai, Hakone-machi and Motohakone-ko ports. Mt. Fuji views on clear days.",hours:"09:30 – 17:00",cost:"¥1,200 (single), ¥2,220 (round)",address:"Togendai Port, Hakone, Kanagawa",lat:35.2176,lng:139.0066,notes:"Three ornate ship designs." },
     { id:154, name:"Hakone Shrine",city:"Hakone",category:"Attractions",description:"Ancient shrine in a cedar forest by Lake Ashi. The iconic 'Peace Torii' stands in the water — famous photo spot.",hours:"24 hours (shrine), Peace Torii best early morning",cost:"Free",address:"80-1 Motohakone, Hakone, Ashigarashimo, Kanagawa 250-0522",lat:35.2062,lng:139.0255,notes:"Queues at Peace Torii can be very long." },
     { id:155, name:"MEGA Don Quijote Shibuya",city:"Tokyo",category:"Shopping",description:"Flagship Shibuya MEGA Don Quijote — seven floors of electronics, snacks, cosmetics, costumes and souvenirs. Tax-free for tourists.",hours:"24 hours",cost:"¥–¥¥",address:"28-6 Udagawacho, Shibuya City, Tokyo 150-0042",lat:35.6625,lng:139.6981,notes:"Tax-free with passport." },
+    { id:156, name:"Hotel Gracery Ginza",city:"Tokyo",category:"Hotel",description:"Modern mid-range hotel in Ginza, walking distance to Tsukiji, Tokyo Station and the Imperial Palace — our Tokyo Block 1 base (16–19 May).",hours:"Check-in 15:00 / Check-out 11:00",cost:"¥¥",address:"2-10-1 Ginza, Chuo City, Tokyo 104-0061",lat:35.6719,lng:139.7666,notes:"Our Tokyo arrival hotel." },
+    { id:157, name:"HOTEL MYSTAYS Fuji Onsen Resort",city:"Fuji",category:"Hotel",description:"Onsen hotel on the shores of Lake Yamanakako with Mt. Fuji views — our Fuji base (19–21 May).",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥",address:"3234 Azakengamine, Yamanakako, Minamitsuru, Yamanashi 401-0501",lat:35.4052,lng:138.8579,notes:"Our Fuji hotel. Large communal onsen on site." },
+    { id:158, name:"Yumoto Fujiya Hotel",city:"Hakone",category:"Hotel",description:"Hot-spring hotel in Hakone-Yumoto at the foot of Mt. Hakone, with indoor and outdoor onsen baths and easy access to the Hakone Tozan line — our Hakone base (21–22 May).",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥",address:"256 Yumoto, Hakone, Ashigarashimo, Kanagawa 250-0311",lat:35.2304,lng:139.1066,notes:"Our Hakone hotel. Historic onsen ryokan-style property." },
+    { id:159, name:"Shirakabanoyado Hiko (白樺の宿 彦)",city:"Osaka",category:"Hotel",description:"Traditional Japanese inn — our Osaka base (26–29 May). Confirm exact address on arrival.",hours:"Check-in 15:00 / Check-out 10:00",cost:"¥¥",address:"Osaka (confirm exact address)",lat:34.6650,lng:135.5023,notes:"Our Osaka accommodation." },
+    { id:160, name:"Park Hotel Tokyo",city:"Tokyo",category:"Hotel",description:"Sleek art-focused hotel on floors 25–34 of the Shiodome Media Tower with panoramic Tokyo Tower views — our Tokyo Block 2 base (29 May – 2 Jun).",hours:"Check-in 15:00 / Check-out 12:00",cost:"¥¥¥",address:"1-7-1 Higashi-Shimbashi, Minato City, Tokyo 105-7227",lat:35.6642,lng:139.7598,notes:"Our Tokyo departure hotel." },
 ];
 
 export const DEFAULT_TODOS = [
@@ -290,9 +302,9 @@ export const DEFAULT_RULES = [
 export const DEFAULT_ITINERARY = [
     // TOKYO BLOCK 1 — May 16–18
     { id:"d01", title:"May 16 (Fri) — Tokyo: Arrival", items:[
-        { id:"it1771698705393", time:"", name:"Shijo Kawaramachi Onsen Sora Niwa Terrace Kyoto", desc:"Rooftop open-air onsen in the heart of Kyoto's Shijo Kawaramachi shopping district. City views from the terrace baths.", visited:false },
-        { id:"it1771698799921", time:"", name:"Kinkaku-ji (Golden Pavilion)", desc:"Iconic Zen temple covered in gold leaf, reflecting in a mirror pond.", visited:false },
-        { id:"it1771698814016", time:"", name:"Ryoan-ji", desc:"UNESCO Zen temple famous for its enigmatic rock garden — 15 stones on raked white gravel.", visited:false },
+        { id:"it1776657600001", time:"", name:"Arrive at Narita / Haneda", desc:"Fly in, clear immigration, pick up Suica / e-SIM", visited:false, isNote:true },
+        { id:"it1776657600002", time:"", name:"Hotel Gracery Ginza", desc:"Modern mid-range hotel in Ginza, walking distance to Tsukiji, Tokyo Station and the Imperial Palace — our Tokyo Block 1 base (16–19 May).", visited:false },
+        { id:"it1776657600003", time:"15:00", name:"Check in — Hotel Gracery Ginza", desc:"Drop bags, freshen up", visited:false, isNote:true },
     ]},
     { id:"d02", title:"May 17 (Sat) — Tokyo: Shibuya / Harajuku / Shinjuku", items:[
         { id:"it1776225600001", time:"9:00", name:"Günaydın — wake up", desc:"", visited:false, isNote:true },
@@ -338,12 +350,13 @@ export const DEFAULT_ITINERARY = [
 
     // FUJI — May 19–20
     { id:"d04", title:"May 19 (Mon) — Fuji Day 1", items:[
-        { id:"it1776398400001", time:"7:30", name:"Hotel checkout", desc:"Check out of Tokyo hotel", visited:false, isNote:true },
-        { id:"it1776398400002", time:"8:30", name:"JR Train (Shinjuku → Kawaguchiko)", desc:"Fuji Excursion from Shinjuku (~2 hrs direct)", visited:false, isNote:true },
-        { id:"it1776398400003", time:"10:40", name:"Arrive at hotel", desc:"Check in / drop bags at Kawaguchiko accommodation", visited:false, isNote:true },
-        { id:"it1776398400004", time:"", name:"Onsen + Fuji-area lakes nature walk", desc:"Afternoon plan: relax in an onsen and walk the lakes around Mt. Fuji", visited:false, isNote:true },
+        { id:"it1776398400001", time:"7:30", name:"Check out — Hotel Gracery Ginza", desc:"Bags + Suica, head to Shinjuku", visited:false, isNote:true },
+        { id:"it1776398400002", time:"8:30", name:"Shinjuku → Fuji (bus or Fuji Excursion)", desc:"Highway bus direct to Yamanakako (~2h15) or Fuji Excursion to Kawaguchiko + local bus to Yamanakako", visited:false, isNote:true },
+        { id:"it1776398400003", time:"", name:"HOTEL MYSTAYS Fuji Onsen Resort", desc:"Onsen hotel on the shores of Lake Yamanakako with Mt. Fuji views — our Fuji base (19–21 May).", visited:false },
+        { id:"it1776398400004", time:"15:00", name:"Check in — MYSTAYS Fuji Onsen Resort", desc:"Drop bags, change into yukata", visited:false, isNote:true },
+        { id:"it1776398400007", time:"", name:"Lake Yamanaka", desc:"Largest of the Fuji Five Lakes — water sports, cycling, stunning Fuji reflections.", visited:false },
         { id:"it1776398400005", time:"", name:"Oshino Hakkai", desc:"Eight crystal-clear spring water ponds fed by snowmelt from Mt. Fuji. Traditional thatched-roof farmhouses.", visited:false },
-        { id:"it1776398400006", time:"", name:"Ubuya", desc:"Famous luxury ryokan on Lake Kawaguchi with every room facing Mt. Fuji. Iconic Fuji views from the bath.", visited:false },
+        { id:"it1776398400008", time:"", name:"Onsen + Fuji-area lakes nature walk", desc:"Relax in the hotel onsen and walk around the lakes", visited:false, isNote:true },
     ]},
     { id:"d05", title:"May 20 (Tue) — Fuji Day 2", items:[
         { id:"it1776484800001", time:"", name:"Fuji-Q Highland", desc:"Thrill-ride theme park at the foot of Mt. Fuji. Record-breaking roller coasters plus Naruto X Boruto Ninja World attraction area.", visited:false },
@@ -359,6 +372,7 @@ export const DEFAULT_ITINERARY = [
     // HAKONE — May 21
     { id:"d06", title:"May 21 (Wed) — Hakone", items:[
         { id:"it1776571200001", time:"", name:"Kahvaltı — breakfast", desc:"", visited:false, isNote:true },
+        { id:"it1776571200010", time:"", name:"Check out — MYSTAYS Fuji Onsen Resort", desc:"Transfer to Hakone", visited:false, isNote:true },
         { id:"it1776571200002", time:"", name:"Hakone Open-Air Museum", desc:"Extensive outdoor sculpture park with works by Moore, Rodin and others — plus an indoor Picasso pavilion with 300+ pieces.", visited:false },
         { id:"it1776571200003", time:"", name:"Hakone Tozan Train → Gora", desc:"Switchback mountain railway from Hakone-Yumoto to Gora Station", visited:false, isNote:true },
         { id:"it1776571200004", time:"", name:"Hakone Ropeway", desc:"Cable car over the volcanic ridge with Mt. Fuji views on clear days", visited:false, isNote:true },
@@ -366,11 +380,16 @@ export const DEFAULT_ITINERARY = [
         { id:"it1776571200006", time:"", name:"Togendai", desc:"Ropeway terminal and Lake Ashi pirate-ship port", visited:false, isNote:true },
         { id:"it1776571200007", time:"", name:"Hakone Sightseeing Cruise (Pirate Ship)", desc:"Pirate-ship-styled cruise across Lake Ashi between Togendai, Hakone-machi and Motohakone-ko ports. Mt. Fuji views on clear days.", visited:false },
         { id:"it1776571200008", time:"", name:"Hakone Shrine", desc:"Ancient shrine in a cedar forest by Lake Ashi. The iconic 'Peace Torii' stands in the water — famous photo spot.", visited:false },
+        { id:"it1776571200011", time:"", name:"Yumoto Fujiya Hotel", desc:"Hot-spring hotel in Hakone-Yumoto at the foot of Mt. Hakone, with indoor and outdoor onsen baths and easy access to the Hakone Tozan line — our Hakone base (21–22 May).", visited:false },
+        { id:"it1776571200012", time:"", name:"Check in — Yumoto Fujiya Hotel", desc:"Unwind with the onsen baths", visited:false, isNote:true },
         { id:"it1776571200009", time:"", name:"Dinner", desc:"Yemek", visited:false, isNote:true },
     ]},
 
     // KYOTO — May 22–25
     { id:"d07", title:"May 22 (Thu) — Travel to Kyoto", items:[
+        { id:"it1776916800001", time:"", name:"Check out — Yumoto Fujiya Hotel", desc:"Transfer to Kyoto (Odawara → Shin-Osaka → Kyoto by Shinkansen)", visited:false, isNote:true },
+        { id:"it1776916800002", time:"", name:"Shijo Kawaramachi Onsen Sora Niwa Terrace Kyoto", desc:"Kyoto hotel in the heart of the Shijo Kawaramachi shopping district, featuring a rooftop open-air onsen with city views — our Kyoto base (22–26 May).", visited:false },
+        { id:"it1776916800003", time:"", name:"Check in — Sora Niwa Terrace Kyoto", desc:"Drop bags, rooftop onsen orientation", visited:false, isNote:true },
         { id:"it1771698901445", time:"", name:"Hayakawa Hamonoten", desc:"Traditional Japanese knife shop at Nishiki Market. Handmade kitchen knives — quintessential Kyoto souvenir.", visited:false },
         { id:"it1772974502014", time:"15:30", name:"Nishiki Market", desc:"'Kyoto's Kitchen' — 400m covered market with 100+ stalls. Fresh seafood, pickles, matcha sweets, knives.", visited:false },
         { id:"it1772974779828", time:"", name:"Kawaramachi Shopping", desc:"Explore the Shijo-Kawaramachi shopping area", visited:false, isNote:true },
@@ -411,7 +430,10 @@ export const DEFAULT_ITINERARY = [
 
     // TRANSITION + OSAKA — May 26–29
     { id:"d11", title:"May 26 (Mon) — Kyoto → Osaka", items:[
+        { id:"it1777262400001", time:"", name:"Check out — Sora Niwa Terrace Kyoto", desc:"Bags, last rooftop onsen dip, head to station", visited:false, isNote:true },
         { id:"i45", time:"10 AM", name:"Train Kyoto → Osaka", desc:"JR Special Rapid (~30 min)", visited:false, isNote:true },
+        { id:"it1777262400002", time:"", name:"Shirakabanoyado Hiko (白樺の宿 彦)", desc:"Traditional Japanese inn — our Osaka base (26–29 May). Confirm exact address on arrival.", visited:false },
+        { id:"it1777262400003", time:"", name:"Check in — Shirakabanoyado Hiko", desc:"Drop bags, freshen up", visited:false, isNote:true },
         { id:"it1772980109262", time:"", name:"Osaka Castle", desc:"Iconic 16th-century castle and symbol of Osaka. 8-floor museum with panoramic city views from the top.", visited:false },
         { id:"it1772980111520", time:"", name:"Hokoku Shrine", desc:"Grand Shinto shrine in Osaka Castle Park dedicated to Toyotomi Hideyoshi.", visited:false },
         { id:"it1772980129753", time:"", name:"Umeda Sky Building", desc:"Floating Garden Observatory — panoramic city views from the rooftop", visited:false, isNote:true },
@@ -443,13 +465,17 @@ export const DEFAULT_ITINERARY = [
 
     // TOKYO BLOCK 2 — May 29 – Jun 2
     { id:"d14", title:"May 29 (Thu) — Osaka → Tokyo", items:[
+        { id:"it1777521600001", time:"", name:"Check out — Shirakabanoyado Hiko", desc:"Last bags, head to Shin-Osaka", visited:false, isNote:true },
         { id:"i53", time:"10 AM", name:"Shinkansen to Tokyo", desc:"Bullet train back (~2h30)", visited:false, isNote:true },
+        { id:"it1777521600002", time:"", name:"Park Hotel Tokyo", desc:"Sleek art-focused hotel on floors 25–34 of the Shiodome Media Tower with panoramic Tokyo Tower views — our Tokyo Block 2 base (29 May – 2 Jun).", visited:false },
+        { id:"it1777521600003", time:"15:00", name:"Check in — Park Hotel Tokyo", desc:"Unpack, enjoy the Shiodome views", visited:false, isNote:true },
     ]},
     { id:"d15", title:"May 30 (Fri) — Tokyo", items:[] },
     { id:"d16", title:"May 31 (Sat) — Tokyo", items:[] },
     { id:"d17", title:"Jun 1 (Sun) — Tokyo: Last Full Day", items:[] },
     { id:"d18", title:"Jun 2 (Mon) — Departure", items:[
-        { id:"i69", time:"", name:"Fly home", desc:"Check out, head to Narita/Haneda. Safe travels!", visited:false, isNote:true },
+        { id:"it1777867200001", time:"", name:"Check out — Park Hotel Tokyo", desc:"Check out by noon, head to Narita/Haneda. Safe travels!", visited:false, isNote:true },
+        { id:"i69", time:"", name:"Fly home", desc:"Allow 3 hours before international departure", visited:false, isNote:true },
     ]},
 ];
 
@@ -599,9 +625,12 @@ export const PHRASES = [
 ];
 
 export const DEFAULT_HOTELS = [
-    { city:'Tokyo',  nameJp:'京王プラザホテル', addrJp:'〒160-8330 東京都新宿区西新宿2-2-1', nameEn:'Keio Plaza Hotel Tokyo', mapUrl:'https://www.google.com/maps?q=Keio+Plaza+Hotel+Tokyo' },
-    { city:'Kyoto',  nameJp:'ホテル名未定', addrJp:'京都市', nameEn:'TBD — Kyoto hotel', mapUrl:'#' },
-    { city:'Osaka',  nameJp:'ホテル名未定', addrJp:'大阪市', nameEn:'TBD — Osaka hotel', mapUrl:'#' },
+    { city:'Tokyo (arrival)', nameJp:'ホテルグレイスリー銀座', addrJp:'〒104-0061 東京都中央区銀座2-10-1', nameEn:'Hotel Gracery Ginza', mapUrl:'https://www.google.com/maps?q=Hotel+Gracery+Ginza' },
+    { city:'Fuji',            nameJp:'ホテルマイステイズ富士温泉リゾート', addrJp:'〒401-0501 山梨県南都留郡山中湖村平野字堰ヶ峰3234', nameEn:'HOTEL MYSTAYS Fuji Onsen Resort', mapUrl:'https://www.google.com/maps?q=HOTEL+MYSTAYS+Fuji+Onsen+Resort' },
+    { city:'Hakone',          nameJp:'湯本富士屋ホテル', addrJp:'〒250-0311 神奈川県足柄下郡箱根町湯本256', nameEn:'Yumoto Fujiya Hotel', mapUrl:'https://www.google.com/maps?q=Yumoto+Fujiya+Hotel' },
+    { city:'Kyoto',           nameJp:'四条河原町温泉 空庭テラス京都', addrJp:'〒600-8002 京都府京都市下京区四条河原町', nameEn:'Shijo Kawaramachi Onsen Sora Niwa Terrace Kyoto', mapUrl:'https://www.google.com/maps?q=Shijo+Kawaramachi+Onsen+Sora+Niwa+Terrace+Kyoto' },
+    { city:'Osaka',           nameJp:'白樺の宿 彦', addrJp:'大阪府（詳細住所確認中）', nameEn:'Shirakabanoyado Hiko', mapUrl:'https://www.google.com/maps?q=%E7%99%BD%E6%A8%BA%E3%81%AE%E5%AE%BF+%E5%BD%A6' },
+    { city:'Tokyo (departure)', nameJp:'パークホテル東京', addrJp:'〒105-7227 東京都港区東新橋1-7-1', nameEn:'Park Hotel Tokyo', mapUrl:'https://www.google.com/maps?q=Park+Hotel+Tokyo' },
 ];
 
 export const DARK_MAP_STYLES = [
