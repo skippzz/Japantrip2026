@@ -95,7 +95,7 @@ export const PLACE_VENUE = {
     69:'indoor',70:'indoor',71:'indoor',72:'indoor',78:'indoor',79:'indoor',85:'indoor',
     86:'indoor',91:'indoor',96:'indoor',100:'indoor',101:'indoor',102:'indoor',107:'indoor',
     108:'indoor',109:'indoor',110:'indoor',113:'indoor',118:'indoor',120:'indoor',125:'indoor',
-    127:'indoor',129:'indoor',130:'indoor',131:'indoor',
+    121:'indoor',127:'indoor',129:'indoor',130:'indoor',131:'indoor',
     136:'indoor',139:'indoor',140:'indoor',142:'indoor',143:'indoor',
     145:'indoor',146:'indoor',147:'indoor',155:'indoor',
     156:'indoor',157:'indoor',158:'indoor',159:'indoor',160:'indoor',
