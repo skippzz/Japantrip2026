@@ -150,6 +150,120 @@ function openAppMenu() {
 // in case any inline onclick or external caller still references it.
 function toggleEditMode() { /* removed in Phase 1.7 */ }
 
+// Phase 2.6: pull-to-refresh on Today screen.
+// Pulls down past 80px on dashboard view → re-renders + brief spinner toast.
+function installPullToRefresh() {
+    const main = document.querySelector('.main');
+    if (!main) return;
+    let startY = 0, dragging = false, dy = 0;
+    const indicator = document.createElement('div');
+    indicator.className = 'ptr-indicator';
+    indicator.innerHTML = '<span>↓ Pull to refresh</span>';
+    main.prepend(indicator);
+
+    main.addEventListener('pointerdown', (e) => {
+        if (currentView !== 'dashboard') return;
+        if ((main.scrollTop || 0) > 0) return;
+        startY = e.clientY;
+        dragging = true;
+    });
+    main.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        dy = Math.max(0, e.clientY - startY);
+        if (dy > 0 && dy < 200) {
+            indicator.style.transform = `translateY(${Math.min(dy, 100)}px)`;
+            indicator.classList.toggle('is-armed', dy > 80);
+        }
+    });
+    const finish = () => {
+        if (!dragging) return;
+        dragging = false;
+        indicator.style.transform = '';
+        if (dy > 80) {
+            indicator.classList.add('is-refreshing');
+            window.renderDashboard?.();
+            setTimeout(() => indicator.classList.remove('is-refreshing', 'is-armed'), 600);
+        }
+        dy = 0;
+    };
+    main.addEventListener('pointerup', finish);
+    main.addEventListener('pointercancel', finish);
+}
+
+// Phase 2.3: long-press an activity → action sheet
+function openItemActionSheet(dayId, itemId) {
+    const day = state.itinerary.find(d => d.id === dayId);
+    const it = day?.items.find(x => x.id === itemId);
+    if (!it) return;
+    const html = `
+        <div class="action-sheet-title">${(it.name || 'Activity').slice(0, 60)}</div>
+        <button class="action-sheet-row" onclick="closeSheet('item-actions'); toggleVisited('${dayId}','${itemId}')">
+            <span class="action-sheet-row-icon">${it.visited ? '↩' : '✓'}</span>
+            <span>${it.visited ? 'Mark as not visited' : 'Mark as visited'}</span>
+        </button>
+        <button class="action-sheet-row" onclick="closeSheet('item-actions'); openItinItemModal('${dayId}','${itemId}')">
+            <span class="action-sheet-row-icon">✎</span>
+            <span>Edit</span>
+        </button>
+        <button class="action-sheet-row action-sheet-row-danger" onclick="closeSheet('item-actions'); deleteItinItem('${dayId}','${itemId}')">
+            <span class="action-sheet-row-icon">🗑</span>
+            <span>Delete</span>
+        </button>
+        <button class="action-sheet-cancel" onclick="closeSheet('item-actions')">Cancel</button>
+    `;
+    window.openSheet?.({ id: 'item-actions', side: 'bottom', html });
+}
+
+// Phase 2.3: delegated swipe-to-action handler for timeline items.
+// Swipe left ≥ 60px → toggle visited.
+function installTimelineSwipe(container) {
+    let startX = 0, startY = 0, current = null, dragging = false, locked = null;
+    const TOL_DOWN = 8, THRESH = 60;
+    container.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('button, a, input, .tl-grip')) return;
+        const t = e.target.closest('.tl-item');
+        if (!t) return;
+        startX = e.clientX; startY = e.clientY;
+        current = t; dragging = true; locked = null;
+    });
+    container.addEventListener('pointermove', (e) => {
+        if (!dragging || !current) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (locked === null) {
+            if (Math.abs(dy) > TOL_DOWN && Math.abs(dy) > Math.abs(dx)) { locked = 'v'; current = null; return; }
+            if (Math.abs(dx) > TOL_DOWN) { locked = 'h'; }
+        }
+        if (locked !== 'h') return;
+        if (dx < 0) {
+            current.style.transition = 'none';
+            current.style.transform = `translateX(${Math.max(dx, -120)}px)`;
+            current.classList.add('is-swiping');
+        }
+    });
+    const finish = (e) => {
+        if (!dragging) return;
+        dragging = false;
+        if (!current) return;
+        const dx = (e.clientX || 0) - startX;
+        current.style.transition = '';
+        current.style.transform = '';
+        current.classList.remove('is-swiping');
+        if (locked === 'h' && dx < -THRESH) {
+            const dayId = current.closest('.day-card')?.dataset.dayId;
+            const itemId = current.dataset.itemId;
+            if (dayId && itemId) {
+                if (navigator.vibrate) navigator.vibrate(15);
+                window.toggleVisited?.(dayId, itemId);
+            }
+        }
+        current = null; locked = null;
+    };
+    container.addEventListener('pointerup', finish);
+    container.addEventListener('pointercancel', finish);
+    container.addEventListener('pointerleave', finish);
+}
+
 // Phase 1.8: long-press a day card → action sheet
 function openDayActionSheet(dayId) {
     const day = state.itinerary.find(d => d.id === dayId);
@@ -577,10 +691,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const dayId = target.dataset.dayId;
             openDayActionSheet(dayId);
         });
+        // Phase 2.3: also long-press individual activities → action sheet
+        attachLongPressDelegated(itinList, '.tl-item', ({ target, event }) => {
+            if (isReorderMode()) return;
+            event.stopPropagation?.();
+            const itemId = target.dataset.itemId;
+            const dayCard = target.closest('.day-card');
+            const dayId = dayCard?.dataset.dayId;
+            if (itemId && dayId) openItemActionSheet(dayId, itemId);
+        });
+        // Phase 2.3: swipe-left on activity → toggle visited
+        installTimelineSwipe(itinList);
     }
 
     // Phase 1.13: PWA install prompt UX
     initInstallPrompt();
+
+    // Phase 2.6: pull-to-refresh on Today — recompute "now" + re-render dashboard
+    installPullToRefresh();
 
     // Google Maps bridge: handle callback regardless of load order
     window._onMapsReady = onMapsReady;

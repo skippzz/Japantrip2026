@@ -281,41 +281,57 @@ export function openDetail(id) {
     const navUrl = mapsNavUrl(p.name, p.city, p.lat, p.lng, p.address);
     const searchUrl = mapsSearchUrl(p.name, p.city, p.lat, p.lng, p.address);
 
-    document.getElementById('detail-content').innerHTML = `
-        <div class="detail-header">
-            <h2>${esc(p.name)}</h2>
-            <div class="detail-address">📍 ${esc(getArea(p) ? getArea(p) + ', ' + (p.address || p.city) : (p.address || p.city))}</div>
-        </div>
-        <div class="detail-tags">
-            <span class="tag ${(p.category||'').toLowerCase()}">${p.category}</span>
-            ${getArea(p) ? `<span class="tag tag-area">${esc(getArea(p))}</span>` : ''}
-            <span class="tag tag-city">${esc(p.city)}</span>
-        </div>
-        <img src="${photo}" alt="${esc(p.name)}" class="detail-photo" onerror="this.style.display='none'">
-        <div class="detail-map-wrap">
-            <iframe src="${embedUrl}" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        </div>
-        <div class="detail-info">
-            ${p.hours ? `<div class="detail-info-item"><label>Hours</label><span>${esc(p.hours)}</span></div>` : ''}
-            ${p.cost ? `<div class="detail-info-item"><label>Cost</label><span>${esc(p.cost)}</span></div>` : ''}
-            ${p.notes ? `<div class="detail-info-item"><label>Notes</label><span>${esc(p.notes)}</span></div>` : ''}
-        </div>
-        ${p.description ? `<p class="detail-desc">${esc(p.description)}</p>` : ''}
-        <div class="detail-reservation">
-            <label><input type="checkbox" ${p.reserved?'checked':''} onchange="toggleReserved(${p.id}, this.checked)"> Reservation Made</label>
-            <div class="detail-res-fields" style="${p.reserved?'':'display:none'}" id="res-fields-${p.id}">
-                <input type="text" placeholder="Confirmation #" value="${esc(p.confirmationNo||'')}" onchange="updateResField(${p.id},'confirmationNo',this.value)">
-                <input type="text" placeholder="Booked by" value="${esc(p.bookedBy||'')}" onchange="updateResField(${p.id},'bookedBy',this.value)">
+    // Phase 2.1: route mobile to a bottom sheet, desktop keeps modal
+    const isMobile = window.matchMedia?.('(max-width: 768px)').matches;
+    const closer = isMobile ? `closeSheet('place-detail')` : `closeModal('modal-detail')`;
+
+    const html = `
+        <div class="detail-sheet">
+            ${isMobile ? `<button class="detail-sheet-close" onclick="${closer}" aria-label="Close">✕</button>` : ''}
+            <div class="detail-photo-hero" style="background-image:url('${photo}')">
+                <div class="detail-photo-hero-scrim"></div>
+                <div class="detail-photo-hero-content">
+                    <div class="detail-tags">
+                        <span class="tag ${(p.category||'').toLowerCase()}">${p.category}</span>
+                        ${getArea(p) ? `<span class="tag tag-area">${esc(getArea(p))}</span>` : ''}
+                        <span class="tag tag-city">${esc(p.city)}</span>
+                    </div>
+                    <h2>${esc(p.name)}</h2>
+                    <div class="detail-address">📍 ${esc(getArea(p) ? getArea(p) + ', ' + (p.address || p.city) : (p.address || p.city))}</div>
+                </div>
+            </div>
+            <div class="detail-body">
+                <div class="detail-map-wrap">
+                    <iframe src="${embedUrl}" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+                <div class="detail-info">
+                    ${p.hours ? `<div class="detail-info-item"><label>Hours</label><span>${esc(p.hours)}</span></div>` : ''}
+                    ${p.cost ? `<div class="detail-info-item"><label>Cost</label><span data-yen="${esc(p.cost)}">${esc(p.cost)}</span></div>` : ''}
+                    ${p.notes ? `<div class="detail-info-item"><label>Notes</label><span>${esc(p.notes)}</span></div>` : ''}
+                </div>
+                ${p.description ? `<p class="detail-desc">${esc(p.description)}</p>` : ''}
+                <div class="detail-reservation">
+                    <label><input type="checkbox" ${p.reserved?'checked':''} onchange="toggleReserved(${p.id}, this.checked)"> Reservation Made</label>
+                    <div class="detail-res-fields" style="${p.reserved?'':'display:none'}" id="res-fields-${p.id}">
+                        <input type="text" placeholder="Confirmation #" value="${esc(p.confirmationNo||'')}" onchange="updateResField(${p.id},'confirmationNo',this.value)">
+                        <input type="text" placeholder="Booked by" value="${esc(p.bookedBy||'')}" onchange="updateResField(${p.id},'bookedBy',this.value)">
+                    </div>
+                </div>
+            </div>
+            <div class="detail-action-bar">
+                <a href="${navUrl}" target="_blank" class="btn btn-accent btn-large" rel="noopener">📍 Navigate</a>
+                <button class="btn btn-ghost" onclick="${closer}; openPlaceModal(${p.id})">✏️ Edit</button>
+                ${p.url ? `<a href="${p.url}" target="_blank" class="btn btn-ghost" rel="noopener">Website</a>` : ''}
             </div>
         </div>
-        <div class="detail-actions">
-            <a href="${navUrl}" target="_blank" class="btn-navigate" style="font-size:.85rem;padding:.55rem 1.1rem">📍 Navigate Here</a>
-            <a href="${searchUrl}" target="_blank" class="btn btn-ghost">Open in Google Maps</a>
-            ${p.url ? `<a href="${p.url}" target="_blank" class="btn btn-ghost">Website</a>` : ''}
-            <button class="btn btn-ghost edit-only" onclick="closeModal('modal-detail'); openPlaceModal(${p.id})">✏️ Edit</button>
-        </div>
     `;
-    window.openModal?.('modal-detail');
+
+    if (isMobile && window.openSheet) {
+        window.openSheet({ id: 'place-detail', side: 'bottom', html, snap: [0.95] });
+    } else {
+        document.getElementById('detail-content').innerHTML = html;
+        window.openModal?.('modal-detail');
+    }
 }
 
 // ══════════════════════════════════════════════════════════════

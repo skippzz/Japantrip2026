@@ -653,6 +653,70 @@ body.edit-mode #edit-btn { background: var(--orange); color: #000; }
 .taxi-other-name { color: var(--text-2); font-size: var(--font-xs); }
 
 /* ============================================================
+   PLACE DETAIL SHEET — Phase 2.1
+   ============================================================ */
+.detail-sheet { position: relative; }
+.detail-sheet-close {
+    position: absolute; top: var(--space-2); right: var(--space-2);
+    z-index: 5;
+    background: rgba(0,0,0,.5); color: #fff;
+    border: 0; cursor: pointer;
+    width: var(--tap-min); height: var(--tap-min);
+    border-radius: var(--radius-full);
+    font-size: var(--font-base);
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+}
+.detail-photo-hero {
+    position: relative;
+    height: 240px;
+    margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-4)) 0;
+    background-size: cover; background-position: center;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+.detail-photo-hero-scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 0%, transparent 40%, rgba(0,0,0,.85) 100%);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+.detail-photo-hero-content {
+    position: absolute; bottom: var(--space-4); left: var(--space-4); right: var(--space-4);
+    color: #fff;
+}
+.detail-photo-hero-content h2 {
+    font-size: var(--font-2xl); font-weight: 700;
+    margin: var(--space-2) 0 var(--space-1);
+    text-shadow: 0 2px 4px rgba(0,0,0,.5);
+}
+.detail-photo-hero-content .detail-address {
+    font-size: var(--font-sm); color: #fff; opacity: .95;
+    text-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+.detail-photo-hero-content .detail-tags {
+    margin-bottom: var(--space-1);
+}
+.detail-body {
+    padding: var(--space-4) 0;
+}
+.detail-action-bar {
+    display: flex; gap: var(--space-2);
+    padding: var(--space-3) 0 var(--space-2);
+    border-top: 1px solid var(--bg-3);
+    margin-top: var(--space-3);
+    flex-wrap: wrap;
+}
+.detail-action-bar .btn { flex: 1; min-width: 110px; min-height: var(--tap-comfy); }
+.detail-action-bar .btn-large { flex: 2; }
+
+/* Desktop: keep the original modal-detail rendering for non-mobile */
+@media (min-width: 769px) {
+    .detail-photo-hero {
+        margin: calc(-1 * var(--space-4)) calc(-1 * var(--space-5)) var(--space-4);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+}
+
+/* ============================================================
    INSTALL PROMPT — Phase 1.13 add-to-home UX
    ============================================================ */
 .install-prompt {
@@ -701,6 +765,31 @@ body.edit-mode #edit-btn { background: var(--orange); color: #000; }
 }
 @media (prefers-reduced-motion: reduce) {
     .skeleton { animation: none; }
+}
+
+/* Phase 2.6: pull-to-refresh indicator */
+.ptr-indicator {
+    position: absolute;
+    top: -50px; left: 0; right: 0;
+    height: 50px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-3); font-size: var(--font-sm);
+    transition: transform var(--motion-base) var(--ease-out);
+    z-index: 10; pointer-events: none;
+}
+.ptr-indicator.is-armed { color: var(--accent); }
+.ptr-indicator.is-armed span::before { content: '↑ '; }
+.ptr-indicator.is-armed span::after { content: ' Release'; }
+.ptr-indicator.is-refreshing { color: var(--accent); }
+.ptr-indicator.is-refreshing span { animation: ptr-spin .6s linear infinite; }
+.ptr-indicator.is-refreshing span::before { content: '⟳ '; }
+@keyframes ptr-spin { to { transform: rotate(360deg); } }
+
+/* Phase 2.3: swipe affordance on activity items */
+.tl-item { touch-action: pan-y; transition: transform var(--motion-fast) var(--ease-out); }
+.tl-item.is-swiping {
+    background: rgba(16, 185, 129, .1);
+    border-radius: var(--radius-sm);
 }
 
 /* In reorder mode: grip handles always visible, day cards don't expand on tap */
