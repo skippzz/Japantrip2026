@@ -13,7 +13,10 @@
 // Usage: attachLongPress(el, callback, { delay, moveTolerance })
 //   callback receives ({ event, target }) on activation
 const LP_DELAY = 500;
-const LP_MOVE_TOL = 10;
+// T2.12: tolerance raised from 10px → 18px so subtle finger micro-movement
+// during a long-press doesn't cancel the timer prematurely. Concurrently,
+// scroll detection happens elsewhere (parent scroll cancels via pointermove).
+const LP_MOVE_TOL = 18;
 
 export function attachLongPress(el, callback, opts = {}) {
     const delay = opts.delay ?? LP_DELAY;

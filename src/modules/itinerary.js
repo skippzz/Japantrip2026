@@ -34,7 +34,13 @@ export function toggleRainMode() {
 //  ITINERARY — VERTICAL TIMELINE
 // ══════════════════════════════════════════════════════════════
 export function renderItinerary() {
-    document.querySelector('.floating-navigate')?.remove();
+    // T1.10: remove ALL stale floating-navigate buttons (not just the first)
+    // in case concurrent renders accumulated extras.
+    document.querySelectorAll('.floating-navigate').forEach(el => el.remove());
+    // T2.14: capture scroll position so toggling visited / re-render doesn't
+    // jump the user back to Day 1. Restored after innerHTML rebuild.
+    const mainEl = document.querySelector('.main');
+    const savedScroll = mainEl?.scrollTop || 0;
     const container = document.getElementById('itinerary-list');
     document.getElementById('day-counter').textContent = `${state.itinerary.length} days · May 16 – Jun 2, 2026`;
 
@@ -157,8 +163,13 @@ export function renderItinerary() {
         });
     }
 
-    // SortableJS — destroy previous instances, recreate only in edit mode
-    window._timelineSortables.forEach(s => s.destroy());
+    // SortableJS — destroy previous instances, recreate only in edit mode.
+    // T2.11: wrap destroy in try/catch so one failure (element already removed
+    // from DOM) doesn't leave the rest of the array un-destroyed and leaking
+    // event listeners.
+    window._timelineSortables.forEach(s => {
+        try { s.destroy(); } catch (e) { console.warn('[itinerary] Sortable destroy failed:', e); }
+    });
     window._timelineSortables = [];
     if (window._editMode && typeof Sortable !== 'undefined') {
         document.querySelectorAll('.timeline').forEach(el => {
@@ -218,6 +229,13 @@ export function renderItinerary() {
                 }
             }
         }
+    }
+
+    // T2.14: restore scroll position so visited toggles / re-renders don't
+    // jump the user back to Day 1.
+    if (mainEl && savedScroll > 0) {
+        // requestAnimationFrame so layout settles before we set scrollTop
+        requestAnimationFrame(() => { mainEl.scrollTop = savedScroll; });
     }
 }
 

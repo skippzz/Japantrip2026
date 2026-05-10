@@ -309,18 +309,29 @@ if (typeof window !== 'undefined') {
         section.innerHTML = `
             <div class="near-you-header">📍 Near you</div>
             <div class="near-you-list">
-                ${placesWithDist.map(({ p, km }) => `
+                ${placesWithDist.map(({ p, km }) => {
+                    // T3.0km: very close (< 30m) → show "Here" instead of "0 min walk"
+                    const distText = km < 0.03
+                        ? '<span style="color:var(--green);font-weight:600">You\'re here</span>'
+                        : `${km < 1 ? Math.round(km * 1000) + 'm' : km.toFixed(1) + 'km'} · ~${walkMinutes(km)}min walk`;
+                    return `
                     <button class="near-you-item" onclick="openDetail(${p.id})">
                         <div class="near-you-name">${esc(p.name)}</div>
-                        <div class="near-you-meta">${km < 1 ? Math.round(km * 1000) + 'm' : km.toFixed(1) + 'km'} · ~${walkMinutes(km)}min walk</div>
-                    </button>
-                `).join('')}
+                        <div class="near-you-meta">${distText}</div>
+                    </button>`;
+                }).join('')}
             </div>
         `;
     };
 }
 
 export function openDetail(id) {
+    // T1.7: dedup rapid double-taps on the same card to avoid sheet/modal ID
+    // collision. A second openDetail call within 400ms is ignored.
+    const now = Date.now();
+    if (window._openDetailLast && (now - window._openDetailLast.t) < 400 && window._openDetailLast.id === id) return;
+    window._openDetailLast = { t: now, id };
+
     const p = state.places.find(x=>x.id===id); if(!p) return;
     const photo = getPhotoPath(p);
     const nameQ = encodeURIComponent(p.name + ', ' + p.city + ', Japan');

@@ -120,9 +120,11 @@ function renderHotelMini() {
 // Phase 4.5: smart suggestions — un-visited items in current/nearby days
 function renderSmartSuggestions(ctx) {
     if (!ctx.currentDay) return '';
-    // Find unvisited items across today + next 2 days
-    const window = state.itinerary.slice(ctx.tripDayIdx, ctx.tripDayIdx + 3);
-    const unvisited = window.flatMap(d => (d.items || []).filter(i => !i.visited && !i.isNote)).slice(0, 3);
+    // T2.21: explicit bounds so the slice doesn't silently shrink at trip end.
+    const startIdx = Math.max(0, ctx.tripDayIdx);
+    const endIdx = Math.min(state.itinerary.length, ctx.tripDayIdx + 3);
+    const win = state.itinerary.slice(startIdx, endIdx);
+    const unvisited = win.flatMap(d => (d.items || []).filter(i => !i.visited && !i.isNote)).slice(0, 3);
     if (!unvisited.length) return '';
     return `
         <div class="today-block">
@@ -133,6 +135,14 @@ function renderSmartSuggestions(ctx) {
                 </div>
             `).join('')}
         </div>`;
+}
+
+// T1.6 helper: format a Date as local "YYYY-MM-DD" without UTC conversion.
+function localDateISO(d) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
 }
 
 function renderTodayHero(ctx) {
@@ -301,7 +311,11 @@ export function renderDashboard() {
     // Phase 4.6: async weather decoration after render
     if (ctx.currentDay) {
         const city = getDayCity(ctx.currentDay) || 'Tokyo';
-        const dateISO = ctx.today.toISOString().slice(0, 10);
+        // T1.6: Build a LOCAL date string (not toISOString → UTC) so users west
+        // of UTC don't see yesterday's forecast. Forecast data is keyed to
+        // Asia/Tokyo timezone server-side; here we just need the user's local
+        // calendar day, not UTC.
+        const dateISO = localDateISO(ctx.today);
         getWeatherForDay(city, dateISO).then(w => {
             if (w) {
                 const el2 = document.getElementById('hero-weather-chip');

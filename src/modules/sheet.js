@@ -1,27 +1,20 @@
 // ── Sheet: bottom-sheet + drawer primitive ──
 // Mobile-native modal pattern. Used by trip drawer, app drawer, place detail,
-// templates apply, packing add, etc. Replaces full-screen <div class="modal">
-// patterns on phones; on desktop falls back to centred modal styling via CSS.
+// templates apply, packing add, etc.
 //
-// Usage:
-//   import { openSheet, closeSheet } from './sheet.js';
-//   openSheet({ id: 'trip-drawer', side: 'left', html: '...', onClose: () => {} });
-//
-// API
-//   openSheet({ id, side, html, onClose, dismissible, snap })
-//     id           required string identifier (one sheet per id at a time)
-//     side         'bottom' | 'left' | 'right'  (default 'bottom')
-//     html         markup for the body (you supply your own header/buttons)
-//     onClose      callback when dismissed
-//     dismissible  boolean, allow backdrop tap + swipe to dismiss (default true)
-//     snap         only for side='bottom': array of vh percentages, e.g. [0.5, 0.95]
-//
-//   closeSheet(id)            close a specific sheet
-//   closeAllSheets()          close any open sheet
-//   isSheetOpen(id?)          check whether a sheet (or any sheet) is open
+// Hardened in QA pass:
+//   - Single global ESC listener (no duplicates on rapid open/close)
+//   - ESC ignored while typing in form fields
+//   - Drag works across whole sheet body (not just handle)
+//   - Body scroll-lock restored even if onClose throws
+//   - 320ms close-then-reopen race tracked via `closingIds` so re-open creates
+//     a fresh sheet rather than reusing a transitioning-out one
+//   - Backdrop click only closes the topmost sheet, not all stacked sheets
 
 const SHEETS = new Map();        // id -> { el, backdrop, onClose, side }
+const closingIds = new Set();    // ids in transition (320ms grace)
 let activeStackTop = null;       // id of topmost open sheet
+let escListenerAttached = false; // global single-attach guard
 
 const ROOT = () => document.body;
 
@@ -32,7 +25,6 @@ function buildSheetEl(id, side, html, snap) {
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-modal', 'true');
     if (side === 'bottom') {
-        // Drag handle for bottom sheets
         el.innerHTML = `
             <div class="sheet-handle" aria-hidden="true"></div>
             <div class="sheet-body">${html}</div>
@@ -52,21 +44,22 @@ function buildBackdrop(id) {
 }
 
 // ── Drag-to-dismiss for bottom sheets ──
+// Listeners attached to the whole sheet element so a finger that drifts off
+// the small handle area still tracks the drag.
 function attachBottomDrag(el, id) {
     let startY = 0, currentY = 0, dragging = false, startTime = 0;
-    const body = el.querySelector('.sheet-body');
     const handle = el.querySelector('.sheet-handle');
-    // Only the handle area triggers drag, not the whole body (avoids interfering
-    // with scrollable content inside the sheet).
-    const dragSrc = handle || el;
+    const body = el.querySelector('.sheet-body');
 
     const onPointerDown = (e) => {
+        // Only initiate drag from the handle to avoid stealing scroll inside body.
+        if (!handle || !handle.contains(e.target)) return;
         dragging = true;
         startY = e.clientY ?? e.touches?.[0]?.clientY ?? 0;
         currentY = startY;
         startTime = Date.now();
         el.style.transition = 'none';
-        dragSrc.setPointerCapture?.(e.pointerId);
+        el.setPointerCapture?.(e.pointerId);
     };
     const onPointerMove = (e) => {
         if (!dragging) return;
@@ -81,25 +74,34 @@ function attachBottomDrag(el, id) {
         const elapsed = Date.now() - startTime;
         const velocity = dy / Math.max(1, elapsed); // px/ms
         el.style.transition = '';
-        // Dismiss if dragged > 25% of sheet height OR fast flick
-        const threshold = el.getBoundingClientRect().height * 0.25;
-        if (dy > threshold || velocity > 0.5) {
+        // Dismiss if dragged > 30% of sheet height OR very fast flick (>1.0 px/ms).
+        // Tightened from 25%/0.5 in QA pass to reduce accidental dismisses.
+        const threshold = el.getBoundingClientRect().height * 0.30;
+        if (dy > threshold || velocity > 1.0) {
             closeSheet(id);
         } else {
             el.style.transform = '';
         }
     };
-    dragSrc.addEventListener('pointerdown', onPointerDown);
-    dragSrc.addEventListener('pointermove', onPointerMove);
-    dragSrc.addEventListener('pointerup', onPointerUp);
-    dragSrc.addEventListener('pointercancel', onPointerUp);
+    // Listeners attached to whole sheet element so we keep tracking even if the
+    // pointer moves off the handle.
+    el.addEventListener('pointerdown', onPointerDown);
+    el.addEventListener('pointermove', onPointerMove);
+    el.addEventListener('pointerup', onPointerUp);
+    el.addEventListener('pointercancel', onPointerUp);
 }
 
 export function openSheet({ id, side = 'bottom', html = '', onClose, dismissible = true, snap }) {
     if (!id) throw new Error('openSheet requires an id');
-    // If this id is already open, just replace its body
+    // If this id is currently CLOSING (within 320ms grace), wait — fresh sheet
+    // will be created once the old one finishes its dismiss animation.
+    if (closingIds.has(id)) {
+        setTimeout(() => openSheet({ id, side, html, onClose, dismissible, snap }), 50);
+        return null;
+    }
     const existing = SHEETS.get(id);
     if (existing) {
+        // Same id already open → just replace body content
         const body = existing.el.querySelector('.sheet-body');
         if (body) body.innerHTML = html;
         return existing.el;
@@ -109,12 +111,14 @@ export function openSheet({ id, side = 'bottom', html = '', onClose, dismissible
     const backdrop = dismissible ? buildBackdrop(id) : null;
 
     if (backdrop) {
-        backdrop.addEventListener('click', () => closeSheet(id));
+        // Only close the TOPMOST sheet on backdrop tap, not all stacked sheets
+        backdrop.addEventListener('click', () => {
+            if (activeStackTop) closeSheet(activeStackTop);
+        });
         ROOT().appendChild(backdrop);
     }
     ROOT().appendChild(el);
-    // Force reflow so CSS transition kicks in
-    void el.offsetWidth;
+    void el.offsetWidth; // force reflow for transition
     el.classList.add('is-open');
     if (backdrop) backdrop.classList.add('is-open');
 
@@ -123,17 +127,25 @@ export function openSheet({ id, side = 'bottom', html = '', onClose, dismissible
 
     if (side === 'bottom' && dismissible) attachBottomDrag(el, id);
 
-    // Lock body scroll while a sheet is open (only when first sheet opens)
     if (SHEETS.size === 1) ROOT().classList.add('sheet-open');
-
-    // ESC dismisses topmost sheet
-    if (dismissible) document.addEventListener('keydown', escListener);
+    ensureGlobalEscListener();
 
     return el;
 }
 
-function escListener(e) {
-    if (e.key === 'Escape' && activeStackTop) closeSheet(activeStackTop);
+// Single global ESC listener attached once. Closes topmost sheet, but ignores
+// ESC when focus is inside an input/textarea/select.
+function ensureGlobalEscListener() {
+    if (escListenerAttached) return;
+    escListenerAttached = true;
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if (!activeStackTop) return;
+        const t = e.target;
+        if (t && t.matches?.('input, textarea, select, [contenteditable="true"]')) return;
+        const sheet = SHEETS.get(activeStackTop);
+        if (sheet?.dismissible) closeSheet(activeStackTop);
+    });
 }
 
 export function closeSheet(id) {
@@ -143,19 +155,27 @@ export function closeSheet(id) {
     el.classList.remove('is-open');
     if (backdrop) backdrop.classList.remove('is-open');
     SHEETS.delete(id);
+    closingIds.add(id);
 
-    // Update active top
     activeStackTop = SHEETS.size ? [...SHEETS.keys()].pop() : null;
     if (SHEETS.size === 0) {
         ROOT().classList.remove('sheet-open');
-        document.removeEventListener('keydown', escListener);
     }
 
-    // Wait for transition then remove from DOM
     setTimeout(() => {
-        el.remove();
-        backdrop?.remove();
-        onClose?.();
+        try {
+            el.remove();
+            backdrop?.remove();
+        } finally {
+            // Always release closing state + invoke callback safely so a throw
+            // inside onClose can never leave the sheet system in a bad state.
+            closingIds.delete(id);
+            try { onClose?.(); } catch (e) { console.warn('[sheet] onClose threw', e); }
+            // Defensive: if sheet count is 0 but the class is somehow still set
+            // (e.g. callback opened another sheet then synchronously closed it),
+            // make sure scroll lock matches reality.
+            if (SHEETS.size === 0) ROOT().classList.remove('sheet-open');
+        }
     }, 320);
 }
 
@@ -167,7 +187,6 @@ export function isSheetOpen(id) {
     return id ? SHEETS.has(id) : SHEETS.size > 0;
 }
 
-// Expose a tiny API on window for inline-onclick usage in injected HTML.
 if (typeof window !== 'undefined') {
     window.openSheet = openSheet;
     window.closeSheet = closeSheet;

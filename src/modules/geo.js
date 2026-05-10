@@ -4,9 +4,18 @@
 
 let cache = null;
 
-export function getUserLocation(maxAgeMs = 5 * 60 * 1000) {
+// T2.22: support `{ forceFresh: true }` to bypass the cache. Useful after long
+// transitions (e.g. Shinkansen Tokyo→Kyoto) where the 5-min cache would still
+// return Tokyo coords for an hour.
+export function getUserLocation(maxAgeMsOrOpts = 5 * 60 * 1000) {
+    const opts = (typeof maxAgeMsOrOpts === 'object' && maxAgeMsOrOpts !== null)
+        ? maxAgeMsOrOpts
+        : { maxAgeMs: maxAgeMsOrOpts };
+    const maxAgeMs = opts.maxAgeMs ?? 5 * 60 * 1000;
+    const forceFresh = opts.forceFresh === true;
+
     return new Promise((resolve) => {
-        if (cache && Date.now() - cache.ts < maxAgeMs) return resolve(cache.coords);
+        if (!forceFresh && cache && Date.now() - cache.ts < maxAgeMs) return resolve(cache.coords);
         if (!navigator.geolocation) return resolve(null);
         navigator.geolocation.getCurrentPosition(
             (p) => {
@@ -14,10 +23,13 @@ export function getUserLocation(maxAgeMs = 5 * 60 * 1000) {
                 resolve(cache.coords);
             },
             () => resolve(null),
-            { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
+            { enableHighAccuracy: forceFresh, timeout: 8000, maximumAge: forceFresh ? 0 : 60000 }
         );
     });
 }
+
+// Public: clear the geo cache. Hook this to view changes if you want.
+export function clearGeoCache() { cache = null; }
 
 // Haversine distance in km between two lat/lng pairs.
 export function distanceKm(a, b) {

@@ -81,15 +81,18 @@ export function downloadTripSnapshot() {
 
 export async function shareTripSnapshot() {
     const html = snapshotHtml();
-    if (navigator.share && navigator.canShare?.({ files: [new File([html], 'trip.html', { type: 'text/html' })] })) {
+    const file = new File([html], 'trip.html', { type: 'text/html' });
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
         try {
             await navigator.share({
                 title: getActiveTrip()?.name || 'Trip',
                 text: 'My trip plan',
-                files: [new File([html], 'trip.html', { type: 'text/html' })],
+                files: [file],
             });
+            // T3.54: File object holds the blob in memory; nothing else to revoke
+            // since we never created an Object URL on this path. Done.
             return;
-        } catch { /* fall through */ }
+        } catch { /* fall through to download */ }
     }
     downloadTripSnapshot();
 }

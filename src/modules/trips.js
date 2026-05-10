@@ -179,6 +179,7 @@ export function switchTrip(tripId) {
 }
 
 function loadTripState(trip) {
+    let parseFailed = false;
     try {
         const raw = localStorage.getItem(trip.storageKey);
         if (raw) {
@@ -189,14 +190,21 @@ function loadTripState(trip) {
             setStateRef(state);
             return;
         }
-    } catch { /* corrupt */ }
-    // Empty trip — initialize with blank state
+    } catch (e) {
+        // T2.17: surface corruption instead of silently wiping the trip.
+        parseFailed = true;
+        console.warn('[trips] failed to parse trip state for', trip.id, e);
+    }
+    // Empty / unreadable trip — initialize with blank state
     state.places = [];
     state.todos = [];
     state.itinerary = [];
     state.packing = [];
     state.rules = [];
     setStateRef(state);
+    if (parseFailed) {
+        showToast(`Couldn't read trip "${trip.name}" — its saved state was corrupted. Starting blank. Saved Versions sidebar may have a backup.`, 'error', 8000);
+    }
 }
 
 export function createTrip(name, destination, dateStart, dateEnd, templateKey) {

@@ -905,6 +905,10 @@ body.reorder-mode .day-card { pointer-events: none; }
 body.reorder-mode .day-card .timeline,
 body.reorder-mode .day-card .timeline * { pointer-events: auto; }
 body.reorder-mode .day-header { pointer-events: none; opacity: .6; }
+/* T1.5: re-enable header buttons that aren't part of the day-toggle gesture */
+body.reorder-mode .day-share-btn,
+body.reorder-mode .day-edit-actions,
+body.reorder-mode .day-edit-actions * { pointer-events: auto; }
 /* Add a subtle highlight to show reorder mode is active */
 body.reorder-mode .day-card.expanded { outline: 2px dashed var(--accent); outline-offset: -2px; }
 

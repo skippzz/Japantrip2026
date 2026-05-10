@@ -3,7 +3,8 @@
 // uses network-first for same-origin app files, so users always pull fresh
 // index.html / app.js / modules / styles on every page load when online, and
 // fall back to cache only when offline.
-const CACHE_NAME = 'japan2026-v23';
+// Bumped to v24: Phase 1-6 added 11 new modules; previous list was missing them.
+const CACHE_NAME = 'japan2026-v24';
 
 // App shell — pre-cached on install so the app works offline even on first
 // load-then-go-offline. At runtime these are served network-first.
@@ -13,12 +14,14 @@ const ASSETS = [
     './styles.css',
     './manifest.json',
     './src/app.js',
+    // Core modules
     './src/modules/config.js',
     './src/modules/data.js',
     './src/modules/helpers.js',
     './src/modules/state.js',
     './src/modules/toast.js',
     './src/modules/theme.js',
+    // View / feature modules
     './src/modules/dashboard.js',
     './src/modules/itinerary.js',
     './src/modules/places.js',
@@ -34,6 +37,20 @@ const ASSETS = [
     './src/modules/routing.js',
     './src/modules/trips.js',
     './src/modules/export.js',
+    // Phase 1-6 mobile-overhaul modules (added v24)
+    './src/modules/sheet.js',
+    './src/modules/gestures.js',
+    './src/modules/fab.js',
+    './src/modules/app-drawer.js',
+    './src/modules/reorder-mode.js',
+    './src/modules/install-prompt.js',
+    './src/modules/weather.js',
+    './src/modules/yen-tap.js',
+    './src/modules/geo.js',
+    './src/modules/trip-stats.js',
+    './src/modules/trip-share.js',
+    './src/modules/trip-theme.js',
+    // CDN libs
     'https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js',
     'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js',
     'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',
@@ -43,8 +60,12 @@ self.addEventListener('install', e => {
     e.waitUntil(
         caches.open(CACHE_NAME)
             // Best-effort: don't block install if a single asset 404s in dev.
+            // Tier 3 fix: log misses instead of silent swallow so dev can spot them.
             .then(cache => Promise.all(
-                ASSETS.map(url => cache.add(url).catch(() => null))
+                ASSETS.map(url => cache.add(url).catch(err => {
+                    console.warn('[SW] failed to cache', url, err?.message || err);
+                    return null;
+                }))
             ))
             .then(() => self.skipWaiting())
     );

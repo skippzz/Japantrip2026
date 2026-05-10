@@ -20,6 +20,9 @@ function getCode() {
         || 'TRY';
 }
 
+// T2.20: pop closer listener attached only once even if ensurePop is called
+// many times.
+let popCloserAttached = false;
 function ensurePop() {
     if (pop) return pop;
     pop = document.createElement('div');
@@ -27,21 +30,33 @@ function ensurePop() {
     pop.className = 'yen-popover';
     pop.style.cssText = 'display:none;position:absolute;z-index:200;';
     document.body.appendChild(pop);
-    document.addEventListener('click', (e) => {
-        if (!pop.contains(e.target) && !e.target.closest('[data-yen-clickable]')) {
-            pop.style.display = 'none';
-        }
-    });
+    if (!popCloserAttached) {
+        popCloserAttached = true;
+        document.addEventListener('click', (e) => {
+            if (!pop.contains(e.target) && !e.target.closest('[data-yen-clickable]')) {
+                pop.style.display = 'none';
+            }
+        });
+    }
     return pop;
 }
 
-// Parse a yen amount from a string like "¥1,500" → 1500.
+// T3.49: Parse a yen amount from various formats:
+//   ¥1,500 / ￥1500 / 1500円 / JPY 1500 / 1,500 yen / ¥1.5K / ~¥1,000–1,500
+// For ranges, returns the first number (lower bound).
 function parseYen(text) {
     if (!text) return null;
-    // Match ¥ or 円, with comma-separated digits
-    const m = text.match(/[¥￥]\s*([\d,]+)|([\d,]+)\s*円|JPY\s*([\d,]+)/);
+    // K shorthand first (¥1.5K, 2K yen)
+    const kMatch = text.match(/[¥￥]\s*([\d.]+)\s*[kK]\b|([\d.]+)\s*[kK]\s*(?:yen|円)/);
+    if (kMatch) {
+        const raw = (kMatch[1] || kMatch[2] || '');
+        const n = parseFloat(raw);
+        if (isFinite(n)) return Math.round(n * 1000);
+    }
+    // Standard ¥/￥/円/JPY/yen patterns
+    const m = text.match(/[¥￥]\s*([\d,]+)|([\d,]+)\s*円|JPY\s*([\d,]+)|([\d,]+)\s*yen\b/i);
     if (!m) return null;
-    const raw = (m[1] || m[2] || m[3] || '').replace(/,/g, '');
+    const raw = (m[1] || m[2] || m[3] || m[4] || '').replace(/,/g, '');
     const n = parseInt(raw, 10);
     return isFinite(n) ? n : null;
 }
@@ -58,15 +73,26 @@ function showPopAt(target, yenAmount) {
     `;
     p.style.display = 'block';
     const r = target.getBoundingClientRect();
-    const py = r.bottom + window.scrollY + 6;
-    const px = Math.max(8, Math.min(window.innerWidth - 200, r.left + window.scrollX));
+    // Measure rendered popover for accurate clamp (T3.popover)
+    const pw = p.offsetWidth || 200;
+    const ph = p.offsetHeight || 80;
+    let px = r.left + window.scrollX;
+    let py = r.bottom + window.scrollY + 6;
+    // Clamp horizontally with margin and don't overflow narrow phones
+    px = Math.max(8 + window.scrollX, Math.min(window.scrollX + window.innerWidth - pw - 8, px));
+    // If popover would overflow viewport bottom, place above the target instead
+    const viewBottom = window.scrollY + window.innerHeight;
+    if (py + ph > viewBottom - 8) py = Math.max(window.scrollY + 8, r.top + window.scrollY - ph - 6);
     p.style.top = py + 'px';
     p.style.left = px + 'px';
 }
 
-// Initialise: scans ALL .yen-tappable areas and any element with [data-yen]
-// attribute. Uses event delegation so dynamic content works automatically.
+// T2.20: idempotent — second call is a no-op so we don't accumulate document
+// click listeners on hot reload / accidental re-import.
+let yenTapInitialised = false;
 export function initYenTap() {
+    if (yenTapInitialised) return;
+    yenTapInitialised = true;
     document.addEventListener('click', (e) => {
         const target = e.target.closest('[data-yen]');
         if (!target) return;

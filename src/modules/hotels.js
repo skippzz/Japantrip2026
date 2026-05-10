@@ -31,10 +31,21 @@ export function renderHotelCards() {
         </div>`).join('');
 }
 
+// T1.9: case-insensitive lookup with partial match support so "Tokyo" matches
+// new "Tokyo (arrival)" / "Tokyo (departure)" labels in DEFAULT_HOTELS.
+export function findHotelByCity(hotels, city) {
+    if (!city) return null;
+    const c = city.toLowerCase().trim();
+    return hotels.find(x => x.city.toLowerCase() === c)
+        || hotels.find(x => x.city.toLowerCase().includes(c))
+        || hotels.find(x => c.includes(x.city.toLowerCase()))
+        || null;
+}
+
 export function copyHotel(city) {
     const hotels = loadHotels();
-    const h = hotels.find(x => x.city === city);
-    if (!h) return;
+    const h = findHotelByCity(hotels, city);
+    if (!h) { showToast('Hotel not found.', 'warn'); return; }
     const text = `${h.nameJp}\n${h.addrJp}\n${h.nameEn}`;
     navigator.clipboard.writeText(text).then(() => showToast('Hotel address copied!', 'success'));
 }
@@ -48,7 +59,7 @@ export function openHotelTaxiCard(cityHint) {
         showToast('No hotel data set.', 'warn');
         return;
     }
-    let h = cityHint ? hotels.find(x => x.city.toLowerCase().includes(cityHint.toLowerCase())) : null;
+    let h = cityHint ? findHotelByCity(hotels, cityHint) : null;
     if (!h) h = hotels[0];
 
     const others = hotels.filter(x => x !== h);

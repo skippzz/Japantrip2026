@@ -3,8 +3,28 @@
 import { PHOTOS_URL_KEY } from './config.js';
 import { showToast } from './toast.js';
 
+// T3.31: persist + restore the currency rate across reloads. Hot-loaded into
+// the input on first call so user-edited rates survive page refresh.
+const RATE_KEY = 'jp_currency_rate';
+function getRateInput() { return document.getElementById('currency-rate'); }
+
+function ensureRateRestored() {
+    const el = getRateInput();
+    if (!el || el.dataset.rateRestored) return;
+    const stored = localStorage.getItem(RATE_KEY);
+    if (stored) el.value = stored;
+    el.dataset.rateRestored = '1';
+    // Persist on any subsequent change
+    el.addEventListener('change', () => {
+        try { localStorage.setItem(RATE_KEY, el.value); } catch { /* ok */ }
+    });
+}
+
 export function convertCurrency(from) {
-    const rate = parseFloat(document.getElementById('currency-rate').value) || 0;
+    ensureRateRestored();
+    const rate = parseFloat(getRateInput()?.value) || 0;
+    // Persist current rate (in case it was set programmatically without 'change')
+    if (rate) try { localStorage.setItem(RATE_KEY, String(rate)); } catch { /* ok */ }
     if (from === 'yen') {
         const yen = parseFloat(document.getElementById('currency-yen').value) || 0;
         document.getElementById('currency-local').value = yen ? (yen * rate).toFixed(2) : '';

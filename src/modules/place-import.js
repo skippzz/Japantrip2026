@@ -272,6 +272,14 @@ export async function smartImport(input) {
         return;
     }
 
+    // T3.34: smart-import relies on Places API + short-URL resolution. Bail
+    // early with a clear message instead of silently failing on a flaky offline
+    // connection.
+    if (navigator.onLine === false) {
+        showToast('Offline — place lookup needs an internet connection.', 'warn');
+        return;
+    }
+
     input = input.trim();
 
     // ── Case 1: Not a URL → text search ──

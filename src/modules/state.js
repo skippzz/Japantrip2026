@@ -58,8 +58,12 @@ const STATE_MIGRATIONS = {
     },
 };
 
+// T1.8: MIN_VERSION lifted from 14 → 17 because we only define migrations
+// 17→18 and 18→19. Anyone with stored state at v14/15/16 was being silently
+// wiped on load. Treating those (rare) cases as unmigratable now falls through
+// to the defaults path consistently rather than failing partway.
 function applyMigrations(s) {
-    const MIN_VERSION = 14;
+    const MIN_VERSION = 17;
     if (!s.version || s.version < MIN_VERSION) return false;
     while (s.version < DATA_VERSION) {
         const migrate = STATE_MIGRATIONS[s.version];
@@ -147,9 +151,27 @@ export function importData(file) {
                 return;
             }
             if (!confirm(`Import ${imported.places.length} places and ${imported.itinerary.length} days? This will replace your current data.`)) return;
+            // T3.51: try migrating the imported state instead of force-stamping
+            // the current DATA_VERSION (which leaves it missing migration-added
+            // fields). Older-than-MIN files fall back to forced version + pad.
+            if (imported.version && imported.version < DATA_VERSION) {
+                if (!applyMigrations(imported)) {
+                    if (!imported.rules) imported.rules = [];
+                    if (!imported.packing) imported.packing = [];
+                    if (!imported.todos) imported.todos = [];
+                    imported.version = DATA_VERSION;
+                }
+            } else if (imported.version && imported.version > DATA_VERSION) {
+                showToast(`File is from a newer version (v${imported.version}). Loading anyway — some features may be missing.`, 'warn', 5000);
+                imported.version = DATA_VERSION;
+            } else {
+                imported.version = DATA_VERSION;
+                if (!imported.rules) imported.rules = [];
+            }
             state = imported;
-            state.version = DATA_VERSION;
-            if (!state.rules) state.rules = [];
+            // T3.51: clear stale photoUrl entries — those are ephemeral Google
+            // CDN URLs that may have expired by import time.
+            (state.places || []).forEach(p => { delete p.photoUrl; });
             setStateRef(state);
             // Reset UI state
             window._expandedDays?.clear();
@@ -166,20 +188,44 @@ export function importData(file) {
 }
 
 // ── Save Versioning ──
+// T2.16: per-trip namespaced version key. The original VERSIONS_KEY was global,
+// so quick-saves on Trip A would overwrite Trip B's snapshots when at MAX
+// capacity. We derive a per-trip key from the active storage key. Old global
+// data continues to be readable via getLegacyVersions() for one-time merge.
+function activeVersionsKey() {
+    return VERSIONS_KEY + ':' + activeStorageKey;
+}
 function getSavedVersions() {
-    try { return JSON.parse(localStorage.getItem(VERSIONS_KEY)) || []; }
+    try {
+        const cur = JSON.parse(localStorage.getItem(activeVersionsKey())) || [];
+        if (cur.length) return cur;
+        // Migrate legacy global versions on first read of the legacy trip's key.
+        if (activeStorageKey === STATE_KEY) {
+            const legacy = JSON.parse(localStorage.getItem(VERSIONS_KEY)) || [];
+            if (legacy.length) {
+                localStorage.setItem(activeVersionsKey(), JSON.stringify(legacy));
+                return legacy;
+            }
+        }
+        return [];
+    }
     catch { return []; }
 }
 
 function saveSavedVersions(versions) {
-    try { localStorage.setItem(VERSIONS_KEY, JSON.stringify(versions)); }
+    try { localStorage.setItem(activeVersionsKey(), JSON.stringify(versions)); }
     catch { showToast('Could not save version list — storage may be full.', 'error'); }
 }
 
 // Non-interactive snapshot — used by destructive flows (e.g. template replace) to
 // guarantee an undo point. Silently drops oldest if at MAX_SAVED_VERSIONS.
+// T2.18: skip auto-snapshots when state is essentially empty (no places, no
+// itinerary items) — pollutes the version list otherwise.
 export function autoSaveVersion(name) {
     try {
+        const itemsCount = (state.itinerary || []).reduce((n, d) => n + (d.items?.length || 0), 0);
+        const placesCount = state.places?.length || 0;
+        if (itemsCount === 0 && placesCount === 0) return false;
         const versions = getSavedVersions();
         if (versions.length >= MAX_SAVED_VERSIONS) versions.pop();
         versions.unshift({

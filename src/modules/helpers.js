@@ -141,17 +141,18 @@ export function formatMinutesTo24h(mins) {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-export function getHoursConflict(it, place, travelMinFromPrev) {
+// T2.26: removed dead `travelMinFromPrev` parameter (was never passed in).
+// T3.regex: tightened day-name regex with word boundaries so "TuesdayWednesday"
+// can't false-match.
+export function getHoursConflict(it, place) {
     if (!place || !place.hours) return null;
     const hoursStr = place.hours;
 
-    // Check for "Closed" days
     if (/closed/i.test(hoursStr)) {
-        // Day-specific: "Closed Mondays" or "Mon: Closed"
         const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
         const shortDays = ['sun','mon','tue','wed','thu','fri','sat'];
         for (let i = 0; i < dayNames.length; i++) {
-            if (new RegExp(`closed\\s+${dayNames[i]}|${shortDays[i]}.*closed`, 'i').test(hoursStr)) {
+            if (new RegExp(`\\bclosed\\s+${dayNames[i]}s?\\b|\\b${shortDays[i]}\\b.*\\bclosed\\b`, 'i').test(hoursStr)) {
                 return `⚠️ May be closed on ${dayNames[i].charAt(0).toUpperCase() + dayNames[i].slice(1)}s`;
             }
         }

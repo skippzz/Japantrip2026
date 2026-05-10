@@ -33,6 +33,10 @@ export function applyTheme(theme) {
     const btn = document.getElementById('theme-toggle');
     if (btn) btn.textContent = theme === 'light' ? '☀️' : '🌙';
     localStorage.setItem(THEME_KEY, theme);
+    // T3.29: dynamic theme-color meta so the browser chrome (Android status
+    // bar, PWA splash) matches the active theme.
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'light' ? '#ffffff' : '#0b0f19');
 }
 
 export function toggleTheme() {

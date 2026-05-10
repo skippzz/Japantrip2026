@@ -67,14 +67,9 @@ function openSplitSheet() {
                         <button class="btn-round" onclick="adjustSheetSplitCount(1)">+</button>
                     </div>
                 </div>
-                <div class="split-row">
-                    <label class="split-label">Mode:</label>
-                    <select id="s-split-mode" onchange="calcSheetSplit()" class="select-sm">
-                        <option value="even">Even split</option>
-                        <option value="percent">By % share</option>
-                        <option value="fixed">Fixed amounts</option>
-                    </select>
-                </div>
+                <!-- T3.33: sheet variant only supports 'even' mode for now;
+                     percent / fixed live in the sidebar widget (use legacy ☰). -->
+                <input type="hidden" id="s-split-mode" value="even">
                 <div id="s-split-custom" style="display:none"></div>
                 <div class="split-result" id="s-split-result"></div>
                 <div class="split-actions">
@@ -190,9 +185,9 @@ export function openAppDrawer() {
 
         <div class="drawer-section">
             <div class="drawer-section-title">Settings</div>
-            <button class="trip-drawer-action" onclick="window._toggleThemeFromDrawer()">
-                <span class="trip-drawer-action-icon">🌙</span>
-                <span>Theme</span>
+            <button class="trip-drawer-action" id="theme-drawer-row" onclick="window._toggleThemeFromDrawer()">
+                <span class="trip-drawer-action-icon">${currentThemeIcon()}</span>
+                <span>Theme · ${currentThemeLabel()}</span>
             </button>
             <button class="trip-drawer-action" onclick="window._openDataSheet()">
                 <span class="trip-drawer-action-icon">💾</span>
@@ -216,7 +211,12 @@ export function openAppDrawer() {
 function convertSheetCurrency(from) {
     const yenIn = document.getElementById('s-currency-yen');
     const localIn = document.getElementById('s-currency-local');
-    const rate = parseFloat(document.getElementById('s-currency-rate')?.value) || 0.22;
+    const rateInput = document.getElementById('s-currency-rate');
+    const rate = parseFloat(rateInput?.value) || 0.22;
+    // T3.31: persist + sync to sidebar widget so the two stay in lockstep.
+    try { localStorage.setItem('jp_currency_rate', String(rate)); } catch { /* ok */ }
+    const sidebarRate = document.getElementById('currency-rate');
+    if (sidebarRate && sidebarRate.value !== String(rate)) sidebarRate.value = rate;
     if (from === 'yen') {
         const v = parseFloat(yenIn.value);
         if (isFinite(v)) localIn.value = (v * rate).toFixed(2);
@@ -265,6 +265,25 @@ function clearSheetSplit() {
 }
 function toggleThemeFromDrawer() {
     toggleTheme();
+    // T2.19: refresh the theme row's icon + label so the drawer reflects the
+    // new theme without re-opening.
+    const row = document.getElementById('theme-drawer-row');
+    if (row) {
+        row.innerHTML = `
+            <span class="trip-drawer-action-icon">${currentThemeIcon()}</span>
+            <span>Theme · ${currentThemeLabel()}</span>
+        `;
+    }
+}
+
+// T2.19: helpers used by the drawer renderer to reflect current theme.
+function currentThemeIcon() {
+    const t = document.documentElement.getAttribute('data-theme') || 'dark';
+    return t === 'light' ? '☀️' : '🌙';
+}
+function currentThemeLabel() {
+    const t = document.documentElement.getAttribute('data-theme') || 'dark';
+    return t === 'light' ? 'Light' : 'Dark';
 }
 
 // Expose tool-opener fns + handlers to window so inline onclicks work

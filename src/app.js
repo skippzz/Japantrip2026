@@ -223,7 +223,9 @@ function installTimelineSwipe(container) {
     let startX = 0, startY = 0, current = null, dragging = false, locked = null;
     const TOL_DOWN = 8, THRESH = 60;
     container.addEventListener('pointerdown', (e) => {
-        if (e.target.closest('button, a, input, .tl-grip')) return;
+        // T2.13/T2.25: also exclude .tl-edit-btn explicitly so taps on Done/
+        // Edit/Delete buttons aren't intercepted by the swipe handler.
+        if (e.target.closest('button, a, input, .tl-grip, .tl-edit-btn, .tl-actions')) return;
         const t = e.target.closest('.tl-item');
         if (!t) return;
         startX = e.clientX; startY = e.clientY;
