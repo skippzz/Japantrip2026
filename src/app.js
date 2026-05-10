@@ -14,6 +14,9 @@ import { attachLongPressDelegated } from './modules/gestures.js';
 import { openAppDrawer } from './modules/app-drawer.js';
 import { enterReorderMode, exitReorderMode, isReorderMode } from './modules/reorder-mode.js';
 import { initInstallPrompt } from './modules/install-prompt.js';
+import { initYenTap, tagYen } from './modules/yen-tap.js';
+import './modules/trip-share.js';   // exposes window.shareTripSnapshot/downloadTripSnapshot
+import { applyTripTheme } from './modules/trip-theme.js';
 import { setStateRef } from './modules/helpers.js';
 import { JAPAN_FACTS, PHRASES } from './modules/data.js';
 import { ENABLE_API_PHOTOS } from './modules/config.js';
@@ -321,6 +324,8 @@ function syncHeaderTripName() {
     if (!el) return;
     const trip = getActiveTrip();
     el.textContent = trip?.name || 'Japan 2026';
+    // Phase 3.2: apply per-trip theme overrides
+    applyTripTheme();
 }
 
 // Subscribe to renderAll events from state (import/loadVersion)
@@ -709,6 +714,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Phase 2.6: pull-to-refresh on Today — recompute "now" + re-render dashboard
     installPullToRefresh();
+
+    // Phase 4.1: tap-any-yen-price → inline currency conversion popover
+    initYenTap();
 
     // Google Maps bridge: handle callback regardless of load order
     window._onMapsReady = onMapsReady;

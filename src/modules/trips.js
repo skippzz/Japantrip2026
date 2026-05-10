@@ -436,6 +436,10 @@ export function openTripDrawer() {
                 <span class="trip-drawer-action-icon">💾</span>
                 <span>Save as template</span>
             </button>
+            <button class="trip-drawer-action" onclick="closeSheet('trip-drawer'); shareTripSnapshot()">
+                <span class="trip-drawer-action-icon">📤</span>
+                <span>Share trip (HTML snapshot)</span>
+            </button>
         </div>
         ` : ''}
     `;

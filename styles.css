@@ -421,6 +421,113 @@ body.edit-mode #edit-btn { background: var(--orange); color: #000; }
     font-size: var(--font-2xl); font-weight: 700; line-height: 1.2;
     color: var(--text-0);
 }
+.hero-weather-slot { color: var(--text-2); }
+.weather-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: var(--radius-full);
+    background: var(--bg-2);
+    font-size: var(--font-xs);
+    color: var(--text-1);
+    font-weight: 600;
+}
+.weather-pop { color: var(--cyan); margin-left: 2px; }
+
+/* Phase 4.1: tap-yen-to-convert */
+.yen-popover {
+    background: var(--bg-2); color: var(--text-1);
+    border: 1px solid var(--bg-3);
+    border-radius: var(--radius); padding: var(--space-3);
+    box-shadow: var(--shadow-md);
+    min-width: 180px;
+    font-size: var(--font-sm);
+}
+.yen-pop-amt { font-size: var(--font-lg); font-weight: 700; color: var(--accent); }
+.yen-pop-conv { font-size: var(--font-base); color: var(--text-1); margin-top: 2px; }
+.yen-pop-rate { font-size: var(--font-xs); color: var(--text-3); margin-top: var(--space-2); }
+.yen-clickable {
+    cursor: pointer;
+    text-decoration: underline dotted var(--accent);
+    text-underline-offset: 2px;
+}
+.yen-clickable:hover { color: var(--accent); }
+/* Auto-decorate the place detail Cost field */
+.detail-info-item [data-yen] { cursor: pointer; color: var(--accent); }
+.detail-info-item [data-yen]:hover { text-decoration: underline; }
+
+/* Phase 4.4: Near you section on Places */
+.near-you-section { margin-bottom: var(--space-4); }
+.near-you-prompt {
+    width: 100%; padding: var(--space-3);
+    background: var(--accent-bg); border: 1px dashed var(--accent);
+    border-radius: var(--radius); color: var(--accent);
+    font-weight: 600; cursor: pointer; font-size: var(--font-sm);
+}
+.near-you-prompt:hover { background: rgba(59,130,246,.18); }
+.near-you-loading, .near-you-fail {
+    padding: var(--space-3); color: var(--text-2); font-size: var(--font-sm);
+    text-align: center;
+}
+.near-you-header {
+    font-size: var(--font-xs); text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-3); font-weight: 700;
+    margin-bottom: var(--space-2);
+}
+.near-you-list { display: flex; flex-direction: column; gap: var(--space-2); }
+.near-you-item {
+    display: flex; flex-direction: column; align-items: flex-start;
+    background: var(--bg-2); border: 1px solid var(--bg-3);
+    border-radius: var(--radius); padding: var(--space-3);
+    cursor: pointer; color: var(--text-1);
+    text-align: left;
+}
+.near-you-item:hover { border-color: var(--accent); }
+.near-you-name { font-weight: 600; font-size: var(--font-base); }
+.near-you-meta { font-size: var(--font-xs); color: var(--text-2); margin-top: 2px; }
+
+/* Phase 5.3: trip stats grid */
+.trip-stats-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-2);
+}
+.trip-stat {
+    background: var(--bg-2); border: 1px solid var(--bg-3);
+    border-radius: var(--radius); padding: var(--space-3);
+    text-align: center;
+}
+.trip-stat strong {
+    display: block; font-size: var(--font-2xl); font-weight: 700;
+    color: var(--accent); line-height: 1;
+}
+.trip-stat span {
+    display: block; font-size: var(--font-xs); color: var(--text-2);
+    margin-top: var(--space-1);
+}
+@media (max-width: 480px) {
+    .trip-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Phase 4.5: smart suggestions */
+.today-suggestion {
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-2);
+    border-left: 3px solid var(--cyan);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    color: var(--text-1);
+    font-size: var(--font-sm);
+    margin-bottom: var(--space-1);
+}
+
+/* Phase 3.5: subtle threshold-crossing animation on the today hero */
+@keyframes hero-fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.today-hero {
+    animation: hero-fade-up var(--motion-slow) var(--ease-spring) both;
+}
+@media (prefers-reduced-motion: reduce) {
+    .today-hero { animation: none; }
+}
 
 .today-block {
     display: flex; flex-direction: column; gap: var(--space-2);

@@ -102,6 +102,8 @@ export function renderPlaces() {
             areaBar.style.display = 'none';
         }
     }
+    // Phase 4.4: render the "Near you" prompt above the grid
+    renderNearYou();
     const grid = document.getElementById('places-grid');
     grid.innerHTML = places.map(p => {
         const photo = getPhotoPath(p);
@@ -272,6 +274,52 @@ export function updateResField(id, field, value) {
 // ══════════════════════════════════════════════════════════════
 //  PLACE DETAIL MODAL
 // ══════════════════════════════════════════════════════════════
+// Phase 4.4: render a "Near you" section above the grid using geolocation.
+// Lazy-loaded; only kicks in when user's already on /places view to avoid
+// a permission prompt on first load.
+export async function renderNearYou() {
+    const grid = document.getElementById('places-grid');
+    if (!grid) return;
+    let section = document.getElementById('near-you-section');
+    if (!section) {
+        section = document.createElement('div');
+        section.id = 'near-you-section';
+        section.className = 'near-you-section';
+        grid.parentNode.insertBefore(section, grid);
+    }
+    section.innerHTML = `<button class="near-you-prompt" onclick="window._loadNearYou?.()">📍 Show places near me</button>`;
+}
+
+if (typeof window !== 'undefined') {
+    window._loadNearYou = async () => {
+        const { getUserLocation, distanceKm, walkMinutes } = await import('./geo.js');
+        const section = document.getElementById('near-you-section');
+        if (!section) return;
+        section.innerHTML = '<div class="near-you-loading">Locating…</div>';
+        const loc = await getUserLocation();
+        if (!loc) {
+            section.innerHTML = '<div class="near-you-fail">Location unavailable. Enable location and try again.</div>';
+            return;
+        }
+        const placesWithDist = (state.places || [])
+            .filter(p => p.lat && p.lng)
+            .map(p => ({ p, km: distanceKm(loc, p) }))
+            .sort((a, b) => a.km - b.km)
+            .slice(0, 5);
+        section.innerHTML = `
+            <div class="near-you-header">📍 Near you</div>
+            <div class="near-you-list">
+                ${placesWithDist.map(({ p, km }) => `
+                    <button class="near-you-item" onclick="openDetail(${p.id})">
+                        <div class="near-you-name">${esc(p.name)}</div>
+                        <div class="near-you-meta">${km < 1 ? Math.round(km * 1000) + 'm' : km.toFixed(1) + 'km'} · ~${walkMinutes(km)}min walk</div>
+                    </button>
+                `).join('')}
+            </div>
+        `;
+    };
+}
+
 export function openDetail(id) {
     const p = state.places.find(x=>x.id===id); if(!p) return;
     const photo = getPhotoPath(p);

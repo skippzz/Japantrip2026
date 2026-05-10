@@ -5,6 +5,7 @@ import { state } from './state.js';
 import { TRIP_START, TRIP_END } from './data.js';
 import { getUnaddedPlaces } from './pool.js';
 import { getActiveTrip } from './trips.js';
+import { getWeatherForDay, weatherChipHtml, prewarmWeather } from './weather.js';
 
 // ── Phase 1.9: trip-rhythm context ──
 // The Today screen renders a single contextual hero based on where the user is
@@ -116,6 +117,24 @@ function renderHotelMini() {
         </button>`;
 }
 
+// Phase 4.5: smart suggestions — un-visited items in current/nearby days
+function renderSmartSuggestions(ctx) {
+    if (!ctx.currentDay) return '';
+    // Find unvisited items across today + next 2 days
+    const window = state.itinerary.slice(ctx.tripDayIdx, ctx.tripDayIdx + 3);
+    const unvisited = window.flatMap(d => (d.items || []).filter(i => !i.visited && !i.isNote)).slice(0, 3);
+    if (!unvisited.length) return '';
+    return `
+        <div class="today-block">
+            <div class="today-block-label">Don't forget</div>
+            ${unvisited.map(it => `
+                <div class="today-suggestion">
+                    <span>${esc(it.name)}</span>
+                </div>
+            `).join('')}
+        </div>`;
+}
+
 function renderTodayHero(ctx) {
     const tripName = ctx.trip?.name || 'Japan 2026';
     if (ctx.phase === 'pre') {
@@ -155,7 +174,7 @@ function renderTodayHero(ctx) {
     if (ctx.phase === 'active' || ctx.phase === 'wind-down') {
         return `
             <div class="today-hero hero-active">
-                <div class="today-hero-eyebrow">Day ${ctx.tripDayIdx + 1} of ${ctx.tripLen}</div>
+                <div class="today-hero-eyebrow">Day ${ctx.tripDayIdx + 1} of ${ctx.tripLen}<span id="hero-weather-chip" class="hero-weather-slot"></span></div>
                 <div class="today-hero-title">${esc(ctx.currentDay?.title || 'Today')}</div>
 
                 ${ctx.nowItem ? `
@@ -177,6 +196,8 @@ function renderTodayHero(ctx) {
                         <div>No more activities scheduled today.</div>
                     </div>
                 ` : ''}
+
+                ${renderSmartSuggestions(ctx)}
 
                 ${renderHotelMini()}
 
@@ -276,6 +297,20 @@ export function renderDashboard() {
     // Phase 1.9: contextual rhythm hero up top, then the existing stats below
     const ctx = getTripContext();
     const todayHeroHtml = renderTodayHero(ctx);
+
+    // Phase 4.6: async weather decoration after render
+    if (ctx.currentDay) {
+        const city = getDayCity(ctx.currentDay) || 'Tokyo';
+        const dateISO = ctx.today.toISOString().slice(0, 10);
+        getWeatherForDay(city, dateISO).then(w => {
+            if (w) {
+                const el2 = document.getElementById('hero-weather-chip');
+                if (el2) el2.innerHTML = ' · ' + weatherChipHtml(w);
+            }
+        });
+    }
+    // Pre-warm cache for upcoming trip cities
+    prewarmWeather([...new Set(state.itinerary.map(getDayCity).filter(Boolean))]);
 
     el.innerHTML = `
         ${todayHeroHtml}
