@@ -168,10 +168,10 @@ export function getHoursConflict(it, place) {
     endMins = endMins ?? startMins;
     if (startMins === null) return null;
 
-    // Factor in travel time from previous stop
-    const arrivalMins = (travelMinFromPrev && travelMinFromPrev > 0)
-        ? startMins + travelMinFromPrev
-        : startMins;
+    // T2.26 follow-up: the travelMinFromPrev parameter was removed in the
+    // signature update — this block was dead code (always undefined → falsy
+    // → arrivalMins = startMins). Inlined the simpler branch.
+    const arrivalMins = startMins;
 
     const hours = parseHoursRange(hoursStr);
     if (!hours) return null;

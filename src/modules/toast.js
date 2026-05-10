@@ -21,12 +21,16 @@ export function showToast(message, type = 'info', duration = 3500, action = null
             if (now - t > DEDUP_WINDOW_MS * 5) recentMessages.delete(k);
         }
     }
-    // Cap simultaneous toasts — remove oldest non-action toast
+    // Cap simultaneous toasts. Prefer to remove the oldest non-action toast,
+    // but if every visible toast has an action (sticky), still remove the
+    // oldest so the cap is genuinely enforced rather than silently bypassed.
     const existing = container.querySelectorAll('.toast');
     if (existing.length >= MAX_TOASTS) {
+        let removed = false;
         for (const el of existing) {
-            if (!el.querySelector('.toast-action')) { el.remove(); break; }
+            if (!el.querySelector('.toast-action')) { el.remove(); removed = true; break; }
         }
+        if (!removed && existing.length) existing[0].remove();
     }
     const icons = { success:'✓', error:'✕', info:'ℹ', warn:'⚠' };
     const toast = document.createElement('div');

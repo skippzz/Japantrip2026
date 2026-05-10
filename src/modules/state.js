@@ -151,22 +151,30 @@ export function importData(file) {
                 return;
             }
             if (!confirm(`Import ${imported.places.length} places and ${imported.itinerary.length} days? This will replace your current data.`)) return;
-            // T3.51: try migrating the imported state instead of force-stamping
-            // the current DATA_VERSION (which leaves it missing migration-added
-            // fields). Older-than-MIN files fall back to forced version + pad.
-            if (imported.version && imported.version < DATA_VERSION) {
+            // T3.51 (refined): try migrating the imported state. Files with no
+            // `.version` field (older exports) get the same field-padding
+            // treatment as unmigratable v<MIN_VERSION files instead of being
+            // accepted as-is — they would otherwise miss migration-added fields
+            // like `.rules` (added in v18→v19) silently.
+            const ver = imported.version;
+            if (ver && ver < DATA_VERSION) {
                 if (!applyMigrations(imported)) {
                     if (!imported.rules) imported.rules = [];
                     if (!imported.packing) imported.packing = [];
                     if (!imported.todos) imported.todos = [];
                     imported.version = DATA_VERSION;
                 }
-            } else if (imported.version && imported.version > DATA_VERSION) {
-                showToast(`File is from a newer version (v${imported.version}). Loading anyway — some features may be missing.`, 'warn', 5000);
+            } else if (ver && ver > DATA_VERSION) {
+                showToast(`File is from a newer version (v${ver}). Loading anyway — some features may be missing.`, 'warn', 5000);
                 imported.version = DATA_VERSION;
             } else {
-                imported.version = DATA_VERSION;
+                // No version OR version === DATA_VERSION — pad common
+                // migration-added fields so we don't end up with undefined
+                // arrays after import of an older versionless export.
                 if (!imported.rules) imported.rules = [];
+                if (!imported.packing) imported.packing = [];
+                if (!imported.todos) imported.todos = [];
+                imported.version = DATA_VERSION;
             }
             state = imported;
             // T3.51: clear stale photoUrl entries — those are ephemeral Google
