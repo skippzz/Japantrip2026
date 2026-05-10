@@ -1,9 +1,214 @@
-// ── Dashboard: Hero stats, calendar, quick links ──
+// ── Dashboard: Today screen with rhythm-model hero + supporting stats ──
 
-import { esc, getDayCity, parseDayTitle } from './helpers.js';
+import { esc, getDayCity, parseDayTitle, findPlaceForItem, mapsNavUrl } from './helpers.js';
 import { state } from './state.js';
 import { TRIP_START, TRIP_END } from './data.js';
 import { getUnaddedPlaces } from './pool.js';
+import { getActiveTrip } from './trips.js';
+
+// ── Phase 1.9: trip-rhythm context ──
+// The Today screen renders a single contextual hero based on where the user is
+// in the trip's lifecycle. No mode toggle — just content prioritisation.
+//   pre       : > 7 days out
+//   imminent  : 7 days out → trip start
+//   active    : during trip days
+//   wind-down : final 2 days of trip
+//   post      : after trip ends
+
+const MS_PER_DAY = 86400000;
+
+export function getTripContext() {
+    const trip = getActiveTrip();
+    let tripStart = TRIP_START, tripEnd = TRIP_END;
+    if (trip?.dateStart) tripStart = new Date(trip.dateStart);
+    if (trip?.dateEnd) tripEnd = new Date(trip.dateEnd);
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const daysUntil = Math.ceil((tripStart - today) / MS_PER_DAY);
+    const daysAfter = Math.ceil((today - tripEnd) / MS_PER_DAY);
+    const tripDayIdx = Math.floor((today - tripStart) / MS_PER_DAY);
+    const tripLen = state.itinerary.length;
+
+    let phase = 'pre';
+    if (today > tripEnd) phase = 'post';
+    else if (today >= tripStart) {
+        // active or wind-down
+        const remaining = tripLen - tripDayIdx - 1;
+        phase = (remaining <= 1) ? 'wind-down' : 'active';
+    } else if (daysUntil <= 7) phase = 'imminent';
+
+    const currentDay = (phase === 'active' || phase === 'wind-down') ? state.itinerary[tripDayIdx] : null;
+    const nextDay = (phase === 'pre' || phase === 'imminent') ? state.itinerary[0] : (currentDay ? state.itinerary[tripDayIdx + 1] : null);
+
+    // Find the now/next activity within current day (active/wind-down only)
+    let nowItem = null, nextItem = null, upcomingItems = [];
+    if (currentDay?.items?.length) {
+        const nowMins = now.getHours() * 60 + now.getMinutes();
+        const itemsWithTime = currentDay.items
+            .filter(it => !it.visited && it.time)
+            .map(it => {
+                const m = it.time.trim().match(/(\d{1,2}):?(\d{2})?/);
+                if (!m) return null;
+                const startMins = parseInt(m[1]) * 60 + parseInt(m[2] || '0');
+                // crude end estimate: 90min if no range
+                const range = it.time.split(/\s*[-–]\s*/);
+                let endMins = startMins + 90;
+                if (range[1]) {
+                    const m2 = range[1].match(/(\d{1,2}):?(\d{2})?/);
+                    if (m2) endMins = parseInt(m2[1]) * 60 + parseInt(m2[2] || '0');
+                }
+                return { ...it, startMins, endMins };
+            })
+            .filter(Boolean)
+            .sort((a, b) => a.startMins - b.startMins);
+
+        nowItem = itemsWithTime.find(it => it.startMins <= nowMins && nowMins < it.endMins);
+        const future = itemsWithTime.filter(it => it.startMins > nowMins);
+        nextItem = future[0];
+        upcomingItems = future.slice(0, 3);
+    }
+
+    return {
+        phase,
+        trip,
+        tripStart, tripEnd,
+        daysUntil: Math.max(0, daysUntil),
+        daysAfter: Math.max(0, daysAfter),
+        tripDayIdx, tripLen,
+        currentDay, nextDay,
+        nowItem, nextItem, upcomingItems,
+        today,
+    };
+}
+
+function renderActivityRow(it, opts = {}) {
+    const place = findPlaceForItem(it);
+    const navBtn = (place && opts.showNav)
+        ? `<a class="today-row-nav" href="${esc(mapsNavUrl(place.name, place.city, place.lat, place.lng, place.address))}" target="_blank" rel="noopener">📍 Navigate</a>`
+        : '';
+    return `
+        <div class="today-row${opts.featured ? ' is-featured' : ''}">
+            ${it.time ? `<div class="today-row-time">${esc(it.time)}</div>` : ''}
+            <div class="today-row-body">
+                <div class="today-row-name">${esc(it.name || 'Activity')}</div>
+                ${it.desc ? `<div class="today-row-desc">${esc(it.desc)}</div>` : ''}
+            </div>
+            ${navBtn}
+        </div>`;
+}
+
+function renderHotelMini() {
+    // Read first hotel from the new DEFAULT_HOTELS (or the active trip's hotel if extended later)
+    // For now: show the first place of category Hotel that matches the active trip block.
+    const hotelPlace = state.places?.find(p => p.category === 'Hotel');
+    if (!hotelPlace) return '';
+    const navUrl = mapsNavUrl(hotelPlace.name, hotelPlace.city, hotelPlace.lat, hotelPlace.lng, hotelPlace.address);
+    return `
+        <button class="today-hotel" onclick="openHotelTaxiCard()">
+            <div class="today-hotel-icon">🏨</div>
+            <div class="today-hotel-body">
+                <div class="today-hotel-label">Hotel · tap to show address</div>
+                <div class="today-hotel-name">${esc(hotelPlace.name)}</div>
+            </div>
+            <a class="today-hotel-nav" href="${esc(navUrl)}" target="_blank" onclick="event.stopPropagation()" rel="noopener">📍</a>
+        </button>`;
+}
+
+function renderTodayHero(ctx) {
+    const tripName = ctx.trip?.name || 'Japan 2026';
+    if (ctx.phase === 'pre') {
+        const previewDay = ctx.nextDay;
+        return `
+            <div class="today-hero hero-pre">
+                <div class="today-hero-eyebrow">${ctx.daysUntil > 0 ? `${ctx.daysUntil} days to ${esc(tripName)}` : 'Trip starts today'}</div>
+                <div class="today-hero-title">🌸 Almost there</div>
+                ${previewDay ? `
+                    <button class="today-card-preview" onclick="switchView('itinerary'); setTimeout(()=>jumpToDay('${previewDay.id}'),100)">
+                        <div class="today-card-preview-eyebrow">Preview · Day 1</div>
+                        <div class="today-card-preview-title">${esc(previewDay.title || 'Day 1')}</div>
+                        <div class="today-card-preview-meta">${previewDay.items.length} planned activities</div>
+                    </button>
+                ` : ''}
+            </div>`;
+    }
+    if (ctx.phase === 'imminent') {
+        return `
+            <div class="today-hero hero-imminent">
+                <div class="today-hero-eyebrow">${ctx.daysUntil <= 1 ? 'Tomorrow you fly to Japan' : `${ctx.daysUntil} days to ${esc(tripName)}`}</div>
+                <div class="today-hero-title">✈ Get ready</div>
+                ${ctx.nextDay ? `
+                    <button class="today-card-preview" onclick="switchView('itinerary'); setTimeout(()=>jumpToDay('${ctx.nextDay.id}'),100)">
+                        <div class="today-card-preview-eyebrow">Day 1 plan</div>
+                        <div class="today-card-preview-title">${esc(ctx.nextDay.title || 'Day 1')}</div>
+                        <div class="today-card-preview-meta">${ctx.nextDay.items.length} activities</div>
+                    </button>
+                ` : ''}
+                <button class="today-action-row" onclick="switchView('packing')">
+                    <span class="today-action-row-icon">🎒</span>
+                    <span>Open packing list</span>
+                    <span class="today-action-row-arrow">→</span>
+                </button>
+            </div>`;
+    }
+    if (ctx.phase === 'active' || ctx.phase === 'wind-down') {
+        return `
+            <div class="today-hero hero-active">
+                <div class="today-hero-eyebrow">Day ${ctx.tripDayIdx + 1} of ${ctx.tripLen}</div>
+                <div class="today-hero-title">${esc(ctx.currentDay?.title || 'Today')}</div>
+
+                ${ctx.nowItem ? `
+                    <div class="today-block">
+                        <div class="today-block-label">Happening now</div>
+                        ${renderActivityRow(ctx.nowItem, { showNav: true, featured: true })}
+                    </div>
+                ` : ''}
+
+                ${ctx.upcomingItems.length ? `
+                    <div class="today-block">
+                        <div class="today-block-label">${ctx.nowItem ? 'Up next' : 'Today'}</div>
+                        ${ctx.upcomingItems.map(it => renderActivityRow(it, { showNav: false })).join('')}
+                    </div>
+                ` : ''}
+
+                ${!ctx.nowItem && !ctx.upcomingItems.length ? `
+                    <div class="today-block today-block-empty">
+                        <div>No more activities scheduled today.</div>
+                    </div>
+                ` : ''}
+
+                ${renderHotelMini()}
+
+                <button class="today-action-row" onclick="switchView('itinerary'); setTimeout(()=>jumpToDay('${ctx.currentDay?.id || ''}'),100)">
+                    <span class="today-action-row-icon">📅</span>
+                    <span>Open today's full plan</span>
+                    <span class="today-action-row-arrow">→</span>
+                </button>
+            </div>`;
+    }
+    if (ctx.phase === 'post') {
+        const total = state.itinerary.reduce((s, d) => s + d.items.length, 0);
+        const visited = state.itinerary.reduce((s, d) => s + d.items.filter(i => i.visited).length, 0);
+        const cities = new Set(state.places.map(p => p.city)).size;
+        return `
+            <div class="today-hero hero-post">
+                <div class="today-hero-eyebrow">Welcome home</div>
+                <div class="today-hero-title">🌸 Trip complete</div>
+                <div class="today-recap-stats">
+                    <div><strong>${ctx.tripLen}</strong><span>days</span></div>
+                    <div><strong>${visited}</strong><span>of ${total} done</span></div>
+                    <div><strong>${cities}</strong><span>cities</span></div>
+                </div>
+                <button class="today-action-row" onclick="openTemplatesGallery('')">
+                    <span class="today-action-row-icon">🌸</span>
+                    <span>Plan your next trip</span>
+                    <span class="today-action-row-arrow">→</span>
+                </button>
+            </div>`;
+    }
+    return '';
+}
 
 export function renderDashboard() {
     const el = document.getElementById('dashboard-content');
@@ -68,8 +273,14 @@ export function renderDashboard() {
             <button class="btn btn-accent" onclick="openTemplatesGallery()">🧩 Browse Trip Templates</button>
         </div>` : '';
 
+    // Phase 1.9: contextual rhythm hero up top, then the existing stats below
+    const ctx = getTripContext();
+    const todayHeroHtml = renderTodayHero(ctx);
+
     el.innerHTML = `
-        <div class="dash-hero">
+        ${todayHeroHtml}
+
+        <div class="dash-hero dash-hero-mini">
             <div class="dash-title">Japan 2026</div>
             <div class="dash-subtitle">May 16 – Jun 2 · ${state.itinerary.length} days · ${citySet.size} cities</div>
             ${heroExtra}

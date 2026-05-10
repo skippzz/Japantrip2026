@@ -353,6 +353,96 @@ export function renderTripManager() {
     }).join('');
 }
 
+// ── Phase 1.5: trip drawer (left-side sheet) ──
+// Replaces the sidebar "Trips" section. Opened from the ☰ header button.
+export function openTripDrawer() {
+    const meta = ensureTripsMeta();
+    const activeId = meta.activeTrip;
+    const activeTrip = meta.trips.find(t => t.id === activeId);
+
+    const tripStats = (trip) => {
+        try {
+            const raw = localStorage.getItem(trip.storageKey);
+            if (!raw) return '';
+            const s = JSON.parse(raw);
+            const places = s.places?.length || 0;
+            const days = s.itinerary?.length || 0;
+            return `${days} day${days !== 1 ? 's' : ''} · ${places} place${places !== 1 ? 's' : ''}`;
+        } catch { return ''; }
+    };
+
+    const tripRow = (trip) => {
+        const isActive = trip.id === activeId;
+        const dates = trip.dateStart && trip.dateEnd
+            ? `${trip.dateStart} → ${trip.dateEnd}`
+            : 'No dates set';
+        const stats = tripStats(trip);
+        return `
+            <button class="trip-drawer-row ${isActive ? 'is-active' : ''}"
+                    onclick="${isActive ? '' : `switchTrip('${trip.id}'); closeSheet('trip-drawer')`}">
+                <div class="trip-drawer-row-bullet">${isActive ? '◆' : '○'}</div>
+                <div class="trip-drawer-row-body">
+                    <div class="trip-drawer-row-name">${esc(trip.name)}</div>
+                    <div class="trip-drawer-row-meta">${esc(trip.destination ? trip.destination + ' · ' : '')}${dates}</div>
+                    ${stats ? `<div class="trip-drawer-row-stats">${stats}</div>` : ''}
+                </div>
+            </button>`;
+    };
+
+    const others = meta.trips.filter(t => t.id !== activeId);
+
+    const html = `
+        <div class="drawer-header">
+            <h2>Trips</h2>
+            <button class="icon-btn" onclick="closeSheet('trip-drawer')" aria-label="Close" title="Close">✕</button>
+        </div>
+
+        <div class="drawer-section">
+            <div class="drawer-section-title">Active</div>
+            ${activeTrip ? tripRow(activeTrip) : '<p class="data-hint">No active trip.</p>'}
+        </div>
+
+        ${others.length ? `
+        <div class="drawer-section">
+            <div class="drawer-section-title">Switch to</div>
+            ${others.map(tripRow).join('')}
+        </div>
+        ` : ''}
+
+        <div class="drawer-section">
+            <div class="drawer-section-title">Create</div>
+            <button class="trip-drawer-action" onclick="closeSheet('trip-drawer'); openNewTripModal()">
+                <span class="trip-drawer-action-icon">＋</span>
+                <span>New trip</span>
+            </button>
+            <button class="trip-drawer-action" onclick="closeSheet('trip-drawer'); openTemplatesGallery('')">
+                <span class="trip-drawer-action-icon">🧩</span>
+                <span>Browse templates</span>
+            </button>
+        </div>
+
+        ${activeTrip ? `
+        <div class="drawer-section">
+            <div class="drawer-section-title">This trip</div>
+            <button class="trip-drawer-action" onclick="closeSheet('trip-drawer'); openTripEditor('${activeTrip.id}')">
+                <span class="trip-drawer-action-icon">⚙</span>
+                <span>Trip settings</span>
+            </button>
+            <button class="trip-drawer-action" onclick="closeSheet('trip-drawer'); renameTrip('${activeTrip.id}')">
+                <span class="trip-drawer-action-icon">✎</span>
+                <span>Rename</span>
+            </button>
+            <button class="trip-drawer-action" onclick="closeSheet('trip-drawer'); openSaveCurrentAsTemplate()">
+                <span class="trip-drawer-action-icon">💾</span>
+                <span>Save as template</span>
+            </button>
+        </div>
+        ` : ''}
+    `;
+
+    window.openSheet?.({ id: 'trip-drawer', side: 'left', html });
+}
+
 export function openNewTripModal() {
     const templateOptions = Object.entries(TRIP_TEMPLATES)
         .map(([key, t]) => `<option value="${key}">${esc(t.name)}</option>`)

@@ -39,6 +39,57 @@ export function copyHotel(city) {
     navigator.clipboard.writeText(text).then(() => showToast('Hotel address copied!', 'success'));
 }
 
+// ── Phase 1.10: Full-screen "show to taxi" card ──
+// Picks the most relevant hotel for the trip's current phase. Massive JP type,
+// readable across a car. Single primary CTA: open in maps.
+export function openHotelTaxiCard(cityHint) {
+    const hotels = loadHotels();
+    if (!hotels.length) {
+        showToast('No hotel data set.', 'warn');
+        return;
+    }
+    let h = cityHint ? hotels.find(x => x.city.toLowerCase().includes(cityHint.toLowerCase())) : null;
+    if (!h) h = hotels[0];
+
+    const others = hotels.filter(x => x !== h);
+
+    const html = `
+        <div class="taxi-card">
+            <button class="taxi-close" onclick="closeSheet('hotel-taxi')" aria-label="Close">✕</button>
+            <div class="taxi-eyebrow">Show to taxi driver</div>
+            <div class="taxi-name-jp">${esc(h.nameJp)}</div>
+            <div class="taxi-addr-jp">${esc(h.addrJp)}</div>
+            <div class="taxi-name-en">${esc(h.nameEn)}</div>
+            <div class="taxi-actions">
+                <a class="btn btn-accent btn-large" href="${h.mapUrl}" target="_blank" rel="noopener">📍 Open in Maps</a>
+                <button class="btn btn-ghost btn-large" onclick="copyHotel('${h.city}')">📋 Copy address</button>
+            </div>
+            ${others.length ? `
+                <div class="taxi-other-hotels">
+                    <div class="taxi-other-label">Other hotels on this trip</div>
+                    ${others.map(o => `
+                        <button class="taxi-other-row" onclick="closeSheet('hotel-taxi'); openHotelTaxiCard('${esc(o.city).replace(/'/g, '&#39;')}')">
+                            <span class="taxi-other-city">${esc(o.city)}</span>
+                            <span class="taxi-other-name">${esc(o.nameEn)}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    window.openSheet?.({
+        id: 'hotel-taxi',
+        side: 'bottom',
+        html,
+        snap: [0.95],
+    });
+}
+
+if (typeof window !== 'undefined') {
+    window.openHotelTaxiCard = openHotelTaxiCard;
+}
+
 export function openHotelEditor(openModalFn) {
     const hotels = loadHotels();
     const html = hotels.map((h, i) => `

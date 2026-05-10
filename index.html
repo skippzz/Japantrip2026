@@ -21,7 +21,8 @@
     <!-- ===== HEADER ===== -->
     <header class="header">
         <div class="header-inner">
-            <h1 class="logo"><span class="logo-icon">🌸</span> Japan 2026</h1>
+            <button class="icon-btn header-trip-btn" id="trip-menu-btn" title="Trips menu" aria-label="Open trips menu">☰</button>
+            <h1 class="logo"><span class="logo-icon">🌸</span> <span class="logo-text" id="header-trip-name">Japan 2026</span></h1>
             <nav class="nav" id="nav" aria-label="Main navigation">
                 <button class="nav-btn active" data-view="dashboard">🏠 Home</button>
                 <button class="nav-btn" data-view="itinerary">📅 Itinerary</button>
@@ -31,9 +32,9 @@
                 <button class="nav-btn" data-view="guide">📖 Guide</button>
             </nav>
             <div class="header-actions">
-                <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">🌙</button>
-                <button class="icon-btn" id="sidebar-btn" title="Menu">☰</button>
-                <button class="icon-btn edit-toggle-btn" id="edit-btn" title="Toggle edit mode — enables adding, editing, and deleting">🔒 <span class="edit-label">Edit</span></button>
+                <button class="theme-toggle desktop-only" id="theme-toggle" title="Toggle light/dark mode">🌙</button>
+                <button class="icon-btn legacy-sidebar-btn desktop-only" id="sidebar-btn" title="Menu" aria-label="Legacy menu">☰</button>
+                <button class="icon-btn header-app-btn" id="app-menu-btn" title="App menu" aria-label="Open app menu">⋯</button>
             </div>
         </div>
     </header>
@@ -529,12 +530,11 @@
 
     <!-- Bottom mobile tab bar -->
     <nav class="bottom-nav" id="bottom-nav" aria-label="Mobile navigation">
-        <button class="bottom-tab active" data-view="dashboard"><span class="bottom-tab-icon">🏠</span><span class="bottom-tab-label">Home</span></button>
+        <button class="bottom-tab active" data-view="dashboard"><span class="bottom-tab-icon">🏠</span><span class="bottom-tab-label">Today</span></button>
         <button class="bottom-tab" data-view="itinerary"><span class="bottom-tab-icon">📅</span><span class="bottom-tab-label">Days</span></button>
-        <button class="bottom-tab" data-view="places"><span class="bottom-tab-icon">📍</span><span class="bottom-tab-label">Places</span></button>
         <button class="bottom-tab" data-view="map"><span class="bottom-tab-icon">🗺️</span><span class="bottom-tab-label">Map</span></button>
-        <button class="bottom-tab" data-view="guide"><span class="bottom-tab-icon">📖</span><span class="bottom-tab-label">Guide</span></button>
-        <button class="bottom-tab" data-view="more"><span class="bottom-tab-icon">☰</span><span class="bottom-tab-label">More</span></button>
+        <button class="bottom-tab" data-view="places"><span class="bottom-tab-icon">📍</span><span class="bottom-tab-label">Places</span></button>
+        <button class="bottom-tab" data-view="more"><span class="bottom-tab-icon">⋯</span><span class="bottom-tab-label">More</span></button>
     </nav>
 
     <!-- Toast container -->

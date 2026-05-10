@@ -8,6 +8,12 @@ import { state, loadState, save, subscribe, emit, exportData, importData,
          quickSave, loadVersion, deleteVersion, renameVersion, renderSavedVersions } from './modules/state.js';
 import { initTheme, toggleTheme, setMapRefs } from './modules/theme.js';
 import { showToast } from './modules/toast.js';
+import './modules/sheet.js';   // Phase 1: bottom-sheet primitive (registers window.openSheet/closeSheet)
+import { registerFab, syncFabVisibility } from './modules/fab.js';
+import { attachLongPressDelegated } from './modules/gestures.js';
+import { openAppDrawer } from './modules/app-drawer.js';
+import { enterReorderMode, exitReorderMode, isReorderMode } from './modules/reorder-mode.js';
+import { initInstallPrompt } from './modules/install-prompt.js';
 import { setStateRef } from './modules/helpers.js';
 import { JAPAN_FACTS, PHRASES } from './modules/data.js';
 import { ENABLE_API_PHOTOS } from './modules/config.js';
@@ -34,7 +40,7 @@ import { initMap, updateMapMarkers, fitMapToAll, initAutocomplete,
          initDayMap, expandDayMap, initExpandedDayMaps,
          startPhotoFetching, expandedDayMapInstance, toggleMapCategory, cleanupExpandedMap } from './modules/map.js';
 import { renderGuide, speakJapanese, translatePhrase, setGuideTab, setPhraseSearch } from './modules/guide.js';
-import { renderHotelCards, copyHotel, openHotelEditor, saveHotelEditor } from './modules/hotels.js';
+import { renderHotelCards, copyHotel, openHotelEditor, saveHotelEditor, openHotelTaxiCard } from './modules/hotels.js';
 import { convertCurrency, setYen, loadPhotosUrl, savePhotosUrl,
          adjustSplitCount, calcSplit, copySplitResult, clearSplit } from './modules/currency.js';
 import { smartImport, handleSmartImport } from './modules/place-import.js';
@@ -45,12 +51,17 @@ import { renderTripManager, switchTrip, deleteTrip, renameTrip,
          applyTemplateToCurrentTrip, confirmOverrideWithTemplate,
          confirmReplaceWithTemplate, openTemplatePreview,
          openSaveCurrentAsTemplate, confirmSaveCurrentAsTemplate,
-         deleteUserTemplate, exportTemplate, importTemplateFromFile } from './modules/trips.js';
+         deleteUserTemplate, exportTemplate, importTemplateFromFile,
+         openTripDrawer, getActiveTrip } from './modules/trips.js';
 
 // ══════════════════════════════════════════════════════════════
 //  SHARED UI STATE (accessible by modules via window._*)
 // ══════════════════════════════════════════════════════════════
-window._editMode = false;
+// Phase 1.7: edit mode is permanently on. Existing affordances stay visible;
+// the toggle button has been removed from the header. We still set this flag
+// because legacy code (Sortable enabling in itinerary.js, place-pool drag in
+// pool.js, etc.) gates on it.
+window._editMode = true;
 window._expandedDays = new Set();
 window._dayMaps = {};
 window._gmap = null;
@@ -103,6 +114,7 @@ let currentView = 'dashboard';
 
 function switchView(name) {
     currentView = name;
+    document.body.dataset.view = name;
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const el = document.getElementById('view-' + name);
     if (el) el.classList.add('active');
@@ -112,6 +124,7 @@ function switchView(name) {
         google.maps.event.trigger(window._gmap, 'resize');
         fitMapToAll();
     }
+    syncFabVisibility();
 }
 
 function toggleSidebar() {
@@ -124,13 +137,48 @@ function closeSidebar() {
     document.getElementById('sidebar-backdrop').classList.remove('open');
 }
 
-function toggleEditMode() {
-    window._editMode = !window._editMode;
-    document.body.classList.toggle('edit-mode', window._editMode);
-    const btn = document.getElementById('edit-btn');
-    if (btn) btn.textContent = window._editMode ? '🔓' : '🔒';
-    renderItinerary();
-    renderPlacePool();
+// ── Phase 1.4: new drawer entry points (filled in 1.5 / 1.6) ──
+function openTripMenu() {
+    // Phase 1.5: opens populated trip drawer (left).
+    openTripDrawer();
+}
+function openAppMenu() {
+    openAppDrawer();
+}
+
+// Phase 1.7: edit mode permanently on. Toggle removed; left as a no-op
+// in case any inline onclick or external caller still references it.
+function toggleEditMode() { /* removed in Phase 1.7 */ }
+
+// Phase 1.8: long-press a day card → action sheet
+function openDayActionSheet(dayId) {
+    const day = state.itinerary.find(d => d.id === dayId);
+    if (!day) return;
+    const html = `
+        <div class="action-sheet-title">${day.title || 'Day'}</div>
+        <button class="action-sheet-row" onclick="closeSheet('day-actions'); enterReorderMode()">
+            <span class="action-sheet-row-icon">⇅</span>
+            <span>Reorder activities</span>
+        </button>
+        <button class="action-sheet-row" onclick="closeSheet('day-actions'); duplicateDay('${dayId}')">
+            <span class="action-sheet-row-icon">📋</span>
+            <span>Duplicate day</span>
+        </button>
+        <button class="action-sheet-row" onclick="closeSheet('day-actions'); shareDayCard('${dayId}')">
+            <span class="action-sheet-row-icon">📤</span>
+            <span>Share as image</span>
+        </button>
+        <button class="action-sheet-row" onclick="closeSheet('day-actions'); optimizeDayRoute('${dayId}')">
+            <span class="action-sheet-row-icon">🔄</span>
+            <span>Optimise route</span>
+        </button>
+        <button class="action-sheet-row action-sheet-row-danger" onclick="closeSheet('day-actions'); deleteDay('${dayId}')">
+            <span class="action-sheet-row-icon">🗑</span>
+            <span>Delete day</span>
+        </button>
+        <button class="action-sheet-cancel" onclick="closeSheet('day-actions')">Cancel</button>
+    `;
+    window.openSheet?.({ id: 'day-actions', side: 'bottom', html });
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -149,7 +197,16 @@ function renderAll() {
     renderRules();
     renderSavedVersions();
     renderTripManager();
+    syncHeaderTripName();
     loadPhotosUrl();
+}
+
+// Phase 1.4/1.5: keep the header logo text in sync with the active trip name.
+function syncHeaderTripName() {
+    const el = document.getElementById('header-trip-name');
+    if (!el) return;
+    const trip = getActiveTrip();
+    el.textContent = trip?.name || 'Japan 2026';
 }
 
 // Subscribe to renderAll events from state (import/loadVersion)
@@ -162,17 +219,20 @@ function bindEvents() {
     // Nav (top + bottom)
     document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
     document.querySelectorAll('.bottom-tab').forEach(b => b.addEventListener('click', () => {
-        if (b.dataset.view === 'more') { toggleSidebar(); return; }
+        // Phase 1.12: More tab opens the app drawer instead of legacy sidebar
+        if (b.dataset.view === 'more') { openAppMenu(); return; }
         switchView(b.dataset.view);
     }));
-    // Sidebar
+    // Sidebar (legacy — to be removed in Phase 1.6 once contents redistribute)
     document.getElementById('sidebar-btn').addEventListener('click', toggleSidebar);
     document.getElementById('sidebar-backdrop').addEventListener('click', closeSidebar);
     document.getElementById('sidebar-close').addEventListener('click', closeSidebar);
+    // New header drawers (Phase 1.4 — populated in 1.5/1.6)
+    document.getElementById('trip-menu-btn')?.addEventListener('click', openTripMenu);
+    document.getElementById('app-menu-btn')?.addEventListener('click', openAppMenu);
     // Theme toggle
-    document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
-    // Edit mode
-    document.getElementById('edit-btn').addEventListener('click', toggleEditMode);
+    document.getElementById('theme-toggle')?.addEventListener('click', toggleTheme);
+    // Edit mode toggle removed in Phase 1.7 — edit affordances always visible
     // Day select
     document.getElementById('day-select').addEventListener('change', e => { if (e.target.value) jumpToDay(e.target.value); });
     // Place filters
@@ -402,6 +462,7 @@ window.renameVersion = renameVersion;
 // Hotels
 window.copyHotel = copyHotel;
 window.openHotelEditor = () => openHotelEditor(openModal);
+window.openHotelTaxiCard = openHotelTaxiCard;
 window.saveHotelEditor = () => saveHotelEditor(closeModal);
 // Currency & Photos
 window.convertCurrency = convertCurrency;
@@ -487,6 +548,12 @@ function onMapsReady() {
 //  INIT
 // ══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+    // Phase 1.7: edit affordances are permanently visible — set the body class
+    // once at startup so the existing CSS rules (.edit-only etc.) keep working
+    // without the toggle button.
+    document.body.classList.add('edit-mode');
+    document.body.dataset.view = 'dashboard';
+
     // Loading screen
     const loadEl = document.getElementById('loading-screen');
     const factEl = document.getElementById('loading-fact');
@@ -502,13 +569,18 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAll();
     bindEvents();
 
-    // First-time edit mode hint
-    if (!localStorage.getItem('editModeHintShown')) {
-        setTimeout(() => {
-            showToast('Tip: Click the 🔒 Edit button in the header to unlock adding, editing, and deleting.', 'info', 8000);
-            localStorage.setItem('editModeHintShown', '1');
-        }, 3000);
+    // Phase 1.8: long-press on day card → action sheet
+    const itinList = document.getElementById('itinerary-list');
+    if (itinList) {
+        attachLongPressDelegated(itinList, '.day-card', ({ target }) => {
+            if (isReorderMode()) return;
+            const dayId = target.dataset.dayId;
+            openDayActionSheet(dayId);
+        });
     }
+
+    // Phase 1.13: PWA install prompt UX
+    initInstallPrompt();
 
     // Google Maps bridge: handle callback regardless of load order
     window._onMapsReady = onMapsReady;
