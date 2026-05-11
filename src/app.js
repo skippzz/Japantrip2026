@@ -162,6 +162,20 @@ function openAppMenu() {
 // in case any inline onclick or external caller still references it.
 function toggleEditMode() { /* removed in Phase 1.7 */ }
 
+// Photo error chain: local bundled photo → photoUrl (Google CDN, SW-cached) →
+// transparent SVG so iOS Safari never paints its broken-image glyph and the
+// underlying card-thumb gradient shows through.
+window.handlePhotoError = function (img) {
+    const fallback = img.dataset.fallback || '';
+    if (fallback && img.src !== fallback) {
+        img.src = fallback;
+        return;
+    }
+    img.onerror = null;
+    img.src = 'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E';
+    img.style.opacity = 0;
+};
+
 // Wave 2: global undo for last delete (activity / day / packing).
 // Stack pushed by individual delete handlers; popped here.
 window._undoLastDelete = function () {

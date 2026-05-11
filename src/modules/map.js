@@ -129,7 +129,7 @@ export function updateMapMarkers(cityFilter) {
             const photo = getPhotoPath(p);
             window._infoWindow.setContent(`
                 <div style="min-width:200px;font-family:-apple-system,sans-serif;color:#1f2937">
-                    <img src="${photo}" style="width:100%;height:100px;object-fit:cover;border-radius:6px 6px 0 0" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E';this.style.opacity=0">
+                    <img src="${photo}" style="width:100%;height:100px;object-fit:cover;border-radius:6px 6px 0 0" loading="lazy" decoding="async" data-fallback="${esc(p.photoUrl || '')}" onerror="handlePhotoError(this)">
                     <div style="padding:8px 10px 10px">
                         <strong style="font-size:13px">${esc(p.name)}</strong><br>
                         <span style="font-size:11px;color:#6b7280">${getArea(p) ? esc(getArea(p)) + ' · ' : ''}${esc(p.address||p.city)}</span><br>

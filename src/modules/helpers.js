@@ -20,15 +20,14 @@ export function getArea(p) { return p.area || PLACE_AREAS[p.id] || ''; }
 export function getVenue(p) { return p.venue || PLACE_VENUE[p.id] || ''; }
 
 // ── Photo path ──
+// Prefer bundled local photo first — it ships with the app and the SW pre-caches
+// the app shell. Use photoUrl (Google CDN, set by runtime fetcher) only when the
+// local jpg is absent. Place card onerror falls back from local→photoUrl→blank.
 export function getPhotoPath(p) {
-    // Ignore stale Google CDN URLs — they're tied to an API key and
-    // when the key is restricted/throttled Google serves a placeholder
-    // map-X image instead of a 404, which our onerror handler can't catch.
-    // Fall through to the bundled local photo when we have one.
-    if (p.photoUrl && !/googleusercontent\.com|googleapis\.com|ggpht\.com/.test(p.photoUrl)) {
-        return p.photoUrl;
-    }
     return `photos/${slugify(p.name)}.jpg`;
+}
+export function getFallbackPhotoUrl(p) {
+    return p.photoUrl || '';
 }
 
 // ── Day/title parsing ──

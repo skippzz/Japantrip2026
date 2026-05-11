@@ -17,11 +17,13 @@ export const MARKER_COLORS = {
     Entertainment:'#3b82f6', Hotel:'#ec4899', Onsen:'#ef4444'
 };
 
-// Disabled: API key is currently deleted/restricted. Runtime fetcher
-// would write expired Google CDN URLs into localStorage that surface as
-// a maps-X placeholder image on subsequent loads. Re-enable only when a
-// live key is reinstated in index.html.
-export const ENABLE_API_PHOTOS = false;
+// Runtime Places API photo fetching. Photo responses are persisted by the
+// service worker's image cache (Cache Storage), so we only hit Google once
+// per photo per device. The SW also rejects suspiciously small responses
+// (< 5KB) so Google's "for development purposes only" placeholder image
+// — which it returns as HTTP 200 when a key is restricted/throttled —
+// never gets cached as if it were a real photo.
+export const ENABLE_API_PHOTOS = true;
 
 export const MAX_SAVED_VERSIONS = 10;
 export const VERSIONS_KEY = 'japanTripVersions';

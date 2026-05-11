@@ -3,10 +3,13 @@
 // uses network-first for same-origin app files, so users always pull fresh
 // index.html / app.js / modules / styles on every page load when online, and
 // fall back to cache only when offline.
-// Bumped to v25: Wave 4 — separate image cache w/ LRU eviction for place photos.
-const CACHE_NAME = 'japan2026-v25';
-const IMG_CACHE_NAME = 'japan2026-img-v1';
-const IMG_CACHE_MAX = 100;
+// Bumped to v26: image cache rejects sub-5KB responses so Google's
+// "for development purposes only" placeholder PNG (~3KB) never gets cached
+// as if it were a real photo.
+const CACHE_NAME = 'japan2026-v26';
+const IMG_CACHE_NAME = 'japan2026-img-v2';
+const IMG_CACHE_MAX = 200;
+const IMG_MIN_BYTES = 5000;
 
 // App shell — pre-cached on install so the app works offline even on first
 // load-then-go-offline. At runtime these are served network-first.
@@ -123,11 +126,28 @@ self.addEventListener('fetch', e => {
 async function imageCache(req) {
     const cache = await caches.open(IMG_CACHE_NAME);
     const cached = await cache.match(req);
-    const fetchAndCache = fetch(req).then(res => {
-        if (res && res.status === 200) {
-            cache.put(req, res.clone()).then(() => trimImgCache(cache));
+    const fetchAndCache = fetch(req).then(async res => {
+        if (!res || res.status !== 200) return res;
+        // Verify it's actually a real photo, not Google's "API key invalid"
+        // placeholder PNG that comes back as HTTP 200. Branch on Content-Length
+        // when set; otherwise buffer the body so we can both size-check and
+        // serve. We clone before buffering so the network response stays usable.
+        const ct = res.headers.get('content-type') || '';
+        if (!ct.startsWith('image/')) return res;
+        const cl = parseInt(res.headers.get('content-length') || '', 10);
+        if (Number.isFinite(cl)) {
+            if (cl >= IMG_MIN_BYTES) {
+                cache.put(req, res.clone()).then(() => trimImgCache(cache));
+            }
+            return res;
         }
-        return res;
+        // No content-length: buffer the body to measure.
+        const buf = await res.clone().arrayBuffer();
+        if (buf.byteLength >= IMG_MIN_BYTES) {
+            const cacheable = new Response(buf, { status: 200, headers: res.headers });
+            cache.put(req, cacheable).then(() => trimImgCache(cache));
+        }
+        return new Response(buf, { status: 200, headers: res.headers });
     }).catch(() => cached);
     return cached || fetchAndCache;
 }

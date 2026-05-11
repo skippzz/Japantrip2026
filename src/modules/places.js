@@ -2,7 +2,7 @@
 
 import { state, save } from './state.js';
 import {
-    esc, getArea, getVenue, getPhotoPath, slugify,
+    esc, getArea, getVenue, getPhotoPath, getFallbackPhotoUrl, slugify,
     mapsSearchUrl, mapsNavUrl, parseDayTitle
 } from './helpers.js';
 import { CATEGORY_ICONS, CITY_COLORS, MARKER_COLORS, ENABLE_API_PHOTOS } from './config.js';
@@ -134,7 +134,7 @@ export function renderPlaces() {
         return `
         <div class="place-card" data-id="${p.id}" onclick="openDetail(${p.id})">
             <div class="card-thumb ${catClass}">
-                <img src="${photo}" class="thumb-img" alt="${esc(p.name)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22/%3E';this.style.opacity=0">
+                <img src="${photo}" class="thumb-img" alt="${esc(p.name)}" loading="lazy" decoding="async" data-fallback="${esc(getFallbackPhotoUrl(p))}" onerror="handlePhotoError(this)">
                 <span class="thumb-icon">${CATEGORY_ICONS[p.category]||'📍'}</span>
                 <span class="thumb-city">${esc(getArea(p) ? getArea(p) + ', ' + p.city : p.city)}</span>
             </div>
