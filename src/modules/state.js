@@ -74,13 +74,32 @@ function applyMigrations(s) {
 }
 
 // ── Load / Save ──
+function stripStaleGooglePhotoUrls(s) {
+    // Google Places CDN URLs are tied to an API key. When the key is
+    // restricted/expired/throttled the CDN serves a placeholder map-X
+    // image instead of a 404, so we can't detect failure at <img> load
+    // time. Cheapest fix: never trust them — purge on load.
+    if (!s?.places) return;
+    s.places.forEach(p => {
+        if (p.photoUrl && /googleusercontent\.com|googleapis\.com|ggpht\.com/.test(p.photoUrl)) {
+            delete p.photoUrl;
+        }
+    });
+}
+
 export function loadState() {
     try {
         const raw = localStorage.getItem(activeStorageKey);
         if (raw) {
             const s = JSON.parse(raw);
-            if (s.version === DATA_VERSION) { state = s; setStateRef(state); return; }
-            if (applyMigrations(s)) { state = s; setStateRef(state); save(); return; }
+            if (s.version === DATA_VERSION) {
+                stripStaleGooglePhotoUrls(s);
+                state = s; setStateRef(state); return;
+            }
+            if (applyMigrations(s)) {
+                stripStaleGooglePhotoUrls(s);
+                state = s; setStateRef(state); save(); return;
+            }
         }
     } catch (e) { /* corrupt data, fall through to defaults */ }
     state.places = JSON.parse(JSON.stringify(DEFAULT_PLACES));

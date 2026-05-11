@@ -17,7 +17,11 @@ export const MARKER_COLORS = {
     Entertainment:'#3b82f6', Hotel:'#ec4899', Onsen:'#ef4444'
 };
 
-export const ENABLE_API_PHOTOS = true;
+// Disabled: API key is currently deleted/restricted. Runtime fetcher
+// would write expired Google CDN URLs into localStorage that surface as
+// a maps-X placeholder image on subsequent loads. Re-enable only when a
+// live key is reinstated in index.html.
+export const ENABLE_API_PHOTOS = false;
 
 export const MAX_SAVED_VERSIONS = 10;
 export const VERSIONS_KEY = 'japanTripVersions';

@@ -21,7 +21,13 @@ export function getVenue(p) { return p.venue || PLACE_VENUE[p.id] || ''; }
 
 // ── Photo path ──
 export function getPhotoPath(p) {
-    if (p.photoUrl) return p.photoUrl;
+    // Ignore stale Google CDN URLs — they're tied to an API key and
+    // when the key is restricted/throttled Google serves a placeholder
+    // map-X image instead of a 404, which our onerror handler can't catch.
+    // Fall through to the bundled local photo when we have one.
+    if (p.photoUrl && !/googleusercontent\.com|googleapis\.com|ggpht\.com/.test(p.photoUrl)) {
+        return p.photoUrl;
+    }
     return `photos/${slugify(p.name)}.jpg`;
 }
 
