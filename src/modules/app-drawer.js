@@ -4,6 +4,8 @@
 
 import { toggleTheme } from './theme.js';
 import { renderTripStatsHtml } from './trip-stats.js';
+import { esc } from './helpers.js';
+import { PHOTOS_URL_KEY } from './config.js';
 
 // Helpers — open named bottom sheets for each tool. Uses window.openSheet which
 // is registered by sheet.js, and global handler functions for inline onclicks
@@ -125,34 +127,101 @@ function openPhrasesSheet() {
 }
 
 function openDataSheet() {
-    // Data has many actions; open the legacy sidebar to that section for now.
     window.closeSheet?.('app-drawer');
-    document.getElementById('sidebar')?.classList.add('open');
-    document.getElementById('sidebar-backdrop')?.classList.add('open');
-    setTimeout(() => {
-        const heads = document.querySelectorAll('.sidebar-section h3');
-        heads.forEach(h => {
-            if (h.textContent.includes('Data')) {
-                h.parentElement.classList.remove('collapsed');
-                h.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        });
-    }, 50);
+    const html = `
+        <div class="drawer-header">
+            <h2>💾 Data &amp; Versions</h2>
+            <button class="icon-btn" onclick="closeSheet('data-sheet')" aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-body">
+            <div class="data-actions">
+                <button class="btn btn-accent btn-sm" onclick="exportData()" style="flex:1">📥 Export</button>
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('import-file').click()" style="flex:1">📤 Import</button>
+                <button class="btn btn-ghost btn-sm" onclick="exportICS()" style="flex:1">📅 Calendar</button>
+                <input type="file" id="import-file" accept=".json" style="display:none" onchange="if(this.files[0]) importData(this.files[0]); this.value=''">
+            </div>
+            <div class="data-actions" style="margin-top:6px">
+                <button class="btn btn-ghost btn-sm" onclick="quickSave()" style="flex:1">⚡ Quick Save</button>
+                <button class="btn btn-ghost btn-sm" onclick="renderReservationSummary()" style="flex:1">🎫 Reservations</button>
+            </div>
+            <div id="saved-versions-list" class="saved-versions-list" style="margin-top:10px"></div>
+            <p class="data-hint" id="storage-usage" style="margin-top:8px"></p>
+            <p class="data-hint" style="margin-top:14px;cursor:pointer;opacity:.5" onclick="clearAppCache()" title="Clear cached files and reload">Clear cache &amp; reload</p>
+        </div>`;
+    window.openSheet?.({ id: 'data-sheet', side: 'bottom', html, snap: [0.85] });
+    setTimeout(() => window.renderSavedVersions?.(), 0);
 }
 
 function openLinksSheet() {
     window.closeSheet?.('app-drawer');
-    document.getElementById('sidebar')?.classList.add('open');
-    document.getElementById('sidebar-backdrop')?.classList.add('open');
-    setTimeout(() => {
-        const heads = document.querySelectorAll('.sidebar-section h3');
-        heads.forEach(h => {
-            if (h.textContent.includes('Quick Links')) {
-                h.parentElement.classList.remove('collapsed');
-                h.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        });
-    }, 50);
+    const html = `
+        <div class="drawer-header">
+            <h2>🔗 Quick Links</h2>
+            <button class="icon-btn" onclick="closeSheet('links-sheet')" aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-body">
+            <ul class="link-list">
+                <li><a href="https://www.google.com/maps" target="_blank" rel="noopener">Google Maps</a></li>
+                <li><a href="https://www.japan-guide.com/" target="_blank" rel="noopener">Japan Guide</a></li>
+                <li><a href="https://www.hyperdia.com/" target="_blank" rel="noopener">Train Schedule (Hyperdia)</a></li>
+                <li><a href="https://www.jorudan.co.jp/english/" target="_blank" rel="noopener">Jorudan (transit search)</a></li>
+                <li><a href="https://translate.google.com/" target="_blank" rel="noopener">Google Translate</a></li>
+            </ul>
+        </div>`;
+    window.openSheet?.({ id: 'links-sheet', side: 'bottom', html, snap: [0.5] });
+}
+
+function openTodoSheet() {
+    window.closeSheet?.('app-drawer');
+    const html = `
+        <div class="drawer-header">
+            <h2>✅ To-Do</h2>
+            <button class="icon-btn" onclick="closeSheet('todo-sheet')" aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-body">
+            <ul class="todo-list" id="todo-list"></ul>
+            <div class="todo-add" style="margin-top:10px">
+                <input type="text" id="todo-input" placeholder="Add a task..." onkeydown="if(event.key==='Enter'){event.preventDefault(); addTodo();}">
+                <button onclick="addTodo()">+</button>
+            </div>
+        </div>`;
+    window.openSheet?.({ id: 'todo-sheet', side: 'bottom', html, snap: [0.85] });
+    setTimeout(() => window.renderTodos?.(), 0);
+}
+
+function openRulesSheet() {
+    window.closeSheet?.('app-drawer');
+    const html = `
+        <div class="drawer-header">
+            <h2>📋 Trip Rules</h2>
+            <button class="icon-btn" onclick="closeSheet('rules-sheet')" aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-body">
+            <div id="trip-rules-list"></div>
+            <div class="todo-add" style="margin-top:10px">
+                <input type="text" id="rule-input" placeholder="Add a rule..." onkeydown="if(event.key==='Enter'){event.preventDefault(); addRule();}">
+                <button onclick="addRule()">+</button>
+            </div>
+        </div>`;
+    window.openSheet?.({ id: 'rules-sheet', side: 'bottom', html, snap: [0.85] });
+    setTimeout(() => window.renderRules?.(), 0);
+}
+
+function openPhotosSheet() {
+    window.closeSheet?.('app-drawer');
+    const url = localStorage.getItem(PHOTOS_URL_KEY) || '';
+    const html = `
+        <div class="drawer-header">
+            <h2>📸 Trip Photos</h2>
+            <button class="icon-btn" onclick="closeSheet('photos-sheet')" aria-label="Close">✕</button>
+        </div>
+        <div class="sheet-body">
+            <p style="font-size:.85rem;color:var(--text-2);margin-bottom:.75rem">Share your photos with the group. Everyone can add to the album.</p>
+            <a class="dash-link" href="${esc(url) || '#'}" target="_blank" rel="noopener" id="photos-link" style="justify-content:center;${!url?'opacity:.5;pointer-events:none;':''}">📸 Open Shared Album</a>
+            <p class="data-hint" style="margin-top:14px">Paste your Google Photos shared album URL:</p>
+            <input type="text" id="photos-url" value="${esc(url)}" placeholder="https://photos.google.com/share/..." style="width:100%;padding:.55rem .7rem;font-size:.9rem;background:var(--bg-3);border:1px solid var(--bg-4);border-radius:8px;color:var(--text-1);outline:none;margin-top:.4rem" onchange="savePhotosUrl(this.value); var l=document.getElementById('photos-link'); if(l){ l.href = this.value || '#'; l.style.opacity = this.value ? '' : '.5'; l.style.pointerEvents = this.value ? '' : 'none'; }">
+        </div>`;
+    window.openSheet?.({ id: 'photos-sheet', side: 'bottom', html, snap: [0.5] });
 }
 
 export function openAppDrawer() {
@@ -180,6 +249,22 @@ export function openAppDrawer() {
                 <button class="tool-tile" onclick="closeSheet('app-drawer'); window._openPhrasesSheet()">
                     <span class="tool-tile-icon">📖</span>
                     <span class="tool-tile-label">Phrases</span>
+                </button>
+                <button class="tool-tile" onclick="window._openTodoSheet()">
+                    <span class="tool-tile-icon">✅</span>
+                    <span class="tool-tile-label">To-Do</span>
+                </button>
+                <button class="tool-tile" onclick="window._openRulesSheet()">
+                    <span class="tool-tile-icon">📋</span>
+                    <span class="tool-tile-label">Rules</span>
+                </button>
+                <button class="tool-tile" onclick="window._openPhotosSheet()">
+                    <span class="tool-tile-icon">📸</span>
+                    <span class="tool-tile-label">Photos</span>
+                </button>
+                <button class="tool-tile" onclick="closeSheet('app-drawer'); openHotelTaxiCard()">
+                    <span class="tool-tile-icon">🏨</span>
+                    <span class="tool-tile-label">Hotel card</span>
                 </button>
             </div>
         </div>
@@ -300,6 +385,9 @@ if (typeof window !== 'undefined') {
     window._openPhrasesSheet = openPhrasesSheet;
     window._openDataSheet = openDataSheet;
     window._openLinksSheet = openLinksSheet;
+    window._openTodoSheet = openTodoSheet;
+    window._openRulesSheet = openRulesSheet;
+    window._openPhotosSheet = openPhotosSheet;
     window._toggleThemeFromDrawer = toggleThemeFromDrawer;
     window.convertSheetCurrency = convertSheetCurrency;
     window.setSheetYen = setSheetYen;

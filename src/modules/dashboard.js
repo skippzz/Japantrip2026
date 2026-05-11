@@ -448,7 +448,7 @@ export function renderDashboard() {
                     <div class="dash-stat-label">Scheduled activities</div>
                 </div>
             </div>
-            <div class="dash-stat" onclick="switchView('itinerary')">
+            <div class="dash-stat" onclick="setPlaceStatusFilter('completed'); switchView('places')">
                 <span class="dash-stat-icon">✅</span>
                 <div class="dash-stat-info">
                     <div class="dash-stat-num">${visitedCount} / ${totalActivities}</div>
@@ -469,7 +469,7 @@ export function renderDashboard() {
                     <div class="dash-stat-label">Unadded places</div>
                 </div>
             </div>
-            <div class="dash-stat">
+            <div class="dash-stat" onclick="setPlaceStatusFilter('reserved'); switchView('places')">
                 <span class="dash-stat-icon">🎫</span>
                 <div class="dash-stat-info">
                     <div class="dash-stat-num">${reservedCount}</div>
@@ -491,7 +491,7 @@ export function renderDashboard() {
                 <div class="dash-link" onclick="switchView('map')">🗺️ Map View</div>
                 <div class="dash-link" onclick="switchView('packing')">🎒 Packing List</div>
                 <div class="dash-link" onclick="openTemplatesGallery()">🧩 Browse Trip Templates</div>
-                <div class="dash-link" onclick="toggleSidebar()">📥 Export / Import</div>
+                <div class="dash-link" onclick="window._openDataSheet?.()">📥 Export / Import</div>
                 <div class="dash-link" onclick="switchView('itinerary')">📌 ${unaddedCount} Unadded Places</div>
             </div>
         </div>

@@ -22,15 +22,21 @@ export function computeTripStats() {
     };
 }
 
+// Each tile deep-links to the relevant view + filter so the at-a-glance
+// section is a navigation primary, not just a passive readout. closeSheet
+// dismisses the app-drawer first so the user lands on the destination view.
+function go(action) {
+    return `onclick="closeSheet('app-drawer'); ${action}"`;
+}
 export function renderTripStatsHtml() {
     const s = computeTripStats();
     return `
         <div class="trip-stats-grid">
-            <div class="trip-stat"><strong>${s.totalDays}</strong><span>Days</span></div>
-            <div class="trip-stat"><strong>${s.totalItems}</strong><span>Activities</span></div>
-            <div class="trip-stat"><strong>${s.visited}</strong><span>Done · ${s.visitedPct}%</span></div>
-            <div class="trip-stat"><strong>${s.places}</strong><span>Places · ${s.cities} cities</span></div>
-            <div class="trip-stat"><strong>${s.reserved}</strong><span>Booked</span></div>
-            <div class="trip-stat"><strong>${s.packedPct}%</strong><span>${s.packed}/${s.packTotal} packed</span></div>
+            <button class="trip-stat" ${go(`switchView('itinerary')`)}><strong>${s.totalDays}</strong><span>Days</span></button>
+            <button class="trip-stat" ${go(`switchView('itinerary')`)}><strong>${s.totalItems}</strong><span>Activities</span></button>
+            <button class="trip-stat" ${go(`setPlaceStatusFilter('completed'); switchView('places')`)}><strong>${s.visited}</strong><span>Done · ${s.visitedPct}%</span></button>
+            <button class="trip-stat" ${go(`switchView('places')`)}><strong>${s.places}</strong><span>Places · ${s.cities} cities</span></button>
+            <button class="trip-stat" ${go(`setPlaceStatusFilter('reserved'); switchView('places')`)}><strong>${s.reserved}</strong><span>Booked</span></button>
+            <button class="trip-stat" ${go(`switchView('packing')`)}><strong>${s.packedPct}%</strong><span>${s.packed}/${s.packTotal} packed</span></button>
         </div>`;
 }

@@ -286,8 +286,11 @@ button:disabled, button[aria-disabled="true"],
 /* App drawer tool tiles (Phase 1.6) */
 .tool-tiles {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-3);
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-2);
+}
+@media (max-width: 480px) {
+    .tool-tiles { grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
 }
 .tool-tile {
     background: var(--bg-2);
@@ -517,7 +520,14 @@ button:disabled, button[aria-disabled="true"],
     background: var(--bg-2); border: 1px solid var(--bg-3);
     border-radius: var(--radius); padding: var(--space-3);
     text-align: center;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
+button.trip-stat { width: 100%; }
+.trip-stat:hover { background: var(--bg-3); border-color: var(--accent); }
+.trip-stat:active { transform: scale(0.97); }
 .trip-stat strong {
     display: block; font-size: var(--font-2xl); font-weight: 700;
     color: var(--accent); line-height: 1;
@@ -2353,6 +2363,16 @@ body.sheet-open { overflow: hidden; touch-action: none; }
     padding: var(--space-3) var(--space-4) var(--space-5);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+}
+/* iOS Safari auto-zooms when an input has font-size < 16px. The keyboard
+   then covers more of the viewport. Force >= 16px on inputs inside sheets
+   to keep the keyboard from obscuring the input it's targeting. */
+.sheet-bottom .sheet-body input[type="number"],
+.sheet-bottom .sheet-body input[type="text"],
+.sheet-bottom .sheet-body input[type="search"],
+.sheet-bottom .sheet-body select,
+.sheet-bottom .sheet-body textarea {
+    font-size: 16px;
 }
 
 /* ── Left drawer (Trip switcher) ── */

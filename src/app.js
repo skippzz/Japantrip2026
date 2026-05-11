@@ -32,7 +32,8 @@ import { renderPlaces, setPlaceFilter, setPlaceSearch, setAreaFilter,
          deletePlace, toggleReserved, updateResField, openDetail,
          openPlaceModal, handlePlaceSubmit, setPlaceSort,
          applyStatusFilter, clearAllFilters, renderReservationSummary,
-         quickAddToDay, confirmQuickAdd, setPlaceRating } from './modules/places.js';
+         quickAddToDay, confirmQuickAdd, setPlaceRating,
+         setPlaceStatusFilter } from './modules/places.js';
 import { renderPlacePool, getUnaddedPlaces, getNearbyForDay, setPoolSearch, setPoolFilter,
          addPlaceToDay, handlePoolDrop, handleReturnToPool, populatePoolTargetDay } from './modules/pool.js';
 import { renderPacking, togglePacked, deletePacking, handlePackingSubmit,
@@ -139,14 +140,11 @@ function switchView(name) {
     syncFabVisibility();
 }
 
+// Legacy sidebar toggle. The sidebar HTML is gone — this stub stays so the
+// global search result row ("Export / Import") and any user-saved bookmarks
+// to toggleSidebar() resolve to opening the data sheet instead.
 function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('open');
-    document.getElementById('sidebar-backdrop').classList.toggle('open');
-}
-
-function closeSidebar() {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebar-backdrop').classList.remove('open');
+    window._openDataSheet?.();
 }
 
 // ── Phase 1.4: new drawer entry points (filled in 1.5 / 1.6) ──
@@ -451,9 +449,7 @@ function bindEvents() {
         switchView(b.dataset.view);
     }));
     // Sidebar (legacy — to be removed in Phase 1.6 once contents redistribute)
-    document.getElementById('sidebar-btn').addEventListener('click', toggleSidebar);
-    document.getElementById('sidebar-backdrop').addEventListener('click', closeSidebar);
-    document.getElementById('sidebar-close').addEventListener('click', closeSidebar);
+    // Sidebar removed; backdrop/close listeners no longer needed.
     // New header drawers (Phase 1.4 — populated in 1.5/1.6)
     document.getElementById('trip-menu-btn')?.addEventListener('click', openTripMenu);
     document.getElementById('app-menu-btn')?.addEventListener('click', openAppMenu);
@@ -497,27 +493,16 @@ function bindEvents() {
     document.getElementById('add-place-btn').addEventListener('click', () => openPlaceModal());
     document.getElementById('add-day-btn').addEventListener('click', addItineraryDay);
     document.getElementById('add-packing-btn').addEventListener('click', () => openModal('modal-packing'));
-    document.getElementById('todo-add-btn').addEventListener('click', addTodo);
-    document.getElementById('todo-input').addEventListener('keydown', e => { if (e.key === 'Enter') addTodo(); });
-    document.getElementById('rule-add-btn')?.addEventListener('click', addRule);
-    document.getElementById('rule-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') addRule(); });
-    // Export/Import
-    document.getElementById('export-btn').addEventListener('click', exportData);
-    document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
-    document.getElementById('import-file').addEventListener('change', e => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
-    document.getElementById('quicksave-btn').addEventListener('click', quickSave);
-    document.getElementById('new-trip-btn')?.addEventListener('click', openNewTripModal);
-    document.getElementById('browse-templates-btn')?.addEventListener('click', openTemplatesGallery);
-    document.getElementById('view-reservations-btn')?.addEventListener('click', renderReservationSummary);
-    document.getElementById('export-ics-btn')?.addEventListener('click', exportICS);
+    // Note: To-Do, Rules, Export/Import/Calendar/QuickSave, Trip Photos,
+    // Currency, Split Bill — all moved into bottom sheets opened from the
+    // ⋯ App drawer. Their handlers live inline in the sheet HTML (see
+    // app-drawer.js openTodoSheet / openRulesSheet / openDataSheet /
+    // openPhotosSheet / openCurrencySheet / openSplitSheet).
     document.getElementById('rain-toggle')?.addEventListener('click', toggleRainMode);
     syncRainToggleBtn();
     // Pool filters
     document.getElementById('pool-search').addEventListener('input', e => { setPoolSearch(e.target.value.toLowerCase()); renderPlacePool(); });
     document.getElementById('pool-city-filter').addEventListener('change', e => { setPoolFilter(e.target.value); renderPlacePool(); });
-    // Bill splitter
-    document.getElementById('split-amount')?.addEventListener('input', calcSplit);
-    document.getElementById('split-count')?.addEventListener('input', calcSplit);
     // Guide tabs
     document.querySelectorAll('[data-gtab]').forEach(btn => btn.addEventListener('click', () => {
         document.querySelectorAll('[data-gtab]').forEach(b => b.classList.remove('active'));
@@ -630,7 +615,7 @@ function runGlobalSearch(query) {
     if (matchedTodos.length) {
         html += '<div class="search-group-title">Todos</div>';
         html += matchedTodos.slice(0, 3).map(t =>
-            `<div class="search-result-item" onclick="closeModal('modal-search'); toggleSidebar()">
+            `<div class="search-result-item" onclick="closeModal('modal-search'); window._openTodoSheet?.()">
                 <span class="search-result-icon">✅</span>
                 <div><div class="search-result-name">${t.text}</div><div class="search-result-meta">${t.done ? 'Done' : 'Pending'}</div></div>
             </div>`
@@ -675,6 +660,7 @@ window.deletePlace = deletePlace;
 window.toggleReserved = toggleReserved;
 window.updateResField = updateResField;
 window.setPlaceRating = setPlaceRating;
+window.setPlaceStatusFilter = setPlaceStatusFilter;
 window.setAreaFilter = setAreaFilter;
 window.openPlaceModal = openPlaceModal;
 window.applyStatusFilter = applyStatusFilter;
@@ -702,6 +688,17 @@ window.copyHotel = copyHotel;
 window.openHotelEditor = () => openHotelEditor(openModal);
 window.openHotelTaxiCard = openHotelTaxiCard;
 window.saveHotelEditor = () => saveHotelEditor(closeModal);
+// Data & versions (used by Data sheet inline handlers)
+window.exportData = exportData;
+window.importData = importData;
+window.quickSave = quickSave;
+window.exportICS = exportICS;
+window.renderSavedVersions = renderSavedVersions;
+// Todos / Rules (used by Todo and Rules sheet inline handlers)
+window.addTodo = addTodo;
+window.addRule = addRule;
+window.renderTodos = renderTodos;
+window.renderRules = renderRules;
 // Currency & Photos
 window.convertCurrency = convertCurrency;
 window.setYen = setYen;

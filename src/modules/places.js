@@ -43,19 +43,27 @@ export function getFilteredPlaces() {
     if (statusFilters.size > 0) {
         const scheduledIds = new Set();
         const scheduledNames = new Set();
+        const completedIds = new Set();
+        const completedNames = new Set();
         state.itinerary.forEach(d => d.items.forEach(it => {
             if (it.placeId != null) scheduledIds.add(it.placeId);
             if (it.name) scheduledNames.add(it.name);
+            if (it.visited) {
+                if (it.placeId != null) completedIds.add(it.placeId);
+                if (it.name) completedNames.add(it.name);
+            }
         }));
 
         arr = arr.filter(p => {
             const isScheduled = scheduledIds.has(p.id) || scheduledNames.has(p.name);
+            const isCompleted = completedIds.has(p.id) || completedNames.has(p.name);
             const isReserved = !!p.reserved;
             const venue = getVenue(p);
 
             if (statusFilters.has('scheduled') && !isScheduled) return false;
             if (statusFilters.has('unscheduled') && isScheduled) return false;
             if (statusFilters.has('reserved') && !isReserved) return false;
+            if (statusFilters.has('completed') && !isCompleted) return false;
             if (statusFilters.has('indoor') && venue !== 'indoor' && venue !== 'both') return false;
             if (statusFilters.has('outdoor') && venue !== 'outdoor' && venue !== 'both') return false;
             return true;
@@ -194,6 +202,24 @@ export function applyStatusFilter() {
     statusFilters.clear();
     document.querySelectorAll('#status-filters input:checked').forEach(cb => {
         statusFilters.add(cb.dataset.status);
+    });
+    renderPlaces();
+}
+
+// Programmatic setter for deep-links from dashboard / "at a glance".
+// Resets all other filters so the user lands on a clean, focused view.
+export function setPlaceStatusFilter(val) {
+    statusFilters.clear();
+    placeFilter = 'all';
+    areaFilter = 'all';
+    placeSearch = '';
+    if (val) statusFilters.add(val);
+    const search = document.getElementById('place-search');
+    if (search) search.value = '';
+    document.querySelectorAll('#filter-bar .chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('#filter-bar .chip[data-filter="all"]')?.classList.add('active');
+    document.querySelectorAll('#status-filters input').forEach(cb => {
+        cb.checked = val ? cb.dataset.status === val : false;
     });
     renderPlaces();
 }
