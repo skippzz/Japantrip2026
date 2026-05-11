@@ -25,7 +25,8 @@ export function renderGuide() {
                 <button class="btn btn-accent btn-sm" onclick="translatePhrase()">Translate</button>
             </div>
             <div id="translate-result" class="translate-result"></div>
-            <input type="text" class="phrase-search" placeholder="Search phrases..." value="${esc(phraseSearch)}" oninput="setPhraseSearch(this.value); renderGuide()">
+            <input type="search" class="phrase-search" placeholder="Search phrases..." value="${esc(phraseSearch)}" oninput="setPhraseSearch(this.value); renderGuide()" aria-label="Search phrases">
+            ${q && !filtered.length ? `<div class="empty-state" style="margin-top:var(--space-4)"><div class="empty-state-icon">🤷</div><div class="empty-state-text"><strong>No phrases match "${esc(phraseSearch)}"</strong><p>Try a shorter search or different word.</p></div></div>` : ''}
             ${cats.map(cat => `
                 <div class="phrase-section">
                     <div class="phrase-section-title">${esc(cat)}</div>

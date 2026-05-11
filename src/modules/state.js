@@ -99,6 +99,23 @@ let activeStorageKey = STATE_KEY;
 export function setStorageKey(key) { activeStorageKey = key; }
 export function getStorageKey() { return activeStorageKey; }
 
+// Wave 4: multi-tab sync. Other tabs editing the same trip should refresh.
+// Suppress writes initiated by this tab (the event only fires in other tabs).
+if (typeof window !== 'undefined') {
+    window.addEventListener('storage', (e) => {
+        if (e.key !== activeStorageKey || !e.newValue) return;
+        try {
+            const next = JSON.parse(e.newValue);
+            if (next?.version === DATA_VERSION) {
+                Object.assign(state, next);
+                setStateRef(state);
+                emit('renderAll');
+                showToast?.('Updated from another tab', 'info', 2500);
+            }
+        } catch { /* ignore */ }
+    });
+}
+
 export function save() {
     try {
         localStorage.setItem(activeStorageKey, JSON.stringify(state));
@@ -251,6 +268,14 @@ export function autoSaveVersion(name) {
 }
 
 export function quickSave() {
+    // Wave 1: same empty-state guard as autoSaveVersion so users don't
+    // pollute the snapshot list with no-content captures.
+    const itemsCount = (state.itinerary || []).reduce((n, d) => n + (d.items?.length || 0), 0);
+    const placesCount = state.places?.length || 0;
+    if (itemsCount === 0 && placesCount === 0) {
+        showToast('Nothing to save yet — add some places or activities first.', 'warn');
+        return;
+    }
     const defaultName = new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
     const name = prompt('Name this save:', defaultName);
     if (!name) return;

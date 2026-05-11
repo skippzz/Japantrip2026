@@ -25,6 +25,14 @@ export function renderPacking() {
         document.getElementById('packing-progress').innerHTML += '<div class="packing-complete">🎉 All packed and ready to go!</div>';
     }
 
+    // Wave 2: empty state with CTA
+    if (!items.length) {
+        const hasFilter = packingFilter !== 'all';
+        container.innerHTML = hasFilter
+            ? `<tr><td colspan="6" style="text-align:center;padding:var(--space-5);color:var(--text-3)">No items in "${esc(packingFilter)}" category. <button class="btn btn-ghost btn-sm" onclick="setPackingFilter('all'); renderPacking()">Show all</button></td></tr>`
+            : `<tr><td colspan="6" style="text-align:center;padding:var(--space-5);color:var(--text-3)">No packing items yet. Tap + to add your first item.</td></tr>`;
+        return;
+    }
     container.innerHTML = items.map(p => `
         <tr class="${p.packed ? 'packed' : ''}">
             <td><input type="checkbox" ${p.packed ? 'checked' : ''} onchange="togglePacked('${p.id}')"></td>
@@ -42,8 +50,20 @@ export function togglePacked(id) {
 }
 
 export function deletePacking(id) {
-    state.packing = state.packing.filter(x => x.id !== id);
+    const idx = state.packing.findIndex(x => x.id === id);
+    if (idx === -1) return;
+    const item = state.packing[idx];
+    if (!confirm(`Delete "${item.name || 'item'}" from packing?`)) return;
+    state.packing.splice(idx, 1);
     save(); renderPacking();
+    window._undoStack = window._undoStack || [];
+    window._undoStack.push({ kind: 'packing', idx, item, ts: Date.now() });
+    window.showToast?.(
+        `Deleted "${item.name}"`,
+        'info',
+        4500,
+        { label: 'Undo', onClick: () => window._undoLastDelete?.() }
+    );
 }
 
 export function handlePackingSubmit(e) {

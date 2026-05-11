@@ -10,6 +10,7 @@ import { CATEGORY_ICONS } from './config.js';
 import { TRIP_START, TRIP_END } from './data.js';
 import { showToast } from './toast.js';
 import { getDaySegments, getDaySummary, optimizeRoute } from './routing.js';
+import { attachWeatherChip, prewarmWeather } from './weather.js';
 
 // ── Shared mutable UI state via window ──
 // window._editMode      — boolean (set by app.js)
@@ -22,17 +23,64 @@ if (!window._timelineSortables) window._timelineSortables = [];
 let itinSearch = '';
 export function setItinSearch(val) { itinSearch = val; }
 
-let rainMode = false;
-export function toggleRainMode() {
-    rainMode = !rainMode;
+// Wave 3: persist rain mode preference so users don't lose it on reload.
+const RAIN_KEY = 'jp_rain_mode';
+let rainMode = (() => {
+    try { return localStorage.getItem(RAIN_KEY) === '1'; }
+    catch { return false; }
+})();
+export function isRainMode() { return rainMode; }
+export function syncRainToggleBtn() {
     const btn = document.getElementById('rain-toggle');
     if (btn) btn.classList.toggle('active', rainMode);
+}
+export function toggleRainMode() {
+    rainMode = !rainMode;
+    try { localStorage.setItem(RAIN_KEY, rainMode ? '1' : '0'); } catch { /* ok */ }
+    syncRainToggleBtn();
     renderItinerary();
 }
 
 // ══════════════════════════════════════════════════════════════
 //  ITINERARY — VERTICAL TIMELINE
 // ══════════════════════════════════════════════════════════════
+// Wave 1: derive "N days · <date range>" from the active trip's metadata or
+// the first/last day titles. Falls back to plain count if no dates.
+function computeDayCounterText() {
+    const n = state.itinerary.length;
+    const trip = window.getActiveTrip?.() || null;
+    if (trip?.dateStart && trip?.dateEnd) {
+        // Format: "May 16 – Jun 2, 2026"
+        const s = new Date(trip.dateStart + 'T00:00:00');
+        const e = new Date(trip.dateEnd + 'T00:00:00');
+        if (!isNaN(s) && !isNaN(e)) {
+            const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const lhs = `${months[s.getMonth()]} ${s.getDate()}`;
+            const rhs = `${months[e.getMonth()]} ${e.getDate()}, ${e.getFullYear()}`;
+            return `${n} days · ${lhs} – ${rhs}`;
+        }
+    }
+    // Fall back: derive from first/last day titles if they look like "May 16 (Fri) — ..."
+    if (n) {
+        const first = (state.itinerary[0].title || '').split(' — ')[0].trim();
+        const last = (state.itinerary[n-1].title || '').split(' — ')[0].trim();
+        if (first && last) return `${n} days · ${first.replace(/\s*\([^)]+\)$/, '')} – ${last.replace(/\s*\([^)]+\)$/, '')}`;
+    }
+    return `${n} day${n !== 1 ? 's' : ''}`;
+}
+
+// Wave 1: pre-compute today day id for the "TODAY" badge on collapsed day cards.
+function getTodayDayId() {
+    const trip = window.getActiveTrip?.();
+    const start = trip?.dateStart ? new Date(trip.dateStart + 'T00:00:00') : TRIP_START;
+    const end = trip?.dateEnd ? new Date(trip.dateEnd + 'T23:59:59') : TRIP_END;
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (today < start || today > end) return null;
+    const idx = Math.floor((today - start) / 86400000);
+    return state.itinerary[idx]?.id || null;
+}
+
 export function renderItinerary() {
     // T1.10: remove ALL stale floating-navigate buttons (not just the first)
     // in case concurrent renders accumulated extras.
@@ -42,17 +90,21 @@ export function renderItinerary() {
     const mainEl = document.querySelector('.main');
     const savedScroll = mainEl?.scrollTop || 0;
     const container = document.getElementById('itinerary-list');
-    document.getElementById('day-counter').textContent = `${state.itinerary.length} days · May 16 – Jun 2, 2026`;
+    // Wave 1: day counter computed from itinerary instead of hardcoded
+    // "May 16 – Jun 2, 2026" so cloned/new trips show correct range.
+    document.getElementById('day-counter').textContent = computeDayCounterText();
 
     if (!state.itinerary.length) {
         container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📅</div><div class="empty-state-text"><strong>No days yet</strong><p>Add your first day to start planning</p></div></div>';
         return;
     }
 
+    const todayDayId = getTodayDayId();
     container.innerHTML = state.itinerary.map((day, idx) => {
         const city = getDayCity(day);
         const cityClass = city.toLowerCase();
         const isExpanded = window._expandedDays.has(day.id);
+        const isToday = day.id === todayDayId;
         const {date, subtitle} = parseDayTitle(day.title);
         const summary = getDaySummary(day);
 
@@ -73,25 +125,26 @@ export function renderItinerary() {
         const timelineHtml = buildTimelineWithSegments(day, city);
 
         return `
-        <div class="day-card ${isExpanded?'expanded':''} city-${cityClass}" data-day-id="${day.id}">
-            <div class="day-header" onclick="toggleDay('${day.id}')">
+        <div class="day-card ${isExpanded?'expanded':''} ${isToday?'today-card':''} city-${cityClass}" data-day-id="${day.id}">
+            <div class="day-header" onclick="toggleDay('${day.id}')" role="button" tabindex="0" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-label="Day ${idx+1}${isToday?' (today)':''} — ${esc(date)}${subtitle ? ' — '+esc(subtitle) : ''}. ${day.items.length} stop${day.items.length!==1?'s':''}. ${isExpanded ? 'Collapse' : 'Expand'}">
                 <div class="day-header-left">
                     <div class="day-num ${cityClass}">${idx+1}</div>
                     <div class="day-info">
-                        <div class="day-title">${esc(date)}</div>
+                        <div class="day-title">${esc(date)}${isToday?'<span class="today-pill">TODAY</span>':''}</div>
                         ${subtitle ? `<div class="day-subtitle">${esc(subtitle)}</div>` : ''}
                     </div>
                 </div>
                 <div class="day-header-right">
                     ${summaryHtml}
+                    <span class="day-weather-slot" id="day-weather-${day.id}"></span>
                     <span class="day-stops">${day.items.length} stop${day.items.length!==1?'s':''}</span>
-                    <button class="day-share-btn" onclick="event.stopPropagation(); shareDayCard('${day.id}')" title="Share as image">📤</button>
+                    <button class="day-share-btn" onclick="event.stopPropagation(); shareDayCard('${day.id}')" title="Share as image" aria-label="Share day ${idx+1} as image">📤</button>
                     <div class="day-edit-actions edit-only" onclick="event.stopPropagation()">
-                        <button title="Duplicate day" onclick="duplicateDay('${day.id}')">📋</button>
-                        <button title="Optimize route" onclick="optimizeDayRoute('${day.id}')">🔄</button>
-                        <button title="Delete day" onclick="deleteDay('${day.id}')">🗑️</button>
+                        <button title="Duplicate day" aria-label="Duplicate day ${idx+1}" onclick="duplicateDay('${day.id}')">📋</button>
+                        <button title="Optimize route" aria-label="Optimize route for day ${idx+1}" onclick="optimizeDayRoute('${day.id}')">🔄</button>
+                        <button title="Delete day" aria-label="Delete day ${idx+1}" onclick="deleteDay('${day.id}')">🗑️</button>
                     </div>
-                    <span class="day-chevron">▼</span>
+                    <span class="day-chevron" aria-hidden="true">▼</span>
                 </div>
             </div>
             <div class="day-body">
@@ -110,6 +163,18 @@ export function renderItinerary() {
             </div>
         </div>`;
     }).join('');
+
+    // Wave 2: async weather chip per day card. Open-Meteo only returns ~16
+    // days, so chips silently no-op for days outside the forecast window.
+    const cities = [...new Set(state.itinerary.map(d => getDayCity(d)).filter(Boolean))];
+    prewarmWeather(cities);
+    state.itinerary.forEach(d => {
+        const dt = computeDayDate(d);
+        const cty = getDayCity(d);
+        if (!dt || !cty) return;
+        const dateISO = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+        attachWeatherChip(`day-weather-${d.id}`, cty, dateISO);
+    });
 
     // Search filtering
     if (itinSearch) {
@@ -243,26 +308,39 @@ export function renderItinerary() {
 function buildTimelineWithSegments(day, city) {
     if (!day.items.length) return '<div class="timeline-drop-hint">Drag places here or use + Add activity</div>';
 
-    // Build a map: toItem.id → travel segment (show segment BEFORE the destination item)
     const segments = getDaySegments(day);
     const segmentBeforeItem = new Map();
     for (const seg of segments) {
         if (seg.travel) segmentBeforeItem.set(seg.toItem.id, seg);
     }
 
+    // Wave 2: derive the day's actual date so hours-conflict can compute
+    // day-of-week and only warn for the matching weekday.
+    const dayDate = computeDayDate(day);
+
     let html = '';
     for (let i = 0; i < day.items.length; i++) {
         const item = day.items[i];
-        // Show travel segment before this place item (if one exists)
         if (!item.isNote) {
             const seg = segmentBeforeItem.get(item.id);
             if (seg) {
                 html += `<div class="tl-travel-segment"><span class="tl-travel-label">${seg.travel.label}</span></div>`;
             }
         }
-        html += renderTimelineItem(item, day, city);
+        html += renderTimelineItem(item, day, city, dayDate);
     }
     return html;
+}
+
+// Wave 2 helper: returns the Date for a given itinerary day, derived from
+// active trip's dateStart + day index.
+function computeDayDate(day) {
+    const idx = state.itinerary.findIndex(d => d.id === day.id);
+    if (idx === -1) return null;
+    const trip = window.getActiveTrip?.();
+    const start = trip?.dateStart ? new Date(trip.dateStart + 'T00:00:00') : TRIP_START;
+    if (isNaN(start)) return null;
+    return new Date(start.getTime() + idx * 86400000);
 }
 
 // ── Optimize route for a day ──
@@ -286,12 +364,12 @@ export function optimizeDayRoute(dayId) {
     showToast(`Route optimized! Saved ~${result.savedKm} km.`, 'success');
 }
 
-export function renderTimelineItem(it, day, city) {
+export function renderTimelineItem(it, day, city, dayDate) {
     const cityClass = city.toLowerCase();
     const place = findPlaceForItem(it);
     const note = it.isNote;
     const navUrl = place ? mapsNavUrl(place.name, city, place.lat, place.lng, place.address) : mapsNavUrl(it.name, city);
-    const hoursWarn = !note ? getHoursConflict(it, place) : null;
+    const hoursWarn = !note ? getHoursConflict(it, place, dayDate) : null;
     return `
     <div class="tl-item ${it.visited?'visited':''} ${note?'is-note':''} ${rainMode && place && getVenue(place) === 'outdoor' ? 'rain-dimmed' : ''} ${rainMode && place && getVenue(place) === 'indoor' ? 'rain-highlighted' : ''}" data-item-id="${it.id}">
         <span class="tl-grip edit-only-inline" title="Drag to reorder or drop in pool">⠿</span>
@@ -384,11 +462,23 @@ export function duplicateDay(dayId) {
 }
 
 export function deleteDay(id) {
-    if (!confirm('Delete this entire day?')) return;
-    state.itinerary = state.itinerary.filter(d=>d.id!==id);
+    const idx = state.itinerary.findIndex(d => d.id === id);
+    if (idx === -1) return;
+    const day = state.itinerary[idx];
+    if (!confirm(`Delete day "${day.title || id}" and all its activities?`)) return;
+    state.itinerary.splice(idx, 1);
     window._expandedDays.delete(id);
     if (window._dayMaps[id]) delete window._dayMaps[id];
     save(); renderItinerary(); window.renderPlacePool?.(); populateDaySelect(); window.renderDashboard?.();
+    // Undo
+    window._undoStack = window._undoStack || [];
+    window._undoStack.push({ kind: 'day', idx, day, ts: Date.now() });
+    window.showToast?.(
+        `Deleted "${day.title || 'day'}" (${day.items?.length || 0} activit${(day.items?.length||0) !== 1 ? 'ies' : 'y'})`,
+        'info',
+        5000,
+        { label: 'Undo', onClick: () => window._undoLastDelete?.() }
+    );
 }
 
 // ── Itinerary Item Modal ──
@@ -429,6 +519,25 @@ export function handleItinItemSubmit(e) {
     const day = state.itinerary.find(d=>d.id===dayId);
     if (!day) return;
 
+    // Wave 3: validate time range — end must be after start when both provided.
+    if (data.time && data.timeEnd) {
+        const toMin = (t) => {
+            const m = t.match(/(\d{1,2})[:.]?(\d{2})?\s*([ap]\.?m\.?)?/i);
+            if (!m) return null;
+            let h = parseInt(m[1]);
+            const min = parseInt(m[2] || '0');
+            const ap = (m[3] || '').toLowerCase();
+            if (ap.startsWith('p') && h < 12) h += 12;
+            if (ap.startsWith('a') && h === 12) h = 0;
+            return h * 60 + min;
+        };
+        const s = toMin(data.time), eMin = toMin(data.timeEnd);
+        if (s != null && eMin != null && eMin <= s) {
+            showToast('End time must be after start time.', 'warn');
+            return;
+        }
+    }
+
     if (itemId) {
         const item = day.items.find(i=>i.id===itemId);
         if (item) Object.assign(item, data);
@@ -440,7 +549,23 @@ export function handleItinItemSubmit(e) {
 
 export function deleteItinItem(dayId, itemId) {
     const day = state.itinerary.find(d=>d.id===dayId);
-    if (day) { day.items = day.items.filter(i=>i.id!==itemId); save(); renderItinerary(); window.renderPlacePool?.(); window.renderDashboard?.(); }
+    if (!day) return;
+    const item = day.items.find(i=>i.id===itemId);
+    if (!item) return;
+    // Wave 1: confirm before delete. Wave 2: also stash for undo via toast action.
+    if (!confirm(`Delete "${item.name || 'activity'}"?`)) return;
+    const idx = day.items.indexOf(item);
+    day.items.splice(idx, 1);
+    save(); renderItinerary(); window.renderPlacePool?.(); window.renderDashboard?.();
+    // Undo: keep a snapshot in window._undoStack and offer via toast action.
+    window._undoStack = window._undoStack || [];
+    window._undoStack.push({ kind: 'activity', dayId, idx, item, ts: Date.now() });
+    window.showToast?.(
+        `Deleted "${item.name || 'activity'}"`,
+        'info',
+        4500,
+        { label: 'Undo', onClick: () => window._undoLastDelete?.() }
+    );
 }
 
 export function populateDaySelect() {

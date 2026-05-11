@@ -3,6 +3,7 @@
 // "one thing at a time" UX) instead of a long sidebar list.
 
 import { toggleTheme } from './theme.js';
+import { renderTripStatsHtml } from './trip-stats.js';
 
 // Helpers — open named bottom sheets for each tool. Uses window.openSheet which
 // is registered by sheet.js, and global handler functions for inline onclicks
@@ -181,6 +182,11 @@ export function openAppDrawer() {
                     <span class="tool-tile-label">Phrases</span>
                 </button>
             </div>
+        </div>
+
+        <div class="drawer-section">
+            <div class="drawer-section-title">This trip · at a glance</div>
+            ${renderTripStatsHtml()}
         </div>
 
         <div class="drawer-section">

@@ -26,7 +26,7 @@ export function renderHotelCards() {
             <div class="hotel-name-en">${esc(h.nameEn)}</div>
             <div class="hotel-actions">
                 <button class="btn btn-sm btn-ghost" onclick="copyHotel('${h.city}')">📋 Copy</button>
-                <a class="btn btn-sm btn-navigate" href="${h.mapUrl}" target="_blank">📍 Map</a>
+                ${(h.mapUrl && h.mapUrl !== '#') ? `<a class="btn btn-sm btn-navigate" href="${h.mapUrl}" target="_blank" rel="noopener">📍 Map</a>` : ''}
             </div>
         </div>`).join('');
 }
@@ -72,7 +72,7 @@ export function openHotelTaxiCard(cityHint) {
             <div class="taxi-addr-jp">${esc(h.addrJp)}</div>
             <div class="taxi-name-en">${esc(h.nameEn)}</div>
             <div class="taxi-actions">
-                <a class="btn btn-accent btn-large" href="${h.mapUrl}" target="_blank" rel="noopener">📍 Open in Maps</a>
+                ${(h.mapUrl && h.mapUrl !== '#') ? `<a class="btn btn-accent btn-large" href="${h.mapUrl}" target="_blank" rel="noopener">📍 Open in Maps</a>` : ''}
                 <button class="btn btn-ghost btn-large" onclick="copyHotel('${h.city}')">📋 Copy address</button>
             </div>
             ${others.length ? `

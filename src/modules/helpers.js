@@ -141,19 +141,27 @@ export function formatMinutesTo24h(mins) {
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-// T2.26: removed dead `travelMinFromPrev` parameter (was never passed in).
-// T3.regex: tightened day-name regex with word boundaries so "TuesdayWednesday"
-// can't false-match.
-export function getHoursConflict(it, place) {
+// Wave 2: now accepts optional `dayDate` (JS Date). When provided, the
+// closed-day check is suppressed unless the activity actually falls on the
+// closed day — otherwise we'd over-warn "May be closed on Mondays" for a
+// Tuesday activity that happens to be at a sometimes-closed place.
+export function getHoursConflict(it, place, dayDate) {
     if (!place || !place.hours) return null;
     const hoursStr = place.hours;
 
     if (/closed/i.test(hoursStr)) {
         const dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
         const shortDays = ['sun','mon','tue','wed','thu','fri','sat'];
+        const todayDow = (dayDate && !isNaN(dayDate)) ? dayDate.getDay() : null;
         for (let i = 0; i < dayNames.length; i++) {
             if (new RegExp(`\\bclosed\\s+${dayNames[i]}s?\\b|\\b${shortDays[i]}\\b.*\\bclosed\\b`, 'i').test(hoursStr)) {
-                return `⚠️ May be closed on ${dayNames[i].charAt(0).toUpperCase() + dayNames[i].slice(1)}s`;
+                if (todayDow == null) {
+                    return `⚠️ May be closed on ${dayNames[i].charAt(0).toUpperCase() + dayNames[i].slice(1)}s`;
+                }
+                if (todayDow === i) {
+                    return `⚠️ Closed today (${dayNames[i].charAt(0).toUpperCase() + dayNames[i].slice(1)})`;
+                }
+                // Otherwise: a different day's "closed Mondays" doesn't apply — keep silent.
             }
         }
         if (/^closed$/i.test(hoursStr.trim())) return '⚠️ Marked as closed';

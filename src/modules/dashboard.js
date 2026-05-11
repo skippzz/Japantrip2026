@@ -1,6 +1,6 @@
 // ── Dashboard: Today screen with rhythm-model hero + supporting stats ──
 
-import { esc, getDayCity, parseDayTitle, findPlaceForItem, mapsNavUrl } from './helpers.js';
+import { esc, getDayCity, parseDayTitle, findPlaceForItem, mapsNavUrl, parseTimeToMinutes } from './helpers.js';
 import { state } from './state.js';
 import { TRIP_START, TRIP_END } from './data.js';
 import { getUnaddedPlaces } from './pool.js';
@@ -47,19 +47,16 @@ export function getTripContext() {
     let nowItem = null, nextItem = null, upcomingItems = [];
     if (currentDay?.items?.length) {
         const nowMins = now.getHours() * 60 + now.getMinutes();
+        // Wave 2: delegate to parseTimeToMinutes which handles "9", "9:00",
+        // "8 AM", "9:00 PM", "20:30". Removes prior inline regex limitation.
         const itemsWithTime = currentDay.items
             .filter(it => !it.visited && it.time)
             .map(it => {
-                const m = it.time.trim().match(/(\d{1,2}):?(\d{2})?/);
-                if (!m) return null;
-                const startMins = parseInt(m[1]) * 60 + parseInt(m[2] || '0');
-                // crude end estimate: 90min if no range
                 const range = it.time.split(/\s*[-–]\s*/);
-                let endMins = startMins + 90;
-                if (range[1]) {
-                    const m2 = range[1].match(/(\d{1,2}):?(\d{2})?/);
-                    if (m2) endMins = parseInt(m2[1]) * 60 + parseInt(m2[2] || '0');
-                }
+                const startMins = parseTimeToMinutes(range[0]);
+                if (startMins == null) return null;
+                let endMins = range[1] ? parseTimeToMinutes(range[1]) : null;
+                if (endMins == null || endMins <= startMins) endMins = startMins + 90;
                 return { ...it, startMins, endMins };
             })
             .filter(Boolean)
@@ -115,6 +112,65 @@ function renderHotelMini() {
             </div>
             <a class="today-hotel-nav" href="${esc(navUrl)}" target="_blank" onclick="event.stopPropagation()" rel="noopener">📍</a>
         </button>`;
+}
+
+// Wave 2: best-effort geolocation distance to the first upcoming activity.
+// Cached in sessionStorage for 5min so we don't re-prompt or hammer the API.
+const GEO_CACHE_KEY = 'jp_geo_cache';
+function getCachedGeo() {
+    try {
+        const raw = sessionStorage.getItem(GEO_CACHE_KEY);
+        if (!raw) return null;
+        const { ts, coords } = JSON.parse(raw);
+        if (Date.now() - ts > 5 * 60 * 1000) return null;
+        return coords;
+    } catch { return null; }
+}
+function setCachedGeo(coords) {
+    try { sessionStorage.setItem(GEO_CACHE_KEY, JSON.stringify({ ts: Date.now(), coords })); } catch { /* ok */ }
+}
+function haversineKm(a, b) {
+    const R = 6371;
+    const toRad = (d) => d * Math.PI / 180;
+    const dLat = toRad(b.lat - a.lat);
+    const dLng = toRad(b.lng - a.lng);
+    const lat1 = toRad(a.lat), lat2 = toRad(b.lat);
+    const h = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+}
+function updateGeoDistance(ctx) {
+    const slot = document.getElementById('today-geo-slot');
+    if (!slot) return;
+    const target = ctx.nowItem || ctx.nextItem;
+    if (!target) return;
+    const place = findPlaceForItem(target);
+    if (!place || place.lat == null || place.lng == null) return;
+
+    const renderDistance = (coords) => {
+        const km = haversineKm(coords, { lat: place.lat, lng: place.lng });
+        const label = km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
+        slot.innerHTML = ` · 📍 ${label} away`;
+    };
+
+    const cached = getCachedGeo();
+    if (cached) { renderDistance(cached); return; }
+    if (!navigator.geolocation) return;
+    // Only fetch live position if user has previously granted (permissions API),
+    // otherwise stay silent to avoid an unprompted location prompt.
+    if (navigator.permissions?.query) {
+        navigator.permissions.query({ name: 'geolocation' }).then(res => {
+            if (res.state !== 'granted') return;
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                    setCachedGeo(coords);
+                    renderDistance(coords);
+                },
+                () => {},
+                { maximumAge: 5 * 60 * 1000, timeout: 4000 }
+            );
+        }).catch(() => {});
+    }
 }
 
 // Phase 4.5: smart suggestions — un-visited items in current/nearby days
@@ -182,9 +238,15 @@ function renderTodayHero(ctx) {
             </div>`;
     }
     if (ctx.phase === 'active' || ctx.phase === 'wind-down') {
+        // Wave 2: differentiate wind-down so the last day(s) feel urgent.
+        const isWindDown = ctx.phase === 'wind-down';
+        const remaining = ctx.tripLen - ctx.tripDayIdx;
+        const dayBadge = isWindDown
+            ? (remaining === 1 ? 'LAST DAY · ' : 'WIND-DOWN · ')
+            : '';
         return `
-            <div class="today-hero hero-active">
-                <div class="today-hero-eyebrow">Day ${ctx.tripDayIdx + 1} of ${ctx.tripLen}<span id="hero-weather-chip" class="hero-weather-slot"></span></div>
+            <div class="today-hero hero-active ${isWindDown ? 'hero-wind-down' : ''}">
+                <div class="today-hero-eyebrow">${dayBadge}Day ${ctx.tripDayIdx + 1} of ${ctx.tripLen}<span id="hero-weather-chip" class="hero-weather-slot"></span><span id="today-geo-slot" class="hero-weather-slot"></span></div>
                 <div class="today-hero-title">${esc(ctx.currentDay?.title || 'Today')}</div>
 
                 ${ctx.nowItem ? `
@@ -196,7 +258,7 @@ function renderTodayHero(ctx) {
 
                 ${ctx.upcomingItems.length ? `
                     <div class="today-block">
-                        <div class="today-block-label">${ctx.nowItem ? 'Up next' : 'Today'}</div>
+                        <div class="today-block-label">${ctx.nowItem ? 'Up next' : 'Today'}${ctx.nextItem ? ` <span class="today-countdown" id="today-countdown" data-start="${ctx.nextItem.startMins}"></span>` : ''}</div>
                         ${ctx.upcomingItems.map(it => renderActivityRow(it, { showNav: false })).join('')}
                     </div>
                 ` : ''}
@@ -325,6 +387,40 @@ export function renderDashboard() {
     }
     // Pre-warm cache for upcoming trip cities
     prewarmWeather([...new Set(state.itinerary.map(getDayCity).filter(Boolean))]);
+
+    // Wave 2: geo distance hint (active phase only, and only if permission
+    // already granted in this session).
+    if (ctx.phase === 'active' || ctx.phase === 'wind-down') {
+        setTimeout(() => updateGeoDistance(ctx), 0);
+    }
+
+    // Wave 5: live countdown to the next scheduled activity. Re-paints every
+    // 30s; the next renderDashboard call (e.g. visited toggle) blows away the
+    // old timer when the parent innerHTML is rebuilt.
+    if (ctx.nextItem) {
+        const el = document.getElementById('today-countdown');
+        if (el) {
+            const startMins = ctx.nextItem.startMins;
+            const paint = () => {
+                if (!document.body.contains(el)) return;
+                const n = new Date();
+                const diff = startMins - (n.getHours() * 60 + n.getMinutes());
+                if (diff <= 0) { el.textContent = ''; return; }
+                const h = Math.floor(diff / 60), m = diff % 60;
+                el.textContent = h ? `· in ${h}h ${m}m` : `· in ${m}m`;
+            };
+            paint();
+            const id = setInterval(paint, 30000);
+            // Stop ticking once the element is gone from the DOM.
+            const observer = new MutationObserver(() => {
+                if (!document.body.contains(el)) {
+                    clearInterval(id);
+                    observer.disconnect();
+                }
+            });
+            observer.observe(el.parentNode || document.body, { childList: true, subtree: true });
+        }
+    }
 
     el.innerHTML = `
         ${todayHeroHtml}

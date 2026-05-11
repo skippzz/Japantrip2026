@@ -93,36 +93,37 @@ function attachBottomDrag(el, id) {
 
 export function openSheet({ id, side = 'bottom', html = '', onClose, dismissible = true, snap }) {
     if (!id) throw new Error('openSheet requires an id');
-    // If this id is currently CLOSING (within 320ms grace), wait — fresh sheet
-    // will be created once the old one finishes its dismiss animation.
     if (closingIds.has(id)) {
         setTimeout(() => openSheet({ id, side, html, onClose, dismissible, snap }), 50);
         return null;
     }
     const existing = SHEETS.get(id);
     if (existing) {
-        // Same id already open → just replace body content
         const body = existing.el.querySelector('.sheet-body');
         if (body) body.innerHTML = html;
+        // Wave 2: rewire focus trap for refreshed content
+        setupFocusTrap(existing.el);
         return existing.el;
     }
+
+    // Wave 2: remember which element had focus so we can return to it on close.
+    const previousFocus = document.activeElement;
 
     const el = buildSheetEl(id, side, html, snap);
     const backdrop = dismissible ? buildBackdrop(id) : null;
 
     if (backdrop) {
-        // Only close the TOPMOST sheet on backdrop tap, not all stacked sheets
         backdrop.addEventListener('click', () => {
             if (activeStackTop) closeSheet(activeStackTop);
         });
         ROOT().appendChild(backdrop);
     }
     ROOT().appendChild(el);
-    void el.offsetWidth; // force reflow for transition
+    void el.offsetWidth;
     el.classList.add('is-open');
     if (backdrop) backdrop.classList.add('is-open');
 
-    SHEETS.set(id, { el, backdrop, onClose, side, dismissible });
+    SHEETS.set(id, { el, backdrop, onClose, side, dismissible, previousFocus });
     activeStackTop = id;
 
     if (side === 'bottom' && dismissible) attachBottomDrag(el, id);
@@ -130,7 +131,41 @@ export function openSheet({ id, side = 'bottom', html = '', onClose, dismissible
     if (SHEETS.size === 1) ROOT().classList.add('sheet-open');
     ensureGlobalEscListener();
 
+    // Wave 2: focus trap — Tab cycles within sheet, focus first interactive
+    setupFocusTrap(el);
+
     return el;
+}
+
+// Wave 2: focus trap for bottom sheets / side drawers. Same behaviour as
+// modals — Tab wraps to first/last focusable; Shift+Tab from first goes to
+// last. Focus the first interactive element on open.
+function setupFocusTrap(el) {
+    const focusable = () => Array.from(el.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )).filter(n => n.offsetParent !== null);
+    const els = focusable();
+    if (els.length) {
+        // Don't yank focus from any input the user has already focused inside the sheet
+        if (!el.contains(document.activeElement)) {
+            // Skip close X buttons if there's a more meaningful first action
+            const first = els.find(n => !n.matches('[aria-label="Close"]')) || els[0];
+            try { first.focus({ preventScroll: true }); } catch { /* ok */ }
+        }
+    }
+    if (el._trapHandler) el.removeEventListener('keydown', el._trapHandler);
+    el._trapHandler = function (e) {
+        if (e.key !== 'Tab') return;
+        const cur = focusable();
+        if (!cur.length) return;
+        const first = cur[0], last = cur[cur.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault(); last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault(); first.focus();
+        }
+    };
+    el.addEventListener('keydown', el._trapHandler);
 }
 
 // Single global ESC listener attached once. Closes topmost sheet, but ignores
@@ -151,7 +186,7 @@ function ensureGlobalEscListener() {
 export function closeSheet(id) {
     const sheet = SHEETS.get(id);
     if (!sheet) return;
-    const { el, backdrop, onClose } = sheet;
+    const { el, backdrop, onClose, previousFocus } = sheet;
     el.classList.remove('is-open');
     if (backdrop) backdrop.classList.remove('is-open');
     SHEETS.delete(id);
@@ -167,14 +202,15 @@ export function closeSheet(id) {
             el.remove();
             backdrop?.remove();
         } finally {
-            // Always release closing state + invoke callback safely so a throw
-            // inside onClose can never leave the sheet system in a bad state.
             closingIds.delete(id);
             try { onClose?.(); } catch (e) { console.warn('[sheet] onClose threw', e); }
-            // Defensive: if sheet count is 0 but the class is somehow still set
-            // (e.g. callback opened another sheet then synchronously closed it),
-            // make sure scroll lock matches reality.
             if (SHEETS.size === 0) ROOT().classList.remove('sheet-open');
+            // Wave 2: return focus to whatever was focused before we opened.
+            try {
+                if (previousFocus && previousFocus.isConnected && typeof previousFocus.focus === 'function') {
+                    previousFocus.focus({ preventScroll: true });
+                }
+            } catch { /* ok */ }
         }
     }, 320);
 }

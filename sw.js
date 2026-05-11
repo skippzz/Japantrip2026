@@ -3,8 +3,10 @@
 // uses network-first for same-origin app files, so users always pull fresh
 // index.html / app.js / modules / styles on every page load when online, and
 // fall back to cache only when offline.
-// Bumped to v24: Phase 1-6 added 11 new modules; previous list was missing them.
-const CACHE_NAME = 'japan2026-v24';
+// Bumped to v25: Wave 4 — separate image cache w/ LRU eviction for place photos.
+const CACHE_NAME = 'japan2026-v25';
+const IMG_CACHE_NAME = 'japan2026-img-v1';
+const IMG_CACHE_MAX = 100;
 
 // App shell — pre-cached on install so the app works offline even on first
 // load-then-go-offline. At runtime these are served network-first.
@@ -74,7 +76,10 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
     e.waitUntil(
         caches.keys().then(keys =>
-            Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+            Promise.all(keys
+                .filter(k => k !== CACHE_NAME && k !== IMG_CACHE_NAME)
+                .map(k => caches.delete(k))
+            )
         ).then(() => self.clients.claim())
     );
 });
@@ -99,12 +104,43 @@ self.addEventListener('fetch', e => {
     const url = new URL(req.url);
     const isSameOrigin = url.origin === self.location.origin;
 
+    // Wave 4: separate cache for off-origin images (Google Places photos etc.)
+    // with stale-while-revalidate + LRU eviction so we don't blow storage.
+    const isImage = req.destination === 'image'
+        || /\.(jpe?g|png|webp|gif|svg|avif)(\?|$)/i.test(url.pathname);
+    if (!isSameOrigin && isImage) {
+        e.respondWith(imageCache(req));
+        return;
+    }
+
     if (isSameOrigin) {
         e.respondWith(networkFirst(req));
     } else {
         e.respondWith(cacheFirst(req));
     }
 });
+
+async function imageCache(req) {
+    const cache = await caches.open(IMG_CACHE_NAME);
+    const cached = await cache.match(req);
+    const fetchAndCache = fetch(req).then(res => {
+        if (res && res.status === 200) {
+            cache.put(req, res.clone()).then(() => trimImgCache(cache));
+        }
+        return res;
+    }).catch(() => cached);
+    return cached || fetchAndCache;
+}
+
+async function trimImgCache(cache) {
+    try {
+        const keys = await cache.keys();
+        if (keys.length <= IMG_CACHE_MAX) return;
+        // Drop oldest entries first (cache.keys() preserves insertion order).
+        const excess = keys.length - IMG_CACHE_MAX;
+        for (let i = 0; i < excess; i++) await cache.delete(keys[i]);
+    } catch { /* ignore */ }
+}
 
 async function networkFirst(req) {
     try {

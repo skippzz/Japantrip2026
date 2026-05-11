@@ -72,7 +72,13 @@ function resolvePlaceIds(placeIds) {
     return placeIds
         .map(id => byId.get(id))
         .filter(Boolean)
-        .map(p => JSON.parse(JSON.stringify(p))); // deep clone so trip edits don't mutate defaults
+        .map(p => {
+            const clone = JSON.parse(JSON.stringify(p));
+            // Wave 1: strip any cached photoUrl — Google CDN URLs expire,
+            // and the runtime fetcher will re-populate fresh ones.
+            delete clone.photoUrl;
+            return clone;
+        });
 }
 
 // Merge b into a by key extractor; existing entries in a are preserved.
@@ -271,6 +277,33 @@ export function createTrip(name, destination, dateStart, dateEnd, templateKey) {
     return trip;
 }
 
+// Wave 5: duplicate a trip — copy metadata + storage payload to a new id.
+export function duplicateTrip(tripId) {
+    const meta = ensureTripsMeta();
+    const trip = meta.trips.find(t => t.id === tripId);
+    if (!trip) return;
+    const newId = 'trip-' + Date.now();
+    const newStorageKey = 'tripData_' + newId;
+    try {
+        const raw = localStorage.getItem(trip.storageKey);
+        if (raw) localStorage.setItem(newStorageKey, raw);
+    } catch (e) {
+        showToast('Could not duplicate trip: ' + e.message, 'error');
+        return;
+    }
+    const copy = {
+        ...trip,
+        id: newId,
+        name: trip.name + ' (copy)',
+        created: Date.now(),
+        storageKey: newStorageKey,
+    };
+    meta.trips.push(copy);
+    saveTripsMeta(meta);
+    renderTripManager();
+    showToast(`Duplicated as "${copy.name}".`, 'success');
+}
+
 export function deleteTrip(tripId) {
     const meta = ensureTripsMeta();
     const idx = meta.trips.findIndex(t => t.id === tripId);
@@ -342,13 +375,17 @@ export function renderTripManager() {
             }
         } catch { stats = ''; }
 
+        // Wave 5: optional color tag per trip, surfaces as left border accent.
+        const colorStyle = trip.color ? `style="border-left:4px solid ${esc(trip.color)}"` : '';
+        const dot = trip.color ? `<span class="trip-color-dot" style="background:${esc(trip.color)}"></span>` : '';
         return `
-        <div class="trip-card ${isActive ? 'active' : ''}" onclick="switchTrip('${trip.id}')">
+        <div class="trip-card ${isActive ? 'active' : ''}" ${colorStyle} onclick="switchTrip('${trip.id}')">
             <div class="trip-card-header">
-                <div class="trip-card-name">${esc(trip.name)}${isActive ? ' <span class="badge-active">Active</span>' : ''}</div>
+                <div class="trip-card-name">${dot}${esc(trip.name)}${isActive ? ' <span class="badge-active">Active</span>' : ''}</div>
                 <div class="trip-card-actions" onclick="event.stopPropagation()">
                     ${isActive ? `<button onclick="openTripEditor('${trip.id}')" title="Edit trip settings">⚙️</button>` : ''}
                     <button onclick="renameTrip('${trip.id}')" title="Rename">✏️</button>
+                    <button onclick="duplicateTrip('${trip.id}')" title="Duplicate trip">📋</button>
                     ${!isActive ? `<button onclick="deleteTrip('${trip.id}')" title="Delete">🗑️</button>` : ''}
                 </div>
             </div>
@@ -499,6 +536,14 @@ export function openTripEditor(tripId) {
     const trip = meta.trips.find(t => t.id === (tripId || meta.activeTrip));
     if (!trip) return;
 
+    // Wave 5: preset palette for quick selection + custom-input fallback.
+    const COLOR_PRESETS = ['', '#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'];
+    const colorSwatches = COLOR_PRESETS.map(c => `
+        <button type="button" class="color-swatch${(trip.color || '') === c ? ' selected' : ''}"
+            style="${c ? `background:${c}` : 'background:transparent;border:1px dashed var(--bg-3)'}"
+            data-color="${c}" title="${c || 'None'}"
+            onclick="document.getElementById('edit-trip-color').value='${c}'; document.querySelectorAll('.color-swatch').forEach(s=>s.classList.toggle('selected',s.dataset.color==='${c}'))">${c ? '' : '∅'}</button>
+    `).join('');
     const html = `
         <h2>Edit Trip Settings</h2>
         <div class="form-group"><label>Trip Name</label><input type="text" id="edit-trip-name" value="${esc(trip.name)}"></div>
@@ -506,6 +551,11 @@ export function openTripEditor(tripId) {
         <div class="form-row">
             <div class="form-group"><label>Start Date</label><input type="date" id="edit-trip-start" value="${trip.dateStart || ''}"></div>
             <div class="form-group"><label>End Date</label><input type="date" id="edit-trip-end" value="${trip.dateEnd || ''}"></div>
+        </div>
+        <div class="form-group">
+            <label>Color tag</label>
+            <div class="color-swatch-row">${colorSwatches}</div>
+            <input type="hidden" id="edit-trip-color" value="${esc(trip.color || '')}">
         </div>
         <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--bg-4)">
             <h3 style="color:var(--text-2);font-size:.85rem;margin-bottom:.5rem">Danger Zone</h3>
@@ -534,6 +584,7 @@ export function saveTripSettings() {
     trip.destination = document.getElementById('edit-trip-dest')?.value?.trim() || '';
     trip.dateStart = document.getElementById('edit-trip-start')?.value || '';
     trip.dateEnd = document.getElementById('edit-trip-end')?.value || '';
+    trip.color = document.getElementById('edit-trip-color')?.value || '';
 
     saveTripsMeta(meta);
     renderTripManager();

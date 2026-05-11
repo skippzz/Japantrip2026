@@ -17,7 +17,12 @@ let statusFilters = new Set();
 export function setPlaceSort(val) { placeSort = val; }
 
 // Allow external code to set filter state (for event binding in app.js)
-export function setPlaceFilter(val) { placeFilter = val; }
+// Wave 1: when city/category changes, reset areaFilter so a stale "Arashiyama"
+// filter doesn't invisibly hide all Tokyo places after switching from Kyoto.
+export function setPlaceFilter(val) {
+    if (placeFilter !== val) areaFilter = 'all';
+    placeFilter = val;
+}
 export function setAreaFilter(area) { areaFilter = area; renderPlaces(); }
 export function setPlaceSearch(val) { placeSearch = val; }
 export function getPlaceFilter() { return placeFilter; }
@@ -105,6 +110,14 @@ export function renderPlaces() {
     // Phase 4.4: render the "Near you" prompt above the grid
     renderNearYou();
     const grid = document.getElementById('places-grid');
+    // Wave 2: empty state with CTA when no places match the current filter.
+    if (!places.length) {
+        const hasFilter = placeFilter !== 'all' || areaFilter !== 'all' || placeSearch || statusFilters.size > 0;
+        grid.innerHTML = hasFilter
+            ? `<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text"><strong>No places match this filter.</strong><p>Try clearing filters or search.</p><button class="btn btn-accent" onclick="clearAllFilters()">Clear all filters</button></div></div>`
+            : `<div class="empty-state"><div class="empty-state-icon">📍</div><div class="empty-state-text"><strong>No places yet</strong><p>Tap + to add a place, or paste a Google Maps link in the Smart Import field above.</p></div></div>`;
+        return;
+    }
     grid.innerHTML = places.map(p => {
         const photo = getPhotoPath(p);
         const catClass = (p.category||'').toLowerCase();
@@ -136,6 +149,7 @@ export function renderPlaces() {
                 <div class="card-meta">
                     ${p.hours?`<span>🕐 ${esc(p.hours)}</span>`:''}
                     ${p.cost?`<span>💰 ${esc(p.cost)}</span>`:''}
+                    ${p.rating ? `<span class="place-rating-badge" title="My rating">${'★'.repeat(p.rating)}</span>` : ''}
                 </div>
                 <div class="card-actions" onclick="event.stopPropagation()">
                     ${!scheduledDays.length ? `<button class="btn btn-sm btn-accent" onclick="event.stopPropagation(); quickAddToDay(${p.id})" title="Add to itinerary">+ Day</button>` : ''}
@@ -271,6 +285,17 @@ export function updateResField(id, field, value) {
     if (p) { p[field] = value.trim(); save(); }
 }
 
+// Wave 5: personal rating (0-5). 0 clears the rating.
+export function setPlaceRating(id, rating) {
+    const p = state.places.find(x=>x.id===id);
+    if (!p) return;
+    const n = Math.max(0, Math.min(5, parseInt(rating, 10) || 0));
+    if (n === 0) delete p.rating;
+    else p.rating = n;
+    save();
+    renderPlaces();
+}
+
 // ══════════════════════════════════════════════════════════════
 //  PLACE DETAIL MODAL
 // ══════════════════════════════════════════════════════════════
@@ -367,6 +392,13 @@ export function openDetail(id) {
                     ${p.hours ? `<div class="detail-info-item"><label>Hours</label><span>${esc(p.hours)}</span></div>` : ''}
                     ${p.cost ? `<div class="detail-info-item"><label>Cost</label><span data-yen="${esc(p.cost)}">${esc(p.cost)}</span></div>` : ''}
                     ${p.notes ? `<div class="detail-info-item"><label>Notes</label><span>${esc(p.notes)}</span></div>` : ''}
+                    <div class="detail-info-item">
+                        <label>My rating</label>
+                        <div class="rating-row" data-pid="${p.id}">
+                            ${[1,2,3,4,5].map(n => `<button class="rating-star${(p.rating||0) >= n ? ' filled' : ''}" data-n="${n}" onclick="setPlaceRating(${p.id}, ${n}); openDetail(${p.id})" aria-label="Rate ${n} star${n>1?'s':''}">${(p.rating||0) >= n ? '★' : '☆'}</button>`).join('')}
+                            ${p.rating ? `<button class="rating-clear" onclick="setPlaceRating(${p.id}, 0); openDetail(${p.id})" title="Clear rating" aria-label="Clear rating">✕</button>` : ''}
+                        </div>
+                    </div>
                 </div>
                 ${p.description ? `<p class="detail-desc">${esc(p.description)}</p>` : ''}
                 <div class="detail-reservation">

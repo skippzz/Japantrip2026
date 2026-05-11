@@ -17,7 +17,7 @@ import { initInstallPrompt } from './modules/install-prompt.js';
 import { initYenTap, tagYen } from './modules/yen-tap.js';
 import './modules/trip-share.js';   // exposes window.shareTripSnapshot/downloadTripSnapshot
 import { applyTripTheme } from './modules/trip-theme.js';
-import { setStateRef } from './modules/helpers.js';
+import { setStateRef, esc, parseDayTitle } from './modules/helpers.js';
 import { JAPAN_FACTS, PHRASES } from './modules/data.js';
 import { ENABLE_API_PHOTOS } from './modules/config.js';
 
@@ -26,13 +26,13 @@ import { renderDashboard, goToToday } from './modules/dashboard.js';
 import { renderItinerary, toggleDay, toggleVisited, handleItinSort,
          addItineraryDay, deleteDay, duplicateDay, openItinItemModal, handleItinItemSubmit,
          deleteItinItem, populateDaySelect, jumpToDay, shareDayCard,
-         optimizeDayRoute, setItinSearch, toggleRainMode } from './modules/itinerary.js';
+         optimizeDayRoute, setItinSearch, toggleRainMode, syncRainToggleBtn } from './modules/itinerary.js';
 import { exportICS } from './modules/export.js';
 import { renderPlaces, setPlaceFilter, setPlaceSearch, setAreaFilter,
          deletePlace, toggleReserved, updateResField, openDetail,
          openPlaceModal, handlePlaceSubmit, setPlaceSort,
          applyStatusFilter, clearAllFilters, renderReservationSummary,
-         quickAddToDay, confirmQuickAdd } from './modules/places.js';
+         quickAddToDay, confirmQuickAdd, setPlaceRating } from './modules/places.js';
 import { renderPlacePool, getUnaddedPlaces, getNearbyForDay, setPoolSearch, setPoolFilter,
          addPlaceToDay, handlePoolDrop, handleReturnToPool, populatePoolTargetDay } from './modules/pool.js';
 import { renderPacking, togglePacked, deletePacking, handlePackingSubmit,
@@ -55,7 +55,7 @@ import { renderTripManager, switchTrip, deleteTrip, renameTrip,
          confirmReplaceWithTemplate, openTemplatePreview,
          openSaveCurrentAsTemplate, confirmSaveCurrentAsTemplate,
          deleteUserTemplate, exportTemplate, importTemplateFromFile,
-         openTripDrawer, getActiveTrip } from './modules/trips.js';
+         openTripDrawer, getActiveTrip, duplicateTrip } from './modules/trips.js';
 
 // ══════════════════════════════════════════════════════════════
 //  SHARED UI STATE (accessible by modules via window._*)
@@ -116,6 +116,15 @@ function closeModal(id) {
 let currentView = 'dashboard';
 
 function switchView(name) {
+    // Wave 1: clear lingering search filter when leaving itinerary view so
+    // search highlights don't persist invisibly across view switches.
+    if (currentView === 'itinerary' && name !== 'itinerary') {
+        try {
+            setItinSearch('');
+            const inp = document.getElementById('itin-search');
+            if (inp) inp.value = '';
+        } catch { /* ok */ }
+    }
     currentView = name;
     document.body.dataset.view = name;
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -152,6 +161,34 @@ function openAppMenu() {
 // Phase 1.7: edit mode permanently on. Toggle removed; left as a no-op
 // in case any inline onclick or external caller still references it.
 function toggleEditMode() { /* removed in Phase 1.7 */ }
+
+// Wave 2: global undo for last delete (activity / day / packing).
+// Stack pushed by individual delete handlers; popped here.
+window._undoLastDelete = function () {
+    const stack = window._undoStack;
+    if (!stack || !stack.length) return;
+    const last = stack.pop();
+    try {
+        if (last.kind === 'activity') {
+            const day = state.itinerary.find(d => d.id === last.dayId);
+            if (day) {
+                day.items.splice(Math.min(last.idx, day.items.length), 0, last.item);
+            }
+        } else if (last.kind === 'day') {
+            state.itinerary.splice(Math.min(last.idx, state.itinerary.length), 0, last.day);
+            if (last.day.id) window._expandedDays?.add(last.day.id);
+        } else if (last.kind === 'packing') {
+            state.packing.splice(Math.min(last.idx, state.packing.length), 0, last.item);
+        } else if (last.kind === 'place') {
+            state.places.splice(Math.min(last.idx, state.places.length), 0, last.place);
+        }
+        save();
+        emit('renderAll');
+        showToast?.('Restored.', 'success');
+    } catch (e) {
+        showToast?.('Could not undo: ' + e.message, 'error');
+    }
+};
 
 // Phase 2.6: pull-to-refresh on Today screen.
 // Pulls down past 80px on dashboard view → re-renders + brief spinner toast.
@@ -208,6 +245,10 @@ function openItemActionSheet(dayId, itemId) {
             <span class="action-sheet-row-icon">✎</span>
             <span>Edit</span>
         </button>
+        <button class="action-sheet-row" onclick="closeSheet('item-actions'); openMoveToDayPicker('${dayId}','${itemId}')">
+            <span class="action-sheet-row-icon">↗</span>
+            <span>Move to another day…</span>
+        </button>
         <button class="action-sheet-row action-sheet-row-danger" onclick="closeSheet('item-actions'); deleteItinItem('${dayId}','${itemId}')">
             <span class="action-sheet-row-icon">🗑</span>
             <span>Delete</span>
@@ -216,6 +257,51 @@ function openItemActionSheet(dayId, itemId) {
     `;
     window.openSheet?.({ id: 'item-actions', side: 'bottom', html });
 }
+
+// Wave 2: Move-to-day picker replaces the drag-via-pool 3-step workflow.
+function openMoveToDayPicker(fromDayId, itemId) {
+    const fromDay = state.itinerary.find(d => d.id === fromDayId);
+    const item = fromDay?.items.find(x => x.id === itemId);
+    if (!item) return;
+    const rows = state.itinerary
+        .filter(d => d.id !== fromDayId)
+        .map(d => {
+            const { date, subtitle } = parseDayTitle(d.title);
+            return `
+                <button class="action-sheet-row" onclick="closeSheet('move-to-day'); confirmMoveToDay('${fromDayId}','${itemId}','${d.id}')">
+                    <span class="action-sheet-row-icon">📅</span>
+                    <span>
+                        <strong>${esc(date)}</strong>
+                        ${subtitle ? ` · <span style="color:var(--text-3)">${esc(subtitle)}</span>` : ''}
+                        <div style="font-size:var(--font-xs);color:var(--text-3);margin-top:2px">${d.items?.length || 0} activities</div>
+                    </span>
+                </button>
+            `;
+        }).join('');
+    const html = `
+        <div class="action-sheet-title">Move "${esc((item.name || 'activity').slice(0, 50))}" to…</div>
+        ${rows || '<div class="data-hint" style="padding:1rem 0">No other days to move to.</div>'}
+        <button class="action-sheet-cancel" onclick="closeSheet('move-to-day')">Cancel</button>
+    `;
+    window.openSheet?.({ id: 'move-to-day', side: 'bottom', html });
+}
+
+function confirmMoveToDay(fromDayId, itemId, toDayId) {
+    const fromDay = state.itinerary.find(d => d.id === fromDayId);
+    const toDay = state.itinerary.find(d => d.id === toDayId);
+    if (!fromDay || !toDay) return;
+    const idx = fromDay.items.findIndex(x => x.id === itemId);
+    if (idx === -1) return;
+    const [item] = fromDay.items.splice(idx, 1);
+    toDay.items.push(item);
+    save();
+    renderItinerary();
+    window.renderDashboard?.();
+    const targetTitle = parseDayTitle(toDay.title).date || 'day';
+    showToast?.(`Moved to ${targetTitle}`, 'success');
+}
+window.openMoveToDayPicker = openMoveToDayPicker;
+window.confirmMoveToDay = confirmMoveToDay;
 
 // Phase 2.3: delegated swipe-to-action handler for timeline items.
 // Swipe left ≥ 60px → toggle visited.
@@ -338,8 +424,14 @@ subscribe('renderAll', renderAll);
 // ══════════════════════════════════════════════════════════════
 function bindEvents() {
     // Nav (top + bottom)
-    document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
+    document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => {
+        // Wave 3: subtle haptic on nav tap (mobile only).
+        if (navigator.vibrate && b.dataset.view !== currentView) navigator.vibrate(10);
+        switchView(b.dataset.view);
+    }));
     document.querySelectorAll('.bottom-tab').forEach(b => b.addEventListener('click', () => {
+        // Wave 3: haptic feedback on bottom-tab change (mobile-only API).
+        if (navigator.vibrate && b.dataset.view !== currentView) navigator.vibrate(10);
         // Phase 1.12: More tab opens the app drawer instead of legacy sidebar
         if (b.dataset.view === 'more') { openAppMenu(); return; }
         switchView(b.dataset.view);
@@ -405,6 +497,7 @@ function bindEvents() {
     document.getElementById('view-reservations-btn')?.addEventListener('click', renderReservationSummary);
     document.getElementById('export-ics-btn')?.addEventListener('click', exportICS);
     document.getElementById('rain-toggle')?.addEventListener('click', toggleRainMode);
+    syncRainToggleBtn();
     // Pool filters
     document.getElementById('pool-search').addEventListener('input', e => { setPoolSearch(e.target.value.toLowerCase()); renderPlacePool(); });
     document.getElementById('pool-city-filter').addEventListener('change', e => { setPoolFilter(e.target.value); renderPlacePool(); });
@@ -441,6 +534,15 @@ function bindEvents() {
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
             openGlobalSearch();
+        }
+    });
+    // Wave 2: keyboard support for role=button day headers (Enter/Space toggle)
+    document.addEventListener('keydown', e => {
+        const t = e.target;
+        if (t?.classList?.contains('day-header') && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            const dayId = t.closest('.day-card')?.dataset?.dayId;
+            if (dayId) window.toggleDay?.(dayId);
         }
     });
     // Map filters
@@ -558,6 +660,7 @@ window.openDetail = openDetail;
 window.deletePlace = deletePlace;
 window.toggleReserved = toggleReserved;
 window.updateResField = updateResField;
+window.setPlaceRating = setPlaceRating;
 window.setAreaFilter = setAreaFilter;
 window.openPlaceModal = openPlaceModal;
 window.applyStatusFilter = applyStatusFilter;
@@ -623,8 +726,10 @@ window.clearAppCache = async function() {
 };
 // Trips
 window.switchTrip = switchTrip;
+window.getActiveTrip = getActiveTrip;
 window.deleteTrip = deleteTrip;
 window.renameTrip = renameTrip;
+window.duplicateTrip = duplicateTrip;
 window.openNewTripModal = openNewTripModal;
 window.createAndSwitchTrip = createAndSwitchTrip;
 window.openTripEditor = openTripEditor;
@@ -684,6 +789,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1200);
 
     initTheme();
+    // Wave 4: offline banner driven by navigator.onLine + events
+    const offlineBanner = document.getElementById('offline-banner');
+    const updateOnline = () => {
+        if (!offlineBanner) return;
+        offlineBanner.hidden = navigator.onLine;
+    };
+    window.addEventListener('online', updateOnline);
+    window.addEventListener('offline', updateOnline);
+    updateOnline();
     loadState();
     if (state.itinerary.length) window._expandedDays.add(state.itinerary[0].id);
     currentView = 'dashboard';

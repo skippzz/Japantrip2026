@@ -182,6 +182,15 @@ body.edit-mode #edit-btn { background: var(--orange); color: #000; }
 }
 .icon-btn:hover { background: var(--bg-3); }
 
+/* Wave 1: globally disable interaction on disabled buttons so they can't be
+   accidentally clicked while async work is in-flight. */
+button:disabled, button[aria-disabled="true"],
+.btn:disabled, .btn[aria-disabled="true"] {
+    opacity: .55;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 /* New header drawer triggers (Phase 1.4) */
 .header-trip-btn {
     background: transparent;
@@ -411,6 +420,11 @@ body.edit-mode #edit-btn { background: var(--orange); color: #000; }
     display: flex; flex-direction: column; gap: var(--space-3);
 }
 .today-hero.hero-active { border-color: var(--accent); }
+.today-hero.hero-wind-down {
+    border-color: var(--orange);
+    background: linear-gradient(180deg, var(--bg-1), rgba(245, 158, 11, .06));
+}
+.today-hero.hero-wind-down .today-hero-eyebrow { color: var(--orange); }
 .today-hero.hero-post { background: linear-gradient(180deg, var(--bg-1), var(--accent-bg)); }
 
 .today-hero-eyebrow {
@@ -431,6 +445,16 @@ body.edit-mode #edit-btn { background: var(--orange); color: #000; }
     font-weight: 600;
 }
 .weather-pop { color: var(--cyan); margin-left: 2px; }
+.day-weather-slot { display: inline-flex; align-items: center; }
+.day-weather-slot:empty { display: none; }
+.day-weather-slot .weather-chip { font-size: 11px; padding: 1px 6px; }
+.today-countdown {
+    margin-left: 6px;
+    font-weight: 500;
+    color: var(--accent);
+    font-size: 0.85em;
+}
+.today-countdown:empty { display: none; }
 
 /* Phase 4.1: tap-yen-to-convert */
 .yen-popover {
@@ -897,6 +921,28 @@ body.edit-mode #edit-btn { background: var(--orange); color: #000; }
 .tl-item.is-swiping {
     background: rgba(16, 185, 129, .1);
     border-radius: var(--radius-sm);
+}
+
+/* Wave 1: TODAY pill on the active-day card header so it's visible even when collapsed */
+.today-pill {
+    display: inline-block;
+    margin-left: var(--space-2);
+    font-size: var(--font-xs);
+    font-weight: 700;
+    letter-spacing: .08em;
+    background: var(--accent);
+    color: #fff;
+    padding: 1px 7px;
+    border-radius: var(--radius-full);
+    vertical-align: middle;
+    animation: today-pill-pulse 2.6s ease-in-out infinite;
+}
+@keyframes today-pill-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 var(--accent); }
+    50% { box-shadow: 0 0 0 4px rgba(59,130,246,0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .today-pill { animation: none; }
 }
 
 /* In reorder mode: grip handles always visible, day cards don't expand on tap */
@@ -1989,6 +2035,33 @@ input:invalid:not(:placeholder-shown):not(:focus) {
 /* ========================================
    ACCESSIBILITY
    ======================================== */
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 8px;
+    z-index: 10000;
+    padding: 8px 16px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: var(--radius);
+    font-weight: 600;
+    text-decoration: none;
+}
+.skip-link:focus {
+    top: 8px;
+}
+.offline-banner {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 9000;
+    padding: 6px 12px;
+    background: var(--bg-3, #2a3142);
+    color: var(--text-1);
+    text-align: center;
+    font-size: var(--font-sm);
+    border-bottom: 1px solid var(--bg-2);
+}
+.offline-banner[hidden] { display: none; }
 :focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
@@ -2115,6 +2188,38 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .trip-card-meta { font-size: .72rem; color: var(--text-3); margin-top: 2px; }
 .trip-card-stats { font-size: .72rem; color: var(--text-2); margin-top: 2px; }
 .badge-active { font-size: .65rem; background: var(--accent); color: #fff; padding: 1px 6px; border-radius: 8px; font-weight: 500; }
+.trip-color-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.color-swatch-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.color-swatch {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer; padding: 0;
+    color: var(--text-3); font-size: 0.8rem;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+.color-swatch.selected { border-color: var(--text-0); transform: scale(1.08); }
+.color-swatch:hover { transform: scale(1.08); }
+.rating-row { display: flex; gap: 2px; align-items: center; }
+.rating-star {
+    background: none; border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: var(--text-3);
+    padding: 2px 1px;
+    line-height: 1;
+}
+.rating-star.filled { color: #f5b800; }
+.rating-clear {
+    background: none; border: none;
+    cursor: pointer;
+    font-size: 0.7rem;
+    color: var(--text-3);
+    margin-left: 6px;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+.rating-clear:hover { background: var(--bg-3); }
+.place-rating-badge { font-size: .75rem; color: #f5b800; font-weight: 600; }
 
 /* ============================================================
    FAB — floating action button
@@ -2284,10 +2389,16 @@ body.sheet-open { overflow: hidden; touch-action: none; }
     flex: 1;
 }
 
-/* Reduced-motion respect */
+/* Reduced-motion respect — global. */
 @media (prefers-reduced-motion: reduce) {
-    .sheet, .sheet-backdrop {
+    .sheet, .sheet-backdrop,
+    .swipe-content, .ptr-indicator,
+    .fab, .toast, .tl-item,
+    .today-pill, .reorder-bar,
+    .modal, .modal-overlay {
         transition-duration: 1ms !important;
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
     }
 }
 
