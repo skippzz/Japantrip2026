@@ -2300,7 +2300,11 @@ body[data-view="guide"] .fab { display: none; }
    ============================================================ */
 
 /* Lock body scroll while a sheet is open */
-body.sheet-open { overflow: hidden; touch-action: none; }
+/* Lock the underlying page from scrolling while a sheet is open. We used to
+   also apply `touch-action: none` here, but that cascades to children and on
+   iOS Safari blocks tap-then-click on buttons inside the sheet — including
+   the ✕ close button. Pin scroll, leave touches alone. */
+body.sheet-open { overflow: hidden; }
 
 .sheet-backdrop {
     position: fixed; inset: 0;

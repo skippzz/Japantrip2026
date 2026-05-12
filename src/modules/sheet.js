@@ -134,7 +134,48 @@ export function openSheet({ id, side = 'bottom', html = '', onClose, dismissible
     // Wave 2: focus trap — Tab cycles within sheet, focus first interactive
     setupFocusTrap(el);
 
+    // iOS Safari + position:fixed won't scroll a focused input into view above
+    // the on-screen keyboard. Do it ourselves. visualViewport.resize fires when
+    // the keyboard pushes the layout viewport — re-scroll then to handle the
+    // delayed resize on Android Chrome too.
+    setupKeyboardAwareScroll(el);
+
     return el;
+}
+
+function setupKeyboardAwareScroll(el) {
+    const scrollFocusedIntoView = () => {
+        const active = document.activeElement;
+        if (!active || !el.contains(active)) return;
+        if (!active.matches?.('input, textarea, select')) return;
+        // requestAnimationFrame so the keyboard has started pushing the viewport
+        // up before we measure; without it scrollIntoView can target the
+        // pre-keyboard position.
+        requestAnimationFrame(() => {
+            try { active.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+            catch { active.scrollIntoView(); }
+        });
+    };
+    el.addEventListener('focusin', (e) => {
+        if (e.target.matches?.('input, textarea, select')) {
+            // Slight delay: iOS keyboard animates in over ~250ms; firing too
+            // early means we scroll to a position the keyboard then occludes.
+            setTimeout(scrollFocusedIntoView, 300);
+        }
+    });
+    // Re-scroll if the visual viewport changes (keyboard fully shown / rotated).
+    if (window.visualViewport) {
+        const onResize = () => scrollFocusedIntoView();
+        window.visualViewport.addEventListener('resize', onResize);
+        // Detach when the sheet is removed
+        const observer = new MutationObserver(() => {
+            if (!document.body.contains(el)) {
+                window.visualViewport.removeEventListener('resize', onResize);
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: false });
+    }
 }
 
 // Wave 2: focus trap for bottom sheets / side drawers. Same behaviour as
