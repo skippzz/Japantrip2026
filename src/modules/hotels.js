@@ -74,6 +74,7 @@ export function openHotelTaxiCard(cityHint) {
             <div class="taxi-actions">
                 ${(h.mapUrl && h.mapUrl !== '#') ? `<a class="btn btn-accent btn-large" href="${h.mapUrl}" target="_blank" rel="noopener">📍 Open in Maps</a>` : ''}
                 <button class="btn btn-ghost btn-large" onclick="copyHotel('${h.city}')">📋 Copy address</button>
+                <button class="btn btn-ghost btn-large" onclick="closeSheet('hotel-taxi'); openHotelEditor()">✎ Edit hotels</button>
             </div>
             ${others.length ? `
                 <div class="taxi-other-hotels">

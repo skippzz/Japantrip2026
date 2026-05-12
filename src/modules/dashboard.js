@@ -434,48 +434,86 @@ export function renderDashboard() {
         ${emptyStateHtml}
 
         <div class="dash-grid">
-            <div class="dash-stat" onclick="switchView('places')">
-                <span class="dash-stat-icon">📍</span>
-                <div class="dash-stat-info">
-                    <div class="dash-stat-num">${totalPlaces}</div>
-                    <div class="dash-stat-label">Places saved</div>
+            ${(ctx.phase === 'pre' || ctx.phase === 'imminent') ? `
+                <div class="dash-stat" onclick="switchView('packing')">
+                    <span class="dash-stat-icon">🎒</span>
+                    <div class="dash-stat-info">
+                        <div class="dash-stat-num">${packedPct}%</div>
+                        <div class="dash-stat-label">${packedCount}/${packedTotal} packed</div>
+                    </div>
                 </div>
-            </div>
-            <div class="dash-stat" onclick="switchView('itinerary')">
-                <span class="dash-stat-icon">📅</span>
-                <div class="dash-stat-info">
-                    <div class="dash-stat-num">${totalActivities}</div>
-                    <div class="dash-stat-label">Scheduled activities</div>
+                <div class="dash-stat" onclick="renderReservationSummary()">
+                    <span class="dash-stat-icon">🎫</span>
+                    <div class="dash-stat-info">
+                        <div class="dash-stat-num">${reservedCount}</div>
+                        <div class="dash-stat-label">Reservations</div>
+                    </div>
                 </div>
-            </div>
-            <div class="dash-stat" onclick="setPlaceStatusFilter('completed'); switchView('places')">
-                <span class="dash-stat-icon">✅</span>
-                <div class="dash-stat-info">
-                    <div class="dash-stat-num">${visitedCount} / ${totalActivities}</div>
-                    <div class="dash-stat-label">Completed</div>
+                <div class="dash-stat" onclick="switchView('itinerary')">
+                    <span class="dash-stat-icon">📌</span>
+                    <div class="dash-stat-info">
+                        <div class="dash-stat-num">${unaddedCount}</div>
+                        <div class="dash-stat-label">Unadded places</div>
+                    </div>
                 </div>
-            </div>
-            <div class="dash-stat" onclick="switchView('packing')">
-                <span class="dash-stat-icon">🎒</span>
-                <div class="dash-stat-info">
-                    <div class="dash-stat-num">${packedPct}%</div>
-                    <div class="dash-stat-label">${packedCount}/${packedTotal} packed</div>
+                <div class="dash-stat" onclick="switchView('itinerary')">
+                    <span class="dash-stat-icon">📅</span>
+                    <div class="dash-stat-info">
+                        <div class="dash-stat-num">${totalActivities}</div>
+                        <div class="dash-stat-label">Activities planned</div>
+                    </div>
                 </div>
-            </div>
-            <div class="dash-stat" onclick="switchView('itinerary')">
-                <span class="dash-stat-icon">📌</span>
-                <div class="dash-stat-info">
-                    <div class="dash-stat-num">${unaddedCount}</div>
-                    <div class="dash-stat-label">Unadded places</div>
+                <div class="dash-stat" onclick="switchView('places')">
+                    <span class="dash-stat-icon">📍</span>
+                    <div class="dash-stat-info">
+                        <div class="dash-stat-num">${totalPlaces}</div>
+                        <div class="dash-stat-label">Places saved</div>
+                    </div>
                 </div>
-            </div>
-            <div class="dash-stat" onclick="setPlaceStatusFilter('reserved'); switchView('places')">
-                <span class="dash-stat-icon">🎫</span>
-                <div class="dash-stat-info">
-                    <div class="dash-stat-num">${reservedCount}</div>
-                    <div class="dash-stat-label">Reservations made</div>
+            ` : `
+                <div class="dash-stat" onclick="switchView('places')">
+                    <span class="dash-stat-icon">📍</span>
+                    <div class="dash-stat-info">
+                        <div class="dash-stat-num">${totalPlaces}</div>
+                        <div class="dash-stat-label">Places saved</div>
+                    </div>
                 </div>
-            </div>
+                <div class="dash-stat" onclick="switchView('itinerary')">
+                    <span class="dash-stat-icon">📅</span>
+                    <div class="dash-stat-info">
+                        <div class="dash-stat-num">${totalActivities}</div>
+                        <div class="dash-stat-label">Scheduled activities</div>
+                    </div>
+                </div>
+                <div class="dash-stat" onclick="setPlaceStatusFilter('completed'); switchView('places')">
+                    <span class="dash-stat-icon">✅</span>
+                    <div class="dash-stat-info">
+                        <div class="dash-stat-num">${visitedCount} / ${totalActivities}</div>
+                        <div class="dash-stat-label">Done</div>
+                    </div>
+                </div>
+                <div class="dash-stat" onclick="switchView('packing')">
+                    <span class="dash-stat-icon">🎒</span>
+                    <div class="dash-stat-info">
+                        <div class="dash-stat-num">${packedPct}%</div>
+                        <div class="dash-stat-label">${packedCount}/${packedTotal} packed</div>
+                    </div>
+                </div>
+                <div class="dash-stat" onclick="switchView('itinerary')">
+                    <span class="dash-stat-icon">📌</span>
+                    <div class="dash-stat-info">
+                        <div class="dash-stat-num">${unaddedCount}</div>
+                        <div class="dash-stat-label">Unadded places</div>
+                    </div>
+                </div>
+                <div class="dash-stat" onclick="renderReservationSummary()">
+                    <span class="dash-stat-icon">🎫</span>
+                    <div class="dash-stat-info">
+                        <div class="dash-stat-num">${reservedCount}</div>
+                        <div class="dash-stat-label">Booked</div>
+                    </div>
+                </div>
+            `}
         </div>
 
         <div class="dash-section">
@@ -486,13 +524,11 @@ export function renderDashboard() {
         <div class="dash-section">
             <div class="dash-section-title">⚡ Quick Access</div>
             <div class="dash-quick-links">
-                <div class="dash-link" onclick="switchView('itinerary')">📅 Itinerary</div>
-                <div class="dash-link" onclick="switchView('places')">📍 All Places</div>
-                <div class="dash-link" onclick="switchView('map')">🗺️ Map View</div>
                 <div class="dash-link" onclick="switchView('packing')">🎒 Packing List</div>
+                <div class="dash-link" onclick="renderReservationSummary()">🎫 Reservation Summary</div>
                 <div class="dash-link" onclick="openTemplatesGallery()">🧩 Browse Trip Templates</div>
                 <div class="dash-link" onclick="window._openDataSheet?.()">📥 Export / Import</div>
-                <div class="dash-link" onclick="switchView('itinerary')">📌 ${unaddedCount} Unadded Places</div>
+                <div class="dash-link" onclick="exportICS()">📅 Export to Calendar</div>
             </div>
         </div>
     `;

@@ -9,7 +9,7 @@ import { state, loadState, save, subscribe, emit, exportData, importData,
 import { initTheme, toggleTheme, setMapRefs } from './modules/theme.js';
 import { showToast } from './modules/toast.js';
 import './modules/sheet.js';   // Phase 1: bottom-sheet primitive (registers window.openSheet/closeSheet)
-import { registerFab, syncFabVisibility } from './modules/fab.js';
+import { syncFabVisibility } from './modules/fab.js';
 import { attachLongPressDelegated } from './modules/gestures.js';
 import { openAppDrawer } from './modules/app-drawer.js';
 import { enterReorderMode, exitReorderMode, isReorderMode } from './modules/reorder-mode.js';
@@ -812,8 +812,16 @@ document.addEventListener('DOMContentLoaded', () => {
     loadState();
     if (state.itinerary.length) window._expandedDays.add(state.itinerary[0].id);
     currentView = 'dashboard';
-    renderAll();
+    // Wire global event listeners FIRST so header buttons (☰ trip drawer,
+    // ⋯ app drawer) and nav stay functional even if a later render throws
+    // a transient error (e.g. a missing element from a partial migration).
     bindEvents();
+    try {
+        renderAll();
+    } catch (e) {
+        console.error('[init] renderAll() failed; UI may be incomplete:', e);
+        showToast?.('Some screens failed to load — try refreshing.', 'warn', 5000);
+    }
 
     // Phase 1.8: long-press on day card → action sheet
     const itinList = document.getElementById('itinerary-list');
