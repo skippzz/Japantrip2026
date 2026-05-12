@@ -99,23 +99,6 @@ let activeStorageKey = STATE_KEY;
 export function setStorageKey(key) { activeStorageKey = key; }
 export function getStorageKey() { return activeStorageKey; }
 
-// Wave 4: multi-tab sync. Other tabs editing the same trip should refresh.
-// Suppress writes initiated by this tab (the event only fires in other tabs).
-if (typeof window !== 'undefined') {
-    window.addEventListener('storage', (e) => {
-        if (e.key !== activeStorageKey || !e.newValue) return;
-        try {
-            const next = JSON.parse(e.newValue);
-            if (next?.version === DATA_VERSION) {
-                Object.assign(state, next);
-                setStateRef(state);
-                emit('renderAll');
-                showToast?.('Updated from another tab', 'info', 2500);
-            }
-        } catch { /* ignore */ }
-    });
-}
-
 export function save() {
     try {
         localStorage.setItem(activeStorageKey, JSON.stringify(state));

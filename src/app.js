@@ -32,7 +32,7 @@ import { renderPlaces, setPlaceFilter, setPlaceSearch, setAreaFilter,
          deletePlace, toggleReserved, updateResField, openDetail,
          openPlaceModal, handlePlaceSubmit, setPlaceSort,
          applyStatusFilter, clearAllFilters, renderReservationSummary,
-         quickAddToDay, confirmQuickAdd, setPlaceRating,
+         quickAddToDay, confirmQuickAdd,
          setPlaceStatusFilter } from './modules/places.js';
 import { renderPlacePool, getUnaddedPlaces, getNearbyForDay, setPoolSearch, setPoolFilter,
          addPlaceToDay, handlePoolDrop, handleReturnToPool, populatePoolTargetDay } from './modules/pool.js';
@@ -535,15 +535,6 @@ function bindEvents() {
             openGlobalSearch();
         }
     });
-    // Wave 2: keyboard support for role=button day headers (Enter/Space toggle)
-    document.addEventListener('keydown', e => {
-        const t = e.target;
-        if (t?.classList?.contains('day-header') && (e.key === 'Enter' || e.key === ' ')) {
-            e.preventDefault();
-            const dayId = t.closest('.day-card')?.dataset?.dayId;
-            if (dayId) window.toggleDay?.(dayId);
-        }
-    });
     // Map filters
     const mapCityFilter = document.getElementById('map-filter');
     if (mapCityFilter) mapCityFilter.addEventListener('change', e => updateMapMarkers(e.target.value));
@@ -659,7 +650,6 @@ window.openDetail = openDetail;
 window.deletePlace = deletePlace;
 window.toggleReserved = toggleReserved;
 window.updateResField = updateResField;
-window.setPlaceRating = setPlaceRating;
 window.setPlaceStatusFilter = setPlaceStatusFilter;
 window.setAreaFilter = setAreaFilter;
 window.openPlaceModal = openPlaceModal;

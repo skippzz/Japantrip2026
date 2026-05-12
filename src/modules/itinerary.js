@@ -126,7 +126,7 @@ export function renderItinerary() {
 
         return `
         <div class="day-card ${isExpanded?'expanded':''} ${isToday?'today-card':''} city-${cityClass}" data-day-id="${day.id}">
-            <div class="day-header" onclick="toggleDay('${day.id}')" role="button" tabindex="0" aria-expanded="${isExpanded ? 'true' : 'false'}" aria-label="Day ${idx+1}${isToday?' (today)':''} — ${esc(date)}${subtitle ? ' — '+esc(subtitle) : ''}. ${day.items.length} stop${day.items.length!==1?'s':''}. ${isExpanded ? 'Collapse' : 'Expand'}">
+            <div class="day-header" onclick="toggleDay('${day.id}')" aria-label="Day ${idx+1}${isToday?' (today)':''} — ${esc(date)}${subtitle ? ' — '+esc(subtitle) : ''}">
                 <div class="day-header-left">
                     <div class="day-num ${cityClass}">${idx+1}</div>
                     <div class="day-info">
